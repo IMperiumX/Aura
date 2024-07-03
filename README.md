@@ -7,6 +7,17 @@ The virtual health and wellness platform aims to provide a comprehensive solutio
 
 License: Apache Software License 2.0
 
+## Features
+
+- **Personalized Health Assessments**: Complete detailed health assessments to receive tailored recommendations for nutrition, fitness, mental health, and overall wellness.
+- **Virtual Health Coaches**: Connect with certified health coaches, nutritionists, fitness trainers, and mental health professionals for personalized guidance and support.
+- **Interactive Workouts**: Access a library of interactive workout videos, live fitness classes, and personalized exercise routines suited to individual goals and fitness levels.
+- **Nutrition Planning**: Utilize meal planning tools, healthy recipes, dietary recommendations, and nutritional guidance to make informed food choices.
+- **Mental Health Support**: Engage with mindfulness exercises, stress management techniques, and mental health resources to promote emotional well-being and reduce anxiety.
+- **Community Support**: Join a supportive online community to share experiences, participate in challenges, and motivate each other on your wellness journeys.
+- **Progress Tracking**: Track health metrics, set goals, monitor progress, and celebrate achievements to stay motivated and accountable.
+- **Integration with Wearable Devices**: Sync with popular wearable devices and health apps to track activity levels, sleep patterns, heart rate, and other vital health data for a holistic view of wellness.
+
 ## Settings
 
 Moved to [settings](http://cookiecutter-django.readthedocs.io/en/latest/settings.html).
@@ -19,7 +30,7 @@ Moved to [settings](http://cookiecutter-django.readthedocs.io/en/latest/settings
 
 - To create a **superuser account**, use this command:
 
-      $ python manage.py createsuperuser
+      python manage.py createsuperuser
 
 For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
 
@@ -27,19 +38,19 @@ For convenience, you can keep your normal user logged in on Chrome and your supe
 
 Running type checks with mypy:
 
-    $ mypy aura
+        mypy aura
 
 ### Test coverage
 
 To run the tests, check your test coverage, and generate an HTML coverage report:
 
-    $ coverage run -m pytest
-    $ coverage html
-    $ open htmlcov/index.html
+    coverage run -m pytest
+    coverage html
+    open htmlcov/index.html
 
 #### Running tests with pytest
 
-    $ pytest
+    pytest
 
 ### Live reloading and Sass CSS compilation
 
@@ -76,19 +87,19 @@ celery -A config.celery_app worker -B -l info
 
 In development, it is often nice to be able to see emails that are being sent from your application. If you choose to use [Mailpit](https://github.com/axllent/mailpit) when generating the project a local SMTP server with a web interface will be available.
 
-1.  [Download the latest Mailpit release](https://github.com/axllent/mailpit/releases) for your OS.
+1. [Download the latest Mailpit release](https://github.com/axllent/mailpit/releases) for your OS.
 
-2.  Copy the binary file to the project root.
+2. Copy the binary file to the project root.
 
-3.  Make it executable:
+3. Make it executable:
 
-        $ chmod +x mailpit
+        chmod +x mailpit
 
-4.  Spin up another terminal window and start it there:
+4. Spin up another terminal window and start it there:
 
         ./mailpit
 
-5.  Check out <http://127.0.0.1:8025/> to see how it goes.
+5. Check out <http://127.0.0.1:8025/> to see how it goes.
 
 Now you have your own mail server running locally, ready to receive whatever you send it.
 
