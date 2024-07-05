@@ -29,18 +29,24 @@ class HealthAssessment(models.Model):
         max_length=15,
         choices=AssessmentType.choices,
         verbose_name="Assessment Type",
+        help_text="Type of health assessment conducted",
     )
     risk_level = models.CharField(
         max_length=8,
         choices=RiskLevel.choices,
         verbose_name="Risk Level",
+        help_text="Level of risk identified in the assessment",
     )
-    recommendations = models.TextField()
+    recommendations = models.TextField(
+        help_text="Recommendations based on the assessment",
+    )
     responses = models.JSONField(
         verbose_name="Responses",
+        help_text="Responses provided during the assessment",
     )
     result = models.TextField(
         verbose_name="Result",
+        help_text="Result of the health assessment",
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -60,7 +66,7 @@ class HealthAssessment(models.Model):
         verbose_name_plural = "Health Assessments"
 
     def __str__(self):
-        return f"{self.user} - {self.assessment_type} - {self.created_at}"
+        return f"{self.patient} - {self.assessment_type} - {self.created_at}"
 
 
 class HealthRiskPrediction(models.Model):
@@ -71,9 +77,11 @@ class HealthRiskPrediction(models.Model):
     health_issue = models.CharField(
         max_length=255,
         verbose_name="Health Issue",
+        help_text="Specific health issue identified",
     )
     preventive_measures = models.TextField(
         verbose_name="Preventive Measures",
+        help_text="Measures to prevent the identified health issue",
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -99,4 +107,4 @@ class HealthRiskPrediction(models.Model):
         verbose_name_plural = "Health Risk Predictions"
 
     def __str__(self):
-        return f"{self.user} - {self.health_issue} - {self.created_at}"
+        return f"{self.patient} - {self.health_issue} - {self.created_at}"
