@@ -276,3 +276,5 @@ mailpit
 aura/media/
 
 .pytest_cache/
+
+.env
