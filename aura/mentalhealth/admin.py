@@ -6,8 +6,26 @@ from .models import TherapySession
 
 @admin.register(TherapySession)
 class TherapySessionAdmin(admin.ModelAdmin):
-    list_display = ("id", "therapist", "patient")
-    list_filter = ("therapist", "patient")
+    list_display = (
+        "id",
+        "therapist",
+        "patient",
+        "session_type",
+        "status",
+        "scheduled_at",
+        "started_at",
+        "ended_at",
+        "created_at",
+    )
+    list_filter = (
+        "therapist",
+        "patient",
+        "scheduled_at",
+        "started_at",
+        "ended_at",
+        "created_at",
+    )
+    date_hierarchy = "created_at"
 
 
 @admin.register(ChatbotInteraction)
