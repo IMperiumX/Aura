@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class TherapySession(models.Model):
@@ -26,52 +27,49 @@ class TherapySession(models.Model):
         CANCELLED = "cancelled", "Cancelled"
         COMPLETED = "completed", "Completed"
 
-    therapist = models.ForeignKey(
-        "users.User",
-        on_delete=models.CASCADE,
-        related_name="therapy_sessions_as_therapist",
-        verbose_name="Therapist",
-    )
-
-    patient = models.ForeignKey(
-        "users.User",
-        on_delete=models.CASCADE,
-        related_name="therapy_sessions_as_patient",
-        verbose_name="Patient",
-    )
-
     session_type = models.CharField(
         max_length=5,
         choices=SessionType.choices,
         verbose_name="Session Type",
     )
-
     status = models.CharField(
         max_length=10,
         choices=SessionStatus.choices,
         default=SessionStatus.PENDING,
         verbose_name="Status",
     )
+    summary = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
 
     scheduled_at = models.DateTimeField(
         verbose_name="Scheduled At",
     )
-
     started_at = models.DateTimeField(
         blank=True,
         null=True,
         verbose_name="Started At",
     )
-
     ended_at = models.DateTimeField(
         blank=True,
         null=True,
         verbose_name="Ended At",
     )
-
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Created At",
+    )
+
+    therapist = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="therapy_sessions_as_therapist",
+        verbose_name="Therapist",
+    )
+    patient = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="therapy_sessions_as_patient",
+        verbose_name="Patient",
     )
 
     class Meta:
@@ -88,24 +86,24 @@ class ChatbotInteraction(models.Model):
     A model to represent a chatbot interaction.
     """
 
+    message = models.TextField(
+        verbose_name="Message",
+    )
+    response = models.TextField(
+        verbose_name="Response",
+    )
+    conversation_log = models.TextField()
+    interaction_date = models.DateTimeField(null=True, default=timezone.now)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created At",
+    )
+
     user = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
         related_name="chatbot_interactions",
         verbose_name="User",
-    )
-
-    message = models.TextField(
-        verbose_name="Message",
-    )
-
-    response = models.TextField(
-        verbose_name="Response",
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Created At",
     )
 
     class Meta:
