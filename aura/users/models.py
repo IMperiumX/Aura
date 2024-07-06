@@ -185,9 +185,15 @@ class CoachProfile(AbstractProfile):
         blank=True,
         verbose_name=_("Availability Schedule"),
     )
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        verbose_name="Rating",
+    )
     specialization = models.CharField(max_length=100)
     weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
     height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
 
     class Meta:
+        order_with_respect_to = "rating"
         verbose_name_plural = "Coaches"
