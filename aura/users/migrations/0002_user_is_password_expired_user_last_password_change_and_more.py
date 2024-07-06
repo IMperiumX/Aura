@@ -50,8 +50,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(
-                        max_length=120, verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
                 ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
@@ -88,8 +87,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(
-                        max_length=120, verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
                 ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
@@ -104,8 +102,7 @@ class Migration(migrations.Migration):
                 ("specialties", models.CharField(max_length=255)),
                 (
                     "years_of_experience",
-                    models.PositiveIntegerField(
-                        verbose_name="Years of Experience"),
+                    models.PositiveIntegerField(verbose_name="Years of Experience"),
                 ),
                 (
                     "availability",
@@ -139,8 +136,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(
-                        max_length=120, verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
                 ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
@@ -200,8 +196,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(
-                        max_length=120, verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
                 ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
