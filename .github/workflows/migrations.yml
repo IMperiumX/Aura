@@ -67,6 +67,7 @@ jobs:
 
       - name: Apply migrations
         run: |
+          export CELERY_BROKER_URL=redis://localhost:6379/0
           python manage.py migrate
 
       # Checkout the current ref
