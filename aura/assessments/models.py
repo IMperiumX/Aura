@@ -54,7 +54,7 @@ class HealthAssessment(models.Model):
     )
 
     patient = models.ForeignKey(
-        "users.UserProfile",
+        "users.PatientProfile",
         on_delete=models.CASCADE,
         related_name="health_assessments",
         verbose_name="User",
@@ -89,13 +89,13 @@ class HealthRiskPrediction(models.Model):
     )
 
     assessment = models.ForeignKey(
-        "assesments.HealthAssessment",
+        "assessments.HealthAssessment",
         on_delete=models.CASCADE,
         related_name="health_risk_predictions",
         verbose_name="Health Assessment",
     )
     patient = models.ForeignKey(
-        "users.UserProfile",
+        "users.PatientProfile",
         on_delete=models.CASCADE,
         related_name="health_risk_predictions",
         verbose_name="User",
