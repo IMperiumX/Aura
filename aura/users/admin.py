@@ -92,7 +92,7 @@ class UserAdmin(auth_admin.UserAdmin):
     def get_inline_instances(self, request, obj=None):
         """
 
-        :param request: 
+        :param request:
         :param obj:  (Default value = None)
 
         """
