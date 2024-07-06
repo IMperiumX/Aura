@@ -38,6 +38,7 @@ def sane_repr(*attrs: str) -> Callable[[object], str]:
 
 class FlexibleForeignKey(ForeignKey):
     """ """
+
     def __init__(self, *args: Any, **kwargs: Any):
         kwargs.setdefault("on_delete", models.CASCADE)
         super().__init__(*args, **kwargs)
@@ -63,8 +64,7 @@ class User(AbstractUser):
         default=False,
         help_text=_(
             "If set to true then the user needs to change the "
-            "password on next sign in.",
-        ),
+            "password on next sign in.", ),
     )
     last_password_change = models.DateTimeField(
         _("date of last password change"),
@@ -115,9 +115,7 @@ class AbstractProfile(models.Model):
     avatar_url = models.CharField(_("avatar url"), max_length=120)
     bio = models.TextField(blank=True, verbose_name="Biography")
     date_of_birth = models.DateField()
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True, )
     gender = models.CharField(
         max_length=1,
         choices=GenderType.choices,
@@ -158,8 +156,12 @@ class PatientProfile(AbstractProfile):
     current_medications = models.JSONField(null=True, blank=True)
     health_data = models.JSONField(null=True, blank=True)
     preferences = models.JSONField(null=True, blank=True)
-    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
-    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
+    weight = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Weight (kg)")
+    height = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Height (cm)")
 
     class Meta:
         """ """
@@ -172,8 +174,7 @@ class TherapistProfile(AbstractProfile):
     license_number = models.CharField(max_length=50)
     specialties = models.CharField(max_length=255)
     years_of_experience = models.PositiveIntegerField(
-        verbose_name="Years of Experience",
-    )
+        verbose_name="Years of Experience", )
     availability = models.JSONField(
         null=True,
         blank=True,
@@ -202,8 +203,12 @@ class CoachProfile(AbstractProfile):
         verbose_name="Rating",
     )
     specialization = models.CharField(max_length=100)
-    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
-    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
+    weight = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Weight (kg)")
+    height = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Height (cm)")
 
     class Meta:
         """ """

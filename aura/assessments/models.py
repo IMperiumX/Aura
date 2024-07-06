@@ -32,8 +32,7 @@ class HealthAssessment(models.Model):
         help_text="Level of risk identified in the assessment",
     )
     recommendations = models.TextField(
-        help_text="Recommendations based on the assessment",
-    )
+        help_text="Recommendations based on the assessment", )
     responses = models.JSONField(
         verbose_name="Responses",
         help_text="Responses provided during the assessment",
