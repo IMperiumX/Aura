@@ -8,28 +8,38 @@ from .models import TherapySession
 class TherapySessionAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "therapist",
-        "patient",
         "session_type",
         "status",
+        "summary",
+        "notes",
         "scheduled_at",
         "started_at",
         "ended_at",
         "created_at",
-    )
-    list_filter = (
         "therapist",
         "patient",
+    )
+    list_filter = (
         "scheduled_at",
         "started_at",
         "ended_at",
         "created_at",
+        "therapist",
+        "patient",
     )
     date_hierarchy = "created_at"
 
 
 @admin.register(ChatbotInteraction)
 class ChatbotInteractionAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "message", "response", "created_at")
-    list_filter = ("user", "created_at")
+    list_display = (
+        "id",
+        "message",
+        "response",
+        "conversation_log",
+        "interaction_date",
+        "created_at",
+        "user",
+    )
+    list_filter = ("interaction_date", "created_at", "user")
     date_hierarchy = "created_at"
