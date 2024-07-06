@@ -46,9 +46,24 @@ jobs:
 
     steps:
       # Checkout master to run all merged migrations.
-      - uses: actions/checkout@v4
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
         with:
           ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements/base.txt
+            requirements/local.txt
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/local.txt
 
       - name: Apply migrations
         run: |
