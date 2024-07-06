@@ -18,24 +18,28 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
 
 
 class UserProfileInline(admin.StackedInline):
+    """ """
     model = UserProfile
     can_delete = False
     verbose_name_plural = "User Profiles"
 
 
 class PatientProfileInline(admin.StackedInline):
+    """ """
     model = PatientProfile
     can_delete = False
     verbose_name_plural = "Patients"
 
 
 class CoachProfileInline(admin.StackedInline):
+    """ """
     model = CoachProfile
     can_delete = False
     verbose_name_plural = "Coaches"
 
 
 class TherapistProfileInline(admin.StackedInline):
+    """ """
     model = TherapistProfile
     can_delete = False
     verbose_name_plural = "Therapists"
@@ -43,6 +47,7 @@ class TherapistProfileInline(admin.StackedInline):
 
 @admin.register(User)
 class UserAdmin(auth_admin.UserAdmin):
+    """ """
     form = UserAdminChangeForm
     add_form = UserAdminCreationForm
     fieldsets = (
@@ -81,6 +86,12 @@ class UserAdmin(auth_admin.UserAdmin):
     )
 
     def get_inline_instances(self, request, obj=None):
+        """
+
+        :param request: 
+        :param obj:  (Default value = None)
+
+        """
         if not obj:
             return []
         inline_instances = super().get_inline_instances(request, obj)
@@ -98,6 +109,7 @@ class UserAdmin(auth_admin.UserAdmin):
 
 @admin.register(PatientProfile)
 class PatientProfileAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",
@@ -119,6 +131,7 @@ class PatientProfileAdmin(admin.ModelAdmin):
 
 @admin.register(TherapistProfile)
 class TherapistProfileAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",
@@ -138,6 +151,7 @@ class TherapistProfileAdmin(admin.ModelAdmin):
 
 @admin.register(CoachProfile)
 class CoachProfileAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",
@@ -159,6 +173,7 @@ class CoachProfileAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfile(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",
