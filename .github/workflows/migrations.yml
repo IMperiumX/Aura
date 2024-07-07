@@ -97,7 +97,7 @@ jobs:
           CELERY_BROKER_URL: $CELERY_BROKER_URL
           DATABASE_URL: $DATABASE_URL
         with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          githubToken: ${{ github.token }}
           migration: ${{ steps.file.outputs.added }}
           cmd: python manage.py sqlmigrate
           app_label: users
