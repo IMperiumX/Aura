@@ -160,8 +160,10 @@ class PatientProfile(AbstractProfile):
     current_medications = models.JSONField(null=True, blank=True)
     health_data = models.JSONField(null=True, blank=True)
     preferences = models.JSONField(null=True, blank=True)
-    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
-    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
+    weight = models.FloatField(
+        null=True, blank=True, verbose_name="Weight (kg)")
+    height = models.FloatField(
+        null=True, blank=True, verbose_name="Height (cm)")
 
     class Meta:
         """ """
@@ -206,8 +208,10 @@ class CoachProfile(AbstractProfile):
         verbose_name="Rating",
     )
     specialization = models.CharField(max_length=100)
-    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
-    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
+    weight = models.FloatField(
+        null=True, blank=True, verbose_name="Weight (kg)")
+    height = models.FloatField(
+        null=True, blank=True, verbose_name="Height (cm)")
 
     class Meta:
         """ """
