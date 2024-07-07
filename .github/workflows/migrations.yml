@@ -17,8 +17,8 @@ jobs:
     timeout-minutes: 3
     # Map a step output to a job output
     outputs:
-      added: ${{ steps.changes.outputs.migrations_added }}
-      modified: ${{ steps.changes.outputs.migrations_modified }}
+      added: ${{ steps.did-migration-change.outputs.added }}
+      modified: ${{ steps.did-migration-change.outputs.modified }}
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
