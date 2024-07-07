@@ -3,6 +3,7 @@ from typing import Any
 from django.db import models
 from django.db.models import ForeignKey
 from django.db.models.fields.related_descriptors import ReverseOneToOneDescriptor
+from django.db.transaction import atomic
 
 
 class FlexibleForeignKey(ForeignKey):
@@ -15,17 +16,28 @@ class FlexibleForeignKey(ForeignKey):
 
 # Based on AutoOneToOneField from django-annoying:
 # https://github.com/skorokithakis/django-annoying/blob/master/annoying/fields.py
-
-
 class AutoSingleRelatedObjectDescriptor(ReverseOneToOneDescriptor):
-    """Descriptor for access to the object from its related class."""
+    """
+    The descriptor that handles the object creation for an AutoOneToOneField.
+    """
 
     def __get__(self, instance, instance_type=None):
+        model = getattr(self.related, "related_model", self.related.model)
+
         try:
             return super().__get__(instance, instance_type)
-        except self.related.related_model.DoesNotExist:
-            obj = self.related.related_model(**{self.related.field.name: instance})
-            obj.save()
+        except model.DoesNotExist:
+            with atomic():
+                # Using get_or_create instead() of save() or create()
+                # as it better handles race conditions
+                obj, _ = model.objects.get_or_create(
+                    **{self.related.field.name: instance},
+                )
+
+            # Update Django's cache, otherwise first 2 calls to obj.relobj
+            # will return 2 different in-memory objects
+            self.related.set_cached_value(instance, obj)
+            self.related.field.set_cached_value(obj, instance)
             return obj
 
 
