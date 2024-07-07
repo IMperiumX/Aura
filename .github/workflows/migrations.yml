@@ -52,7 +52,6 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -95,8 +94,8 @@ jobs:
         env:
           SENTRY_LOG_LEVEL: ERROR
           PGPASSWORD: password
-          CELERY_BROKER_URL: ${{ env.DATABASE_URL }}
-          DATABASE_URL: ${{ env.CELERY_BROKER_URL }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          CELERY_BROKER_URL: ${{ env.CELERY_BROKER_URL }}
         with:
           githubToken: ${{ github.token }}
           migration: ${{ steps.file.outputs.added }}
