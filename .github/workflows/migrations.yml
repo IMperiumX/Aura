@@ -74,9 +74,10 @@ jobs:
 
       - name: Apply Migrations
         run: |
-          export CELERY_BROKER_URL=$CELERY_BROKER_URL
-          export DATABASE_URL=$DATABASE_URL
           python manage.py ci_migrate
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          CELERY_BROKER_URL: ${{ env.CELERY_BROKER_URL }}
 
       - uses: actions/checkout@v4
         with:
@@ -94,8 +95,8 @@ jobs:
         env:
           SENTRY_LOG_LEVEL: ERROR
           PGPASSWORD: password
-          CELERY_BROKER_URL: $CELERY_BROKER_URL
-          DATABASE_URL: $DATABASE_URL
+          CELERY_BROKER_URL: ${{ env.DATABASE_URL }}
+          DATABASE_URL: ${{ env.CELERY_BROKER_URL }}
         with:
           githubToken: ${{ github.token }}
           migration: ${{ steps.file.outputs.added }}
