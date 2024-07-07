@@ -37,12 +37,19 @@ jobs:
     name: Generate SQL
     runs-on: ubuntu-22.04
     timeout-minutes: 8
-    strategy:
-      matrix:
-        pg-version: ['14']
-
     needs: did-migration-change
     if: needs.did-migration-change.outputs.added == 'true'
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: mydatabase
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       # Checkout master to run all merged migrations.
@@ -68,6 +75,7 @@ jobs:
       - name: Apply migrations
         run: |
           export CELERY_BROKER_URL=redis://localhost:6379/0
+          export DATABASE_URL=postgres://postgres:password@localhost:5432/mydatabase
           python manage.py ci_migrate
 
       # Checkout the current ref
