@@ -92,5 +92,6 @@ jobs:
           PGPASSWORD: password
         with:
           cmd: python manage.py sqlmigrate
+          app_label: users
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           migration: ${{ steps.file.outputs.added }}
