@@ -33,8 +33,7 @@ class HealthAssessment(models.Model):
         help_text=_("Level of risk identified in the assessment"),
     )
     recommendations = models.TextField(
-        help_text=_("Recommendations based on the assessment"),
-    )
+        help_text=_("Recommendations based on the assessment"), )
     responses = models.JSONField(
         verbose_name="Responses",
         help_text=_("Responses provided during the assessment"),
@@ -43,9 +42,7 @@ class HealthAssessment(models.Model):
         verbose_name="Result",
         help_text=_("Result of the health assessment"),
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True, )
 
     patient = models.ForeignKey(
         "users.PatientProfile",
@@ -76,9 +73,7 @@ class HealthRiskPrediction(models.Model):
         verbose_name="Preventive Measures",
         help_text=_("Measures to prevent the identified health issue"),
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True, )
 
     assessment = models.ForeignKey(
         "assessments.HealthAssessment",

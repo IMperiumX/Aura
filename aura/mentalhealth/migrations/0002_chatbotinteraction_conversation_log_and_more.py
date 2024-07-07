@@ -21,7 +21,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="chatbotinteraction",
             name="interaction_date",
-            field=models.DateTimeField(default=django.utils.timezone.now, null=True),
+            field=models.DateTimeField(default=django.utils.timezone.now,
+                                       null=True),
         ),
         migrations.AddField(
             model_name="therapysession",
