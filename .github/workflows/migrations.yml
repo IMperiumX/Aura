@@ -10,6 +10,10 @@ defaults:
   run:
     shell: bash --noprofile --norc -eo pipefail -ux {0}
 
+env:
+  DATABASE_URL: postgres://postgres:password@localhost:5432/mydatabase
+  CELERY_BROKER_URL: redis://localhost:6379/0
+
 jobs:
   did-migration-change:
     name: check if any migration changes
@@ -70,8 +74,8 @@ jobs:
 
       - name: Apply Migrations
         run: |
-          export CELERY_BROKER_URL=redis://localhost:6379/0
-          export DATABASE_URL=postgres://postgres:password@localhost:5432/mydatabase
+          export CELERY_BROKER_URL=$CELERY_BROKER_URL
+          export DATABASE_URL=$DATABASE_URL
           python manage.py ci_migrate
 
       - uses: actions/checkout@v4
@@ -90,8 +94,8 @@ jobs:
         env:
           SENTRY_LOG_LEVEL: ERROR
           PGPASSWORD: password
-          CELERY_BROKER_URL: redis://localhost:6379/0
-          DATABASE_URL: postgres://postgres:password@localhost:5432/mydatabase
+          CELERY_BROKER_URL: $CELERY_BROKER_URL
+          DATABASE_URL: $DATABASE_URL
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           migration: ${{ steps.file.outputs.added }}
