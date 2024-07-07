@@ -15,7 +15,7 @@ from .managers import UserManager
 def sane_repr(*attrs: str) -> Callable[[object], str]:
     """
 
-    :param *attrs: str: 
+    :param *attrs: str:
 
     """
     if "id" not in attrs and "pk" not in attrs:
@@ -27,7 +27,7 @@ def sane_repr(*attrs: str) -> Callable[[object], str]:
         :param self: object:
         :param self: object:
         :param self: object:
-        :param self: object: 
+        :param self: object:
 
         """
         cls = type(self).__name__
@@ -99,7 +99,7 @@ class User(AbstractUser):
     def set_password(self, raw_password):
         """
 
-        :param raw_password: 
+        :param raw_password:
 
         """
         super().set_password(raw_password)
