@@ -139,15 +139,6 @@ class AbstractProfile(AuditModel):
         return f"{self.user} - {self.created_at}"
 
 
-class Profile(AbstractProfile):
-    """A model to represent a user's profile."""
-
-    class Meta:
-        """ """
-
-        verbose_name_plural = "User Profiles"
-
-
 class Patient(AbstractProfile):
     """A model to represent a patient"""
 

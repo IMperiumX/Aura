@@ -8,7 +8,6 @@ from .forms import UserAdminChangeForm
 from .forms import UserAdminCreationForm
 from .models import Coach
 from .models import Patient
-from .models import Profile
 from .models import Therapist
 from .models import User
 
@@ -17,14 +16,6 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # https://docs.allauth.org/en/latest/common/admin.html#admin
     admin.autodiscover()
     admin.site.login = secure_admin_login(admin.site.login)  # type: ignore[method-assign]
-
-
-class ProfileInline(admin.StackedInline):
-    """ """
-
-    model = Profile
-    can_delete = False
-    verbose_name_plural = "User Profiles"
 
 
 class PatientInline(admin.StackedInline):
@@ -118,8 +109,6 @@ class UserAdmin(auth_admin.UserAdmin):
             return []
         inline_instances = super().get_inline_instances(request, obj)
 
-        if hasattr(obj, "user_profile"):
-            inline_instances.append(ProfileInline(self.model, self.admin_site))
         if hasattr(obj, "patient_profile"):
             inline_instances.append(PatientInline(self.model, self.admin_site))
         elif hasattr(obj, "therapist_profile"):
@@ -127,30 +116,6 @@ class UserAdmin(auth_admin.UserAdmin):
         elif hasattr(obj, "coach_profile"):
             inline_instances.append(CoachInline(self.model, self.admin_site))
         return inline_instances
-
-
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "created",
-        "modified",
-        "created_by",
-        "updated_by",
-        "avatar_url",
-        "bio",
-        "date_of_birth",
-        "gender",
-        "user",
-    )
-    list_filter = (
-        "created",
-        "modified",
-        "created_by",
-        "updated_by",
-        "date_of_birth",
-        "user",
-    )
 
 
 @admin.register(Patient)
