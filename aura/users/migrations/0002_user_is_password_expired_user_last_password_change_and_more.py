@@ -34,9 +34,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="user",
             name="email",
-            field=models.EmailField(max_length=75,
-                                    unique=True,
-                                    verbose_name="email address"),
+            field=models.EmailField(
+                max_length=75, unique=True, verbose_name="email address"
+            ),
         ),
         migrations.CreateModel(
             name="UserProfile",
@@ -52,17 +52,16 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(max_length=120,
-                                     verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
-                ("bio", models.TextField(blank=True,
-                                         verbose_name="Biography")),
+                ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "gender",
-                    models.CharField(choices=[("m", " Male"), ("f", "Female")],
-                                     max_length=1),
+                    models.CharField(
+                        choices=[("m", " Male"), ("f", "Female")], max_length=1
+                    ),
                 ),
                 (
                     "user",
@@ -90,30 +89,28 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(max_length=120,
-                                     verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
-                ("bio", models.TextField(blank=True,
-                                         verbose_name="Biography")),
+                ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "gender",
-                    models.CharField(choices=[("m", " Male"), ("f", "Female")],
-                                     max_length=1),
+                    models.CharField(
+                        choices=[("m", " Male"), ("f", "Female")], max_length=1
+                    ),
                 ),
                 ("license_number", models.CharField(max_length=50)),
                 ("specialties", models.CharField(max_length=255)),
                 (
                     "years_of_experience",
-                    models.PositiveIntegerField(
-                        verbose_name="Years of Experience"),
+                    models.PositiveIntegerField(verbose_name="Years of Experience"),
                 ),
                 (
                     "availability",
-                    models.JSONField(blank=True,
-                                     null=True,
-                                     verbose_name="Availability Schedule"),
+                    models.JSONField(
+                        blank=True, null=True, verbose_name="Availability Schedule"
+                    ),
                 ),
                 (
                     "user",
@@ -141,17 +138,16 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(max_length=120,
-                                     verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
-                ("bio", models.TextField(blank=True,
-                                         verbose_name="Biography")),
+                ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "gender",
-                    models.CharField(choices=[("m", " Male"), ("f", "Female")],
-                                     max_length=1),
+                    models.CharField(
+                        choices=[("m", " Male"), ("f", "Female")], max_length=1
+                    ),
                 ),
                 ("medical_record_number", models.CharField(max_length=20)),
                 ("insurance_provider", models.CharField(max_length=100)),
@@ -161,21 +157,20 @@ class Migration(migrations.Migration):
                 ("allergies", models.TextField()),
                 ("medical_conditions", models.TextField()),
                 ("medical_history", models.JSONField(blank=True, null=True)),
-                ("current_medications", models.JSONField(blank=True,
-                                                         null=True)),
+                ("current_medications", models.JSONField(blank=True, null=True)),
                 ("health_data", models.JSONField(blank=True, null=True)),
                 ("preferences", models.JSONField(blank=True, null=True)),
                 (
                     "weight",
-                    models.FloatField(blank=True,
-                                      null=True,
-                                      verbose_name="Weight (kg)"),
+                    models.FloatField(
+                        blank=True, null=True, verbose_name="Weight (kg)"
+                    ),
                 ),
                 (
                     "height",
-                    models.FloatField(blank=True,
-                                      null=True,
-                                      verbose_name="Height (cm)"),
+                    models.FloatField(
+                        blank=True, null=True, verbose_name="Height (cm)"
+                    ),
                 ),
                 (
                     "user",
@@ -203,45 +198,44 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "avatar_url",
-                    models.CharField(max_length=120,
-                                     verbose_name="avatar url"),
+                    models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
-                ("bio", models.TextField(blank=True,
-                                         verbose_name="Biography")),
+                ("bio", models.TextField(blank=True, verbose_name="Biography")),
                 ("date_of_birth", models.DateField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "gender",
-                    models.CharField(choices=[("m", " Male"), ("f", "Female")],
-                                     max_length=1),
+                    models.CharField(
+                        choices=[("m", " Male"), ("f", "Female")], max_length=1
+                    ),
                 ),
                 ("certification", models.CharField(max_length=100)),
                 ("areas_of_expertise", models.CharField(max_length=25)),
                 ("coaching_philosophy", models.TextField(blank=True)),
                 (
                     "availability",
-                    models.JSONField(blank=True,
-                                     null=True,
-                                     verbose_name="Availability Schedule"),
+                    models.JSONField(
+                        blank=True, null=True, verbose_name="Availability Schedule"
+                    ),
                 ),
                 (
                     "rating",
-                    models.DecimalField(decimal_places=2,
-                                        max_digits=3,
-                                        verbose_name="Rating"),
+                    models.DecimalField(
+                        decimal_places=2, max_digits=3, verbose_name="Rating"
+                    ),
                 ),
                 ("specialization", models.CharField(max_length=100)),
                 (
                     "weight",
-                    models.FloatField(blank=True,
-                                      null=True,
-                                      verbose_name="Weight (kg)"),
+                    models.FloatField(
+                        blank=True, null=True, verbose_name="Weight (kg)"
+                    ),
                 ),
                 (
                     "height",
-                    models.FloatField(blank=True,
-                                      null=True,
-                                      verbose_name="Height (cm)"),
+                    models.FloatField(
+                        blank=True, null=True, verbose_name="Height (cm)"
+                    ),
                 ),
                 (
                     "user",

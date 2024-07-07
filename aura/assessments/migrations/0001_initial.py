@@ -10,8 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("users",
-         "0002_user_is_password_expired_user_last_password_change_and_more"),
+        ("users", "0002_user_is_password_expired_user_last_password_change_and_more"),
     ]
 
     operations = [
@@ -57,7 +56,8 @@ class Migration(migrations.Migration):
                 (
                     "recommendations",
                     models.TextField(
-                        help_text="Recommendations based on the assessment"),
+                        help_text="Recommendations based on the assessment"
+                    ),
                 ),
                 (
                     "responses",
@@ -75,8 +75,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "created_at",
-                    models.DateTimeField(auto_now_add=True,
-                                         verbose_name="Created At"),
+                    models.DateTimeField(auto_now_add=True, verbose_name="Created At"),
                 ),
                 (
                     "patient",
@@ -123,8 +122,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "created_at",
-                    models.DateTimeField(auto_now_add=True,
-                                         verbose_name="Created At"),
+                    models.DateTimeField(auto_now_add=True, verbose_name="Created At"),
                 ),
                 (
                     "assessment",
