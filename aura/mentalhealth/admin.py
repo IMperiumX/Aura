@@ -1,7 +1,6 @@
 from django.contrib import admin
 
-from .models import ChatbotInteraction
-from .models import TherapySession
+from .models import ChatbotInteraction, TherapySession
 
 
 @admin.register(TherapySession)
