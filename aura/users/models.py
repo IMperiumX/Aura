@@ -126,6 +126,8 @@ class AbstractProfile(AuditModel):
 
         abstract = True
 
+    __repr__ = sane_repr("id", "user")
+
     def __str__(self):
         return f"{self.user}"
 
