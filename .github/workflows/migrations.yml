@@ -1,19 +1,17 @@
+---
 name: migrations
-on: pull_request
+'on': pull_request
 # Concurrency control (no changes here)
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
-
 # Defaults (no changes here)
 defaults:
   run:
     shell: bash --noprofile --norc -eo pipefail -ux {0}
-
 env:
   DATABASE_URL: postgres://postgres:password@localhost:5432/mydatabase
   CELERY_BROKER_URL: redis://localhost:6379/0
-
 jobs:
   did-migration-change:
     name: check if any migration changes
@@ -26,21 +24,18 @@ jobs:
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
-
       - name: Match migration files
-        uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd # v3.0.0
+        uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd
         id: changes
         with:
           token: ${{ github.token }}
           filters: .github/file-filters.yml
-
   sql:
     name: Generate and Validate SQL
     runs-on: ubuntu-22.04
     timeout-minutes: 8
     needs: did-migration-change
     if: needs.did-migration-change.outputs.added == 'true'
-
     services:
       postgres:
         # Use a specific, stable Postgres version for consistency
@@ -50,13 +45,12 @@ jobs:
           POSTGRES_PASSWORD: password
           POSTGRES_DB: mydatabase
         ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+          - '5432:5432'
+        options: '--health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main    # Check out main branch to apply all merged migrations
-
+          ref: main
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -77,11 +71,9 @@ jobs:
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
           CELERY_BROKER_URL: ${{ env.CELERY_BROKER_URL }}
-
       - uses: actions/checkout@v4
         with:
           clean: false
-
       - name: Get changed migration files
         id: file
         run: |
