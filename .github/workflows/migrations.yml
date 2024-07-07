@@ -83,7 +83,7 @@ jobs:
         id: sql_generation
         run: |
           echo "added<<EOF" >> "$GITHUB_OUTPUT"
-          git diff --diff-filter=A --name-only origin/master HEAD -- 'aura/**/migrations/*' >> "$GITHUB_OUTPUT"
+          git diff --diff-filter=A --name-only origin/main HEAD -- 'aura/**/migrations/*' >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Generate SQL for migration
