@@ -1,14 +1,13 @@
 from collections.abc import Callable
-from typing import Any
 from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import ForeignKey
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from .fields import AutoOneToOneField
 from .managers import UserManager
 from .mixins import AuditModel
 
@@ -37,14 +36,6 @@ def sane_repr(*attrs: str) -> Callable[[object], str]:
         return "<{} at 0x{:x}: {}>".format(cls, id(self), ", ".join(pairs))
 
     return _repr
-
-
-class FlexibleForeignKey(ForeignKey):
-    """ """
-
-    def __init__(self, *args: Any, **kwargs: Any):
-        kwargs.setdefault("on_delete", models.CASCADE)
-        super().__init__(*args, **kwargs)
 
 
 class User(AbstractUser):
@@ -124,7 +115,7 @@ class AbstractProfile(AuditModel):
         choices=GenderType.choices,
     )
 
-    user = models.OneToOneField(
+    user = AutoOneToOneField(
         "users.User",
         on_delete=models.CASCADE,
         related_name="%(class)s_profile",
