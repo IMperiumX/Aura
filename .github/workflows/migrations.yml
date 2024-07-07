@@ -91,5 +91,6 @@ jobs:
           SENTRY_LOG_LEVEL: ERROR
           PGPASSWORD: password
         with:
+          cmd: python manage.py sqlmigrate
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           migration: ${{ steps.file.outputs.added }}
