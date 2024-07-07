@@ -1,5 +1,6 @@
 from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any
+from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
