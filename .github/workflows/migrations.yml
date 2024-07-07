@@ -72,16 +72,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/local.txt
 
+      # Checkout the current ref
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+
       - name: Apply migrations
         run: |
           export CELERY_BROKER_URL=redis://localhost:6379/0
           export DATABASE_URL=postgres://postgres:password@localhost:5432/mydatabase
           python manage.py ci_migrate
 
-      # Checkout the current ref
-      - uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Get changed migration files
         id: file
