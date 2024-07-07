@@ -50,7 +50,7 @@ class User(AbstractUser):
     name = models.CharField(_("Name of User"), blank=True, max_length=255)
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
-    email = models.EmailField(_("email address"), unique=True, max_length=75)
+    email = models.EmailField(_("email address"), unique=True, max_length=100)
     username = None  # type: ignore[assignment]
 
     is_password_expired = models.BooleanField(
