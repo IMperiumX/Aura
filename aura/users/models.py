@@ -136,7 +136,7 @@ class AbstractProfile(AuditModel):
         abstract = True
 
     def __str__(self):
-        return f"{self.user} - {self.created_at}"
+        return f"{self.user}"
 
 
 class Patient(AbstractProfile):
