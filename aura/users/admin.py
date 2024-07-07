@@ -16,8 +16,7 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
     # https://docs.allauth.org/en/latest/common/admin.html#admin
     admin.autodiscover()
-    admin.site.login = secure_admin_login(
-        admin.site.login)  # type: ignore[method-assign]
+    admin.site.login = secure_admin_login(admin.site.login)  # type: ignore[method-assign]
 
 
 class UserProfileInline(admin.StackedInline):
@@ -68,7 +67,7 @@ class UserAdmin(auth_admin.UserAdmin):
         (
             _("Personal info"),
             {
-                "fields": ("name", ),
+                "fields": ("name",),
             },
         ),
         (
@@ -94,13 +93,15 @@ class UserAdmin(auth_admin.UserAdmin):
     raw_id_fields = ["groups", "user_permissions"]
     search_fields = ("email", "name")
     ordering = ["id"]
-    add_fieldsets = ((
-        None,
-        {
-            "classes": ("wide", ),
-            "fields": ("email", "password1", "password2"),
-        },
-    ), )
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "password1", "password2"),
+            },
+        ),
+    )
     filter_horizontal = (
         "groups",
         "user_permissions",
@@ -118,17 +119,13 @@ class UserAdmin(auth_admin.UserAdmin):
         inline_instances = super().get_inline_instances(request, obj)
 
         if hasattr(obj, "userprofile"):
-            inline_instances.append(
-                UserProfileInline(self.model, self.admin_site))
+            inline_instances.append(UserProfileInline(self.model, self.admin_site))
         if hasattr(obj, "patientprofile"):
-            inline_instances.append(
-                PatientProfileInline(self.model, self.admin_site))
+            inline_instances.append(PatientProfileInline(self.model, self.admin_site))
         elif hasattr(obj, "therapistprofile"):
-            inline_instances.append(
-                TherapistProfileInline(self.model, self.admin_site))
+            inline_instances.append(TherapistProfileInline(self.model, self.admin_site))
         elif hasattr(obj, "coachprofile"):
-            inline_instances.append(
-                CoachProfileInline(self.model, self.admin_site))
+            inline_instances.append(CoachProfileInline(self.model, self.admin_site))
         return inline_instances
 
 
