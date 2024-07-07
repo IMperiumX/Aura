@@ -4,13 +4,9 @@ from django.contrib import admin
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import gettext_lazy as _
 
-from .forms import UserAdminChangeForm
-from .forms import UserAdminCreationForm
-from .models import CoachProfile
-from .models import PatientProfile
-from .models import TherapistProfile
-from .models import User
-from .models import UserProfile
+from .forms import UserAdminChangeForm, UserAdminCreationForm
+from .models import (CoachProfile, PatientProfile, TherapistProfile, User,
+                     UserProfile)
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
