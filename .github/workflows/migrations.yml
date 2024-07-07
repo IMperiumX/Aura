@@ -1,16 +1,13 @@
 name: migrations
-on: pull_request
-
-# Cancel in progress workflows on pull_requests.
-# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+on: [pull_request, push]
+# Concurrency control (no changes here)
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+# Defaults (no changes here)
 defaults:
   run:
-    # the default default is:
-    #      bash --noprofile --norc -eo pipefail {0}
     shell: bash --noprofile --norc -eo pipefail -ux {0}
 
 jobs:
@@ -34,7 +31,7 @@ jobs:
           filters: .github/file-filters.yml
 
   sql:
-    name: Generate SQL
+    name: Generate and Validate SQL
     runs-on: ubuntu-22.04
     timeout-minutes: 8
     needs: did-migration-change
@@ -42,7 +39,8 @@ jobs:
 
     services:
       postgres:
-        image: postgres:latest
+        # Use a specific, stable Postgres version for consistency
+        image: postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
@@ -51,17 +49,20 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-    steps:
-      # Checkout master to run all merged migrations.
-      - name: Checkout Code Repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
+    strategy:
+      # Run the job on multiple Python versions to catch compatibility issues
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
 
-      - name: Set up Python
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main    # Check out main branch to apply all merged migrations
+
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: |
             requirements/base.txt
@@ -72,19 +73,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/local.txt
 
-      - name: Apply migrations
+      - name: Apply Migrations
         run: |
           export CELERY_BROKER_URL=redis://localhost:6379/0
           export DATABASE_URL=postgres://postgres:password@localhost:5432/mydatabase
           python manage.py ci_migrate
 
-
-      - name: Get changed migration files
-        id: file
+      - name: Generate SQL for Migrations (combined steps)
+        id: sql_generation
         run: |
-          echo 'added<<EOF' >> "$GITHUB_OUTPUT"
-          git diff --diff-filter=A --name-only origin/master HEAD -- 'aura/**/migrations/*' 'aura/**/migrations/*' >> "$GITHUB_OUTPUT"
-          echo 'EOF' >> "$GITHUB_OUTPUT"
+          echo "added<<EOF" >> "$GITHUB_OUTPUT"
+          git diff --diff-filter=A --name-only origin/master HEAD -- 'aura/**/migrations/*' >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Generate SQL for migration
         uses: getsentry/action-migrations@4d8ed0388dfc0774302bbfd5204e518f9ac4f066 # main
