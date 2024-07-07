@@ -74,10 +74,6 @@ jobs:
           export DATABASE_URL=postgres://postgres:password@localhost:5432/mydatabase
           python manage.py ci_migrate
 
-      - uses: actions/checkout@v4
-        with:
-          clean: false
-
       - name: Get changed migration files
         id: file
         run: |
