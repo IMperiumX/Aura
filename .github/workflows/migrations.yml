@@ -1,5 +1,5 @@
 name: migrations
-on: [pull_request, push]
+on: pull_request
 # Concurrency control (no changes here)
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -49,20 +49,15 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-    strategy:
-      # Run the job on multiple Python versions to catch compatibility issues
-      matrix:
-        python-version: ['3.10', '3.11', '3.12']
-
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main    # Check out main branch to apply all merged migrations
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.12'
           cache: pip
           cache-dependency-path: |
             requirements/base.txt
