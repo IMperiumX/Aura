@@ -108,8 +108,8 @@ class AbstractProfile(AuditModel):
         FEMALE = "f", _("Female")
 
     avatar_url = models.CharField(_("avatar url"), max_length=120)
-    bio = models.TextField(blank=True, verbose_name="Biography")
-    date_of_birth = models.DateField()
+    bio = models.TextField(blank=True, verbose_name=_("Biography"))
+    date_of_birth = models.DateField(null=True)
     gender = models.CharField(
         max_length=1,
         choices=GenderType.choices,
