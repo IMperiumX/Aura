@@ -6,6 +6,7 @@ from .models import TherapySession
 
 @admin.register(TherapySession)
 class TherapySessionAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "session_type",
@@ -32,6 +33,7 @@ class TherapySessionAdmin(admin.ModelAdmin):
 
 @admin.register(ChatbotInteraction)
 class ChatbotInteractionAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "message",

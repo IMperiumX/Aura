@@ -16,28 +16,33 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
     # https://docs.allauth.org/en/latest/common/admin.html#admin
     admin.autodiscover()
-    admin.site.login = secure_admin_login(admin.site.login)  # type: ignore[method-assign]
+    admin.site.login = secure_admin_login(
+        admin.site.login)  # type: ignore[method-assign]
 
 
 class UserProfileInline(admin.StackedInline):
+    """ """
     model = UserProfile
     can_delete = False
     verbose_name_plural = "User Profiles"
 
 
 class PatientProfileInline(admin.StackedInline):
+    """ """
     model = PatientProfile
     can_delete = False
     verbose_name_plural = "Patients"
 
 
 class CoachProfileInline(admin.StackedInline):
+    """ """
     model = CoachProfile
     can_delete = False
     verbose_name_plural = "Coaches"
 
 
 class TherapistProfileInline(admin.StackedInline):
+    """ """
     model = TherapistProfile
     can_delete = False
     verbose_name_plural = "Therapists"
@@ -45,11 +50,16 @@ class TherapistProfileInline(admin.StackedInline):
 
 @admin.register(User)
 class UserAdmin(auth_admin.UserAdmin):
+    """ """
     form = UserAdminChangeForm
     add_form = UserAdminCreationForm
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        (_("Personal info"), {"fields": ("name",)}),
+        (None, {
+            "fields": ("email", "password")
+        }),
+        (_("Personal info"), {
+            "fields": ("name", )
+        }),
         (
             _("Permissions"),
             {
@@ -62,44 +72,55 @@ class UserAdmin(auth_admin.UserAdmin):
                 ),
             },
         ),
-        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+        (_("Important dates"), {
+            "fields": ("last_login", "date_joined")
+        }),
     )
     list_display = ["email", "name", "is_superuser"]
     raw_id_fields = ["groups", "user_permissions"]
     search_fields = ("email", "name")
     ordering = ["id"]
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": ("email", "password1", "password2"),
-            },
-        ),
-    )
+    add_fieldsets = ((
+        None,
+        {
+            "classes": ("wide", ),
+            "fields": ("email", "password1", "password2"),
+        },
+    ), )
     filter_horizontal = (
         "groups",
         "user_permissions",
     )
 
     def get_inline_instances(self, request, obj=None):
+        """
+
+        :param request:
+        :param obj:  (Default value = None)
+
+        """
         if not obj:
             return []
         inline_instances = super().get_inline_instances(request, obj)
 
         if hasattr(obj, "userprofile"):
-            inline_instances.append(UserProfileInline(self.model, self.admin_site))
+            inline_instances.append(
+                UserProfileInline(self.model, self.admin_site))
         if hasattr(obj, "patientprofile"):
-            inline_instances.append(PatientProfileInline(self.model, self.admin_site))
+            inline_instances.append(
+                PatientProfileInline(self.model, self.admin_site))
         elif hasattr(obj, "therapistprofile"):
-            inline_instances.append(TherapistProfileInline(self.model, self.admin_site))
+            inline_instances.append(
+                TherapistProfileInline(self.model, self.admin_site))
         elif hasattr(obj, "coachprofile"):
-            inline_instances.append(CoachProfileInline(self.model, self.admin_site))
+            inline_instances.append(
+                CoachProfileInline(self.model, self.admin_site))
         return inline_instances
 
 
 @admin.register(PatientProfile)
 class PatientProfileAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",
@@ -121,6 +142,7 @@ class PatientProfileAdmin(admin.ModelAdmin):
 
 @admin.register(TherapistProfile)
 class TherapistProfileAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",
@@ -140,6 +162,7 @@ class TherapistProfileAdmin(admin.ModelAdmin):
 
 @admin.register(CoachProfile)
 class CoachProfileAdmin(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",
@@ -161,6 +184,7 @@ class CoachProfileAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfile(admin.ModelAdmin):
+    """ """
     list_display = (
         "id",
         "avatar_url",

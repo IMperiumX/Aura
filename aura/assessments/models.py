@@ -2,14 +2,10 @@ from django.db import models
 
 
 class HealthAssessment(models.Model):
-    """
-    A model to represent a health risk assessment
-    """
+    """A model to represent a health risk assessment"""
 
     class AssessmentType(models.TextChoices):
-        """
-        Choices for the type of health assessment
-        """
+        """Choices for the type of health assessment"""
 
         GENERAL = "general", "General"
         CARDIOVASCULAR = "cardiovascular", "Cardiovascular"
@@ -17,9 +13,7 @@ class HealthAssessment(models.Model):
         MENTAL_HEALTH = "mental_health", "Mental Health"
 
     class RiskLevel(models.TextChoices):
-        """
-        Choices for the risk level of health assessment
-        """
+        """Choices for the risk level of health assessment"""
 
         LOW = "low", "Low"
         MODERATE = "moderate", "Moderate"
@@ -38,8 +32,7 @@ class HealthAssessment(models.Model):
         help_text="Level of risk identified in the assessment",
     )
     recommendations = models.TextField(
-        help_text="Recommendations based on the assessment",
-    )
+        help_text="Recommendations based on the assessment", )
     responses = models.JSONField(
         verbose_name="Responses",
         help_text="Responses provided during the assessment",
@@ -61,6 +54,7 @@ class HealthAssessment(models.Model):
     )
 
     class Meta:
+        """ """
         ordering = ["created_at"]
         verbose_name = "Health Assessment"
         verbose_name_plural = "Health Assessments"
@@ -70,9 +64,7 @@ class HealthAssessment(models.Model):
 
 
 class HealthRiskPrediction(models.Model):
-    """
-    A model to represent potential health risks and preventive measures
-    """
+    """A model to represent potential health risks and preventive measures"""
 
     health_issue = models.CharField(
         max_length=255,
@@ -102,6 +94,7 @@ class HealthRiskPrediction(models.Model):
     )
 
     class Meta:
+        """ """
         ordering = ["created_at"]
         verbose_name = "Health Risk Prediction"
         verbose_name_plural = "Health Risk Predictions"

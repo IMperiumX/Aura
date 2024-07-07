@@ -13,10 +13,20 @@ from .managers import UserManager
 
 
 def sane_repr(*attrs: str) -> Callable[[object], str]:
+    """
+
+    :param *attrs: str:
+
+    """
     if "id" not in attrs and "pk" not in attrs:
         attrs = ("id", *attrs)
 
     def _repr(self: object) -> str:
+        """
+
+        :param self: object:
+
+        """
         cls = type(self).__name__
 
         pairs = (f"{a}={getattr(self, a, None)!r}" for a in attrs)
@@ -27,16 +37,19 @@ def sane_repr(*attrs: str) -> Callable[[object], str]:
 
 
 class FlexibleForeignKey(ForeignKey):
+    """ """
+
     def __init__(self, *args: Any, **kwargs: Any):
         kwargs.setdefault("on_delete", models.CASCADE)
         super().__init__(*args, **kwargs)
 
 
 class User(AbstractUser):
-    """
-    Default custom user model for aura.
+    """Default custom user model for aura.
     If adding fields that need to be filled at user signup,
     check forms.SignupForm and forms.SocialSignupForms accordingly.
+
+
     """
 
     # First and last name do not cover name patterns around the globe
@@ -51,8 +64,7 @@ class User(AbstractUser):
         default=False,
         help_text=_(
             "If set to true then the user needs to change the "
-            "password on next sign in.",
-        ),
+            "password on next sign in.", ),
     )
     last_password_change = models.DateTimeField(
         _("date of last password change"),
@@ -72,27 +84,30 @@ class User(AbstractUser):
     def get_absolute_url(self) -> str:
         """Get URL for user's detail view.
 
-        Returns:
-            str: URL for user detail.
+
+        :returns: URL for user detail.
+
+        :rtype: str
 
         """
         return reverse("users:detail", kwargs={"pk": self.id})
 
     def set_password(self, raw_password):
+        """
+
+        :param raw_password:
+
+        """
         super().set_password(raw_password)
         self.last_password_change = timezone.now()
         self.is_password_expired = False
 
 
 class AbstractProfile(models.Model):
-    """
-    An abstract model to represent a user's profile.
-    """
+    """An abstract model to represent a user's profile."""
 
     class GenderType(models.TextChoices):
-        """
-        Choices for the type of user gender.
-        """
+        """Choices for the type of user gender."""
 
         MALE = "m", _(" Male")
         FEMALE = "f", _("Female")
@@ -100,9 +115,7 @@ class AbstractProfile(models.Model):
     avatar_url = models.CharField(_("avatar url"), max_length=120)
     bio = models.TextField(blank=True, verbose_name="Biography")
     date_of_birth = models.DateField()
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True, )
     gender = models.CharField(
         max_length=1,
         choices=GenderType.choices,
@@ -114,6 +127,7 @@ class AbstractProfile(models.Model):
     )
 
     class Meta:
+        """ """
         abstract = True
 
     def __str__(self):
@@ -121,18 +135,15 @@ class AbstractProfile(models.Model):
 
 
 class UserProfile(AbstractProfile):
-    """
-    A model to represent a user's profile.
-    """
+    """A model to represent a user's profile."""
 
     class Meta:
+        """ """
         verbose_name_plural = "User Profiles"
 
 
 class PatientProfile(AbstractProfile):
-    """
-    A model to represent a patient
-    """
+    """A model to represent a patient"""
 
     medical_record_number = models.CharField(max_length=20)
     insurance_provider = models.CharField(max_length=100)
@@ -145,23 +156,25 @@ class PatientProfile(AbstractProfile):
     current_medications = models.JSONField(null=True, blank=True)
     health_data = models.JSONField(null=True, blank=True)
     preferences = models.JSONField(null=True, blank=True)
-    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
-    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
+    weight = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Weight (kg)")
+    height = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Height (cm)")
 
     class Meta:
+        """ """
         verbose_name_plural = "Patients"
 
 
 class TherapistProfile(AbstractProfile):
-    """
-    A model to represent a therapist
-    """
+    """A model to represent a therapist"""
 
     license_number = models.CharField(max_length=50)
     specialties = models.CharField(max_length=255)
     years_of_experience = models.PositiveIntegerField(
-        verbose_name="Years of Experience",
-    )
+        verbose_name="Years of Experience", )
     availability = models.JSONField(
         null=True,
         blank=True,
@@ -169,13 +182,12 @@ class TherapistProfile(AbstractProfile):
     )
 
     class Meta:
+        """ """
         verbose_name_plural = "Therapists"
 
 
 class CoachProfile(AbstractProfile):
-    """
-    A model to represent a coach
-    """
+    """A model to represent a coach"""
 
     certification = models.CharField(max_length=100)
     areas_of_expertise = models.CharField(max_length=25)
@@ -191,9 +203,14 @@ class CoachProfile(AbstractProfile):
         verbose_name="Rating",
     )
     specialization = models.CharField(max_length=100)
-    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
-    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
+    weight = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Weight (kg)")
+    height = models.FloatField(null=True,
+                               blank=True,
+                               verbose_name="Height (cm)")
 
     class Meta:
+        """ """
         order_with_respect_to = "rating"
         verbose_name_plural = "Coaches"
