@@ -18,8 +18,7 @@ class Migration(migrations.Migration):
             name="is_password_expired",
             field=models.BooleanField(
                 default=False,
-                help_text=
-                "If set to true then the user needs to change the password on next sign in.",
+                help_text="If set to true then the user needs to change the password on next sign in.",
                 verbose_name="password expired",
             ),
         ),
