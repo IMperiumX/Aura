@@ -6,6 +6,7 @@ from django.db import models
 
 class Migration(migrations.Migration):
     """ """
+
     dependencies = [
         ("mentalhealth", "0001_initial"),
     ]
@@ -20,8 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="chatbotinteraction",
             name="interaction_date",
-            field=models.DateTimeField(default=django.utils.timezone.now,
-                                       null=True),
+            field=models.DateTimeField(default=django.utils.timezone.now, null=True),
         ),
         migrations.AddField(
             model_name="therapysession",
