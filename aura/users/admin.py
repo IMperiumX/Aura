@@ -109,7 +109,7 @@ class UserAdmin(auth_admin.UserAdmin):
         """
 
         :param request: param obj:  (Default value = None)
-        :param obj:  (Default value = None)
+        :param obj: Default value = None)
 
         """
         if not obj:
