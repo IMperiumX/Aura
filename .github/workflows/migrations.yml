@@ -86,12 +86,12 @@ jobs:
           echo 'EOF' >> "$GITHUB_OUTPUT"
 
       - name: Generate SQL for migration
-        uses: getsentry/action-migrations@v1.0.7
+        uses: getsentry/action-migrations@4d8ed0388dfc0774302bbfd5204e518f9ac4f066
         env:
           SENTRY_LOG_LEVEL: ERROR
           PGPASSWORD: password
         with:
-          cmd: python manage.py sqlmigrate
-          app_label: migration
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           migration: ${{ steps.file.outputs.added }}
+          cmd: python manage.py sqlmigrate
+          app_label: users
