@@ -74,12 +74,16 @@ jobs:
           export DATABASE_URL=postgres://postgres:password@localhost:5432/mydatabase
           python manage.py ci_migrate
 
-      - name: Generate SQL for Migrations (combined steps)
-        id: sql_generation
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Get changed migration files
+        id: file
         run: |
-          echo "added<<EOF" >> "$GITHUB_OUTPUT"
+          echo 'added<<EOF' >> "$GITHUB_OUTPUT"
           git diff --diff-filter=A --name-only origin/main HEAD -- 'aura/**/migrations/*' >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo 'EOF' >> "$GITHUB_OUTPUT"
 
       - name: Generate SQL for migration
         uses: getsentry/action-migrations@4d8ed0388dfc0774302bbfd5204e518f9ac4f066 # main

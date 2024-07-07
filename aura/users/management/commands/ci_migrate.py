@@ -55,13 +55,13 @@ class Command(BaseCommand):
             msg = f"Running migrations for {db_conn}"
             self.stdout.write(self.style.SUCCESS(msg))
             dj_call_command(
-                "showmigrations",
+                "migrate",
                 database=db_conn,
                 traceback=True,
                 verbosity=1,
             )
             dj_call_command(
-                "migrate",
+                "showmigrations",
                 database=db_conn,
                 traceback=True,
                 verbosity=1,
