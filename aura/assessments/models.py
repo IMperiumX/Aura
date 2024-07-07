@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class HealthAssessment(models.Model):
@@ -23,38 +24,38 @@ class HealthAssessment(models.Model):
         max_length=15,
         choices=AssessmentType.choices,
         verbose_name="Assessment Type",
-        help_text="Type of health assessment conducted",
+        help_text=_("Type of health assessment conducted"),
     )
     risk_level = models.CharField(
         max_length=8,
         choices=RiskLevel.choices,
         verbose_name="Risk Level",
-        help_text="Level of risk identified in the assessment",
+        help_text=_("Level of risk identified in the assessment"),
     )
     recommendations = models.TextField(
-        help_text="Recommendations based on the assessment", )
+        help_text=_("Recommendations based on the assessment"),
+    )
     responses = models.JSONField(
         verbose_name="Responses",
-        help_text="Responses provided during the assessment",
+        help_text=_("Responses provided during the assessment"),
     )
     result = models.TextField(
         verbose_name="Result",
-        help_text="Result of the health assessment",
+        help_text=_("Result of the health assessment"),
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name="Created At",
     )
 
     patient = models.ForeignKey(
         "users.PatientProfile",
         on_delete=models.CASCADE,
         related_name="health_assessments",
-        verbose_name="User",
     )
 
     class Meta:
         """ """
+
         ordering = ["created_at"]
         verbose_name = "Health Assessment"
         verbose_name_plural = "Health Assessments"
@@ -69,15 +70,14 @@ class HealthRiskPrediction(models.Model):
     health_issue = models.CharField(
         max_length=255,
         verbose_name="Health Issue",
-        help_text="Specific health issue identified",
+        help_text=_("Specific health issue identified"),
     )
     preventive_measures = models.TextField(
         verbose_name="Preventive Measures",
-        help_text="Measures to prevent the identified health issue",
+        help_text=_("Measures to prevent the identified health issue"),
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name="Created At",
     )
 
     assessment = models.ForeignKey(
@@ -95,6 +95,7 @@ class HealthRiskPrediction(models.Model):
 
     class Meta:
         """ """
+
         ordering = ["created_at"]
         verbose_name = "Health Risk Prediction"
         verbose_name_plural = "Health Risk Predictions"

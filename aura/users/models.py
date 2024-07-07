@@ -64,7 +64,8 @@ class User(AbstractUser):
         default=False,
         help_text=_(
             "If set to true then the user needs to change the "
-            "password on next sign in.", ),
+            "password on next sign in.",
+        ),
     )
     last_password_change = models.DateTimeField(
         _("date of last password change"),
@@ -115,7 +116,7 @@ class AbstractProfile(models.Model):
     avatar_url = models.CharField(_("avatar url"), max_length=120)
     bio = models.TextField(blank=True, verbose_name="Biography")
     date_of_birth = models.DateField()
-    created_at = models.DateTimeField(auto_now_add=True, )
+    created_at = models.DateTimeField(auto_now_add=True)
     gender = models.CharField(
         max_length=1,
         choices=GenderType.choices,
@@ -128,6 +129,7 @@ class AbstractProfile(models.Model):
 
     class Meta:
         """ """
+
         abstract = True
 
     def __str__(self):
@@ -139,6 +141,7 @@ class UserProfile(AbstractProfile):
 
     class Meta:
         """ """
+
         verbose_name_plural = "User Profiles"
 
 
@@ -156,15 +159,12 @@ class PatientProfile(AbstractProfile):
     current_medications = models.JSONField(null=True, blank=True)
     health_data = models.JSONField(null=True, blank=True)
     preferences = models.JSONField(null=True, blank=True)
-    weight = models.FloatField(null=True,
-                               blank=True,
-                               verbose_name="Weight (kg)")
-    height = models.FloatField(null=True,
-                               blank=True,
-                               verbose_name="Height (cm)")
+    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
+    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
 
     class Meta:
         """ """
+
         verbose_name_plural = "Patients"
 
 
@@ -174,7 +174,8 @@ class TherapistProfile(AbstractProfile):
     license_number = models.CharField(max_length=50)
     specialties = models.CharField(max_length=255)
     years_of_experience = models.PositiveIntegerField(
-        verbose_name="Years of Experience", )
+        verbose_name="Years of Experience",
+    )
     availability = models.JSONField(
         null=True,
         blank=True,
@@ -183,6 +184,7 @@ class TherapistProfile(AbstractProfile):
 
     class Meta:
         """ """
+
         verbose_name_plural = "Therapists"
 
 
@@ -203,14 +205,11 @@ class CoachProfile(AbstractProfile):
         verbose_name="Rating",
     )
     specialization = models.CharField(max_length=100)
-    weight = models.FloatField(null=True,
-                               blank=True,
-                               verbose_name="Weight (kg)")
-    height = models.FloatField(null=True,
-                               blank=True,
-                               verbose_name="Height (cm)")
+    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
+    height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
 
     class Meta:
         """ """
+
         order_with_respect_to = "rating"
         verbose_name_plural = "Coaches"
