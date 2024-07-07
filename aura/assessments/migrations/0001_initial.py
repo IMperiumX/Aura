@@ -116,8 +116,7 @@ class Migration(migrations.Migration):
                 (
                     "preventive_measures",
                     models.TextField(
-                        help_text=
-                        "Measures to prevent the identified health issue",
+                        help_text="Measures to prevent the identified health issue",
                         verbose_name="Preventive Measures",
                     ),
                 ),
