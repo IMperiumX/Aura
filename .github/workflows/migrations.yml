@@ -90,6 +90,8 @@ jobs:
           CELERY_BROKER_URL: ${{ env.CELERY_BROKER_URL }}
         with:
           githubToken: ${{ github.token }}
+          # FIXME: Read only the last detected migration file!
           migration: ${{ steps.file.outputs.added }}
           cmd: python manage.py sqlmigrate
+          # XXX: what if migrations are in a different apps?
           app_label: users
