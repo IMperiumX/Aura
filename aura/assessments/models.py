@@ -46,7 +46,7 @@ class HealthAssessment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     patient = models.ForeignKey(
-        "users.PatientProfile",
+        "users.Patient",
         on_delete=models.CASCADE,
         related_name="health_assessments",
     )
@@ -83,7 +83,7 @@ class HealthRiskPrediction(models.Model):
         verbose_name="Health Assessment",
     )
     patient = models.ForeignKey(
-        "users.PatientProfile",
+        "users.Patient",
         on_delete=models.CASCADE,
         related_name="health_risk_predictions",
         verbose_name="User",

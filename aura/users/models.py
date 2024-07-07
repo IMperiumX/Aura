@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .managers import UserManager
+from .mixins import AuditModel
 
 
 def sane_repr(*attrs: str) -> Callable[[object], str]:
@@ -106,7 +107,7 @@ class User(AbstractUser):
         self.is_password_expired = False
 
 
-class AbstractProfile(models.Model):
+class AbstractProfile(AuditModel):
     """An abstract model to represent a user's profile."""
 
     class GenderType(models.TextChoices):
@@ -118,7 +119,6 @@ class AbstractProfile(models.Model):
     avatar_url = models.CharField(_("avatar url"), max_length=120)
     bio = models.TextField(blank=True, verbose_name="Biography")
     date_of_birth = models.DateField()
-    created_at = models.DateTimeField(auto_now_add=True)
     gender = models.CharField(
         max_length=1,
         choices=GenderType.choices,
@@ -127,6 +127,7 @@ class AbstractProfile(models.Model):
     user = models.OneToOneField(
         "users.User",
         on_delete=models.CASCADE,
+        related_name="%(class)s_profile",
     )
 
     class Meta:
@@ -138,7 +139,7 @@ class AbstractProfile(models.Model):
         return f"{self.user} - {self.created_at}"
 
 
-class UserProfile(AbstractProfile):
+class Profile(AbstractProfile):
     """A model to represent a user's profile."""
 
     class Meta:
@@ -147,7 +148,7 @@ class UserProfile(AbstractProfile):
         verbose_name_plural = "User Profiles"
 
 
-class PatientProfile(AbstractProfile):
+class Patient(AbstractProfile):
     """A model to represent a patient"""
 
     medical_record_number = models.CharField(max_length=20)
@@ -170,7 +171,7 @@ class PatientProfile(AbstractProfile):
         verbose_name_plural = "Patients"
 
 
-class TherapistProfile(AbstractProfile):
+class Therapist(AbstractProfile):
     """A model to represent a therapist"""
 
     license_number = models.CharField(max_length=50)
@@ -190,7 +191,7 @@ class TherapistProfile(AbstractProfile):
         verbose_name_plural = "Therapists"
 
 
-class CoachProfile(AbstractProfile):
+class Coach(AbstractProfile):
     """A model to represent a coach"""
 
     certification = models.CharField(max_length=100)

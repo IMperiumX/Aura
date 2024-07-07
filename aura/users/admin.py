@@ -6,11 +6,11 @@ from django.utils.translation import gettext_lazy as _
 
 from .forms import UserAdminChangeForm
 from .forms import UserAdminCreationForm
-from .models import CoachProfile
-from .models import PatientProfile
-from .models import TherapistProfile
+from .models import Coach
+from .models import Patient
+from .models import Profile
+from .models import Therapist
 from .models import User
-from .models import UserProfile
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
@@ -19,34 +19,34 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     admin.site.login = secure_admin_login(admin.site.login)  # type: ignore[method-assign]
 
 
-class UserProfileInline(admin.StackedInline):
+class ProfileInline(admin.StackedInline):
     """ """
 
-    model = UserProfile
+    model = Profile
     can_delete = False
     verbose_name_plural = "User Profiles"
 
 
-class PatientProfileInline(admin.StackedInline):
+class PatientInline(admin.StackedInline):
     """ """
 
-    model = PatientProfile
+    model = Patient
     can_delete = False
     verbose_name_plural = "Patients"
 
 
-class CoachProfileInline(admin.StackedInline):
+class CoachInline(admin.StackedInline):
     """ """
 
-    model = CoachProfile
+    model = Coach
     can_delete = False
     verbose_name_plural = "Coaches"
 
 
-class TherapistProfileInline(admin.StackedInline):
+class TherapistInline(admin.StackedInline):
     """ """
 
-    model = TherapistProfile
+    model = Therapist
     can_delete = False
     verbose_name_plural = "Therapists"
 
@@ -118,50 +118,89 @@ class UserAdmin(auth_admin.UserAdmin):
             return []
         inline_instances = super().get_inline_instances(request, obj)
 
-        if hasattr(obj, "userprofile"):
-            inline_instances.append(UserProfileInline(self.model, self.admin_site))
-        if hasattr(obj, "patientprofile"):
-            inline_instances.append(PatientProfileInline(self.model, self.admin_site))
-        elif hasattr(obj, "therapistprofile"):
-            inline_instances.append(TherapistProfileInline(self.model, self.admin_site))
-        elif hasattr(obj, "coachprofile"):
-            inline_instances.append(CoachProfileInline(self.model, self.admin_site))
+        if hasattr(obj, "user_profile"):
+            inline_instances.append(ProfileInline(self.model, self.admin_site))
+        if hasattr(obj, "patient_profile"):
+            inline_instances.append(PatientInline(self.model, self.admin_site))
+        elif hasattr(obj, "therapist_profile"):
+            inline_instances.append(TherapistInline(self.model, self.admin_site))
+        elif hasattr(obj, "coach_profile"):
+            inline_instances.append(CoachInline(self.model, self.admin_site))
         return inline_instances
 
 
-@admin.register(PatientProfile)
-class PatientProfileAdmin(admin.ModelAdmin):
-    """ """
-
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
         "avatar_url",
         "bio",
         "date_of_birth",
-        "created_at",
-        "weight",
-        "height",
         "gender",
-        "health_data",
-        "preferences",
         "user",
+    )
+    list_filter = (
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
+        "date_of_birth",
+        "user",
+    )
+
+
+@admin.register(Patient)
+class PatientAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
+        "avatar_url",
+        "bio",
+        "date_of_birth",
+        "gender",
+        "user",
+        "medical_record_number",
+        "insurance_provider",
+        "insurance_policy_number",
+        "emergency_contact_name",
+        "emergency_contact_phone",
+        "allergies",
+        "medical_conditions",
         "medical_history",
         "current_medications",
+        "health_data",
+        "preferences",
+        "weight",
+        "height",
     )
-    list_filter = ("date_of_birth", "created_at", "user")
-    date_hierarchy = "created_at"
+    list_filter = (
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
+        "date_of_birth",
+        "user",
+    )
 
 
-@admin.register(TherapistProfile)
-class TherapistProfileAdmin(admin.ModelAdmin):
-    """ """
-
+@admin.register(Therapist)
+class TherapistAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
         "avatar_url",
         "bio",
         "date_of_birth",
-        "created_at",
         "gender",
         "user",
         "license_number",
@@ -169,45 +208,44 @@ class TherapistProfileAdmin(admin.ModelAdmin):
         "years_of_experience",
         "availability",
     )
-    list_filter = ("date_of_birth", "created_at", "user")
-    date_hierarchy = "created_at"
+    list_filter = (
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
+        "date_of_birth",
+        "user",
+    )
 
 
-@admin.register(CoachProfile)
-class CoachProfileAdmin(admin.ModelAdmin):
-    """ """
-
+@admin.register(Coach)
+class CoachAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
         "avatar_url",
         "bio",
         "date_of_birth",
-        "created_at",
-        "weight",
-        "height",
         "gender",
         "user",
         "certification",
         "areas_of_expertise",
         "coaching_philosophy",
         "availability",
+        "rating",
+        "specialization",
+        "weight",
+        "height",
+        "_order",
     )
-    list_filter = ("date_of_birth", "created_at", "user")
-    date_hierarchy = "created_at"
-
-
-@admin.register(UserProfile)
-class UserProfile(admin.ModelAdmin):
-    """ """
-
-    list_display = (
-        "id",
-        "avatar_url",
-        "bio",
+    list_filter = (
+        "created",
+        "modified",
+        "created_by",
+        "updated_by",
         "date_of_birth",
-        "created_at",
+        "user",
     )
-
-    list_filter = ("date_of_birth", "created_at")
-
-    date_hierarchy = "created_at"
