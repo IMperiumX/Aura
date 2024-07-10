@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from decimal import Decimal
 from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
@@ -191,6 +192,7 @@ class Coach(AbstractProfile):
         max_digits=3,
         decimal_places=2,
         verbose_name="Rating",
+        default=Decimal(0.0),
     )
     specialization = models.CharField(max_length=100)
     weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
