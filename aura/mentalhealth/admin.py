@@ -17,7 +17,7 @@ class TherapySessionAdmin(admin.ModelAdmin):
         "scheduled_at",
         "started_at",
         "ended_at",
-        "created_at",
+        "created",
         "therapist",
         "patient",
     )
@@ -25,11 +25,11 @@ class TherapySessionAdmin(admin.ModelAdmin):
         "scheduled_at",
         "started_at",
         "ended_at",
-        "created_at",
+        "created",
         "therapist",
         "patient",
     )
-    date_hierarchy = "created_at"
+    date_hierarchy = "created"
 
 
 @admin.register(ChatbotInteraction)
@@ -42,8 +42,8 @@ class ChatbotInteractionAdmin(admin.ModelAdmin):
         "response",
         "conversation_log",
         "interaction_date",
-        "created_at",
+        "created",
         "user",
     )
-    list_filter = ("interaction_date", "created_at", "user")
-    date_hierarchy = "created_at"
+    list_filter = ("interaction_date", "created", "user")
+    date_hierarchy = "created"
