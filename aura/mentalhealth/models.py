@@ -1,8 +1,10 @@
 from django.db import models
 from django.utils import timezone
+from model_utils.models import TimeStampedModel
+from recurrence.fields import RecurrenceField
 
 
-class TherapySession(models.Model):
+class TherapySession(TimeStampedModel):
     """
     A model to represent a therapy session.
     """
@@ -54,11 +56,14 @@ class TherapySession(models.Model):
         null=True,
         verbose_name="Ended At",
     )
-    created_at = models.DateTimeField(
+    created = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Created At",
     )
 
+    recurrences = RecurrenceField()
+
+    # relations
     therapist = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
@@ -78,10 +83,10 @@ class TherapySession(models.Model):
         verbose_name_plural = "Therapy Sessions"
 
     def __str__(self):
-        return f"{self.therapist} - {self.patient} - {self.scheduled_at}"
+        return f"{self.therapist} - {self.patient} - {self.recurrences}"
 
 
-class ChatbotInteraction(models.Model):
+class ChatbotInteraction(TimeStampedModel):
     """
     A model to represent a chatbot interaction.
     """
@@ -94,7 +99,7 @@ class ChatbotInteraction(models.Model):
     )
     conversation_log = models.TextField()
     interaction_date = models.DateTimeField(null=True, default=timezone.now)
-    created_at = models.DateTimeField(
+    created = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Created At",
     )
@@ -107,9 +112,9 @@ class ChatbotInteraction(models.Model):
     )
 
     class Meta:
-        ordering = ["created_at"]
+        ordering = ["created"]
         verbose_name = "Chatbot Interaction"
         verbose_name_plural = "Chatbot Interactions"
 
     def __str__(self):
-        return f"{self.user} - {self.created_at}"
+        return f"{self.user}"
