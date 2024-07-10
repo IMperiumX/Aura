@@ -35,7 +35,6 @@ class HealthAssessmentViewSet(viewsets.ModelViewSet):
         "created",
         "modified",
     ]
-    ordering = ["-created_at"]
 
     def perform_create(self, serializer):
         serializer.save(patient=self.request.user.patient_profile)
@@ -62,10 +61,11 @@ class HealthRiskPredictionViewSet(viewsets.ModelViewSet):
     ordering_fields = [
         "confidence_level",
     ]
-    ordering = ["-created_at"]
 
     def perform_create(self, serializer):
         serializer.save(patient=self.request.user.patient_profile)
 
     def get_queryset(self):
-        return self.queryset.filter(patient=self.request.user.patient_profile)
+        return self.queryset.filter(
+            patient=self.request.user.patient_profile,
+        ).select_related("assessment")
