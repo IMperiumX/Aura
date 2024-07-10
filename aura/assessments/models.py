@@ -1,9 +1,24 @@
+from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from model_utils.models import StatusModel
+from model_utils.models import TimeStampedModel
 
 
-class HealthAssessment(models.Model):
+class HealthAssessment(StatusModel, TimeStampedModel):
     """A model to represent a health risk assessment"""
+
+    DRAFT = "draft"
+    COMPLETED = "completed"
+    IN_PROGRESS = "in_progress"
+    SUBMITTED = "submitted"
+    STATUS = (
+        (DRAFT, _("Draft")),
+        (COMPLETED, _("Completed")),
+        (IN_PROGRESS, _("In Progress")),
+        (SUBMITTED, _("Submitted")),
+    )
 
     class AssessmentType(models.TextChoices):
         """Choices for the type of health assessment"""
@@ -43,8 +58,6 @@ class HealthAssessment(models.Model):
         verbose_name="Result",
         help_text=_("Result of the health assessment"),
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-
     patient = models.ForeignKey(
         "users.Patient",
         on_delete=models.CASCADE,
@@ -52,17 +65,19 @@ class HealthAssessment(models.Model):
     )
 
     class Meta:
-        """ """
-
-        ordering = ["created_at"]
         verbose_name = "Health Assessment"
         verbose_name_plural = "Health Assessments"
 
     def __str__(self):
-        return f"{self.patient} - {self.assessment_type} - {self.created_at}"
+        return f"{self.patient} - {self.assessment_type}"
+
+    def get_recommendations(self):
+        from .services import RecommendationEngine
+
+        return RecommendationEngine.get_mental_health_recommendations(self)
 
 
-class HealthRiskPrediction(models.Model):
+class HealthRiskPrediction(TimeStampedModel):
     """A model to represent potential health risks and preventive measures"""
 
     health_issue = models.CharField(
@@ -74,7 +89,16 @@ class HealthRiskPrediction(models.Model):
         verbose_name="Preventive Measures",
         help_text=_("Measures to prevent the identified health issue"),
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    confidence_level = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text=_("Confidence level of the prediction"),
+    )
+    source = models.CharField(
+        max_length=100,
+        help_text=_("Source or method of the prediction"),
+    )
 
     assessment = models.ForeignKey(
         "assessments.HealthAssessment",
@@ -90,11 +114,8 @@ class HealthRiskPrediction(models.Model):
     )
 
     class Meta:
-        """ """
-
-        ordering = ["created_at"]
         verbose_name = "Health Risk Prediction"
         verbose_name_plural = "Health Risk Predictions"
 
     def __str__(self):
-        return f"{self.patient} - {self.health_issue} - {self.created_at}"
+        return f"{self.patient} - {self.health_issue}"

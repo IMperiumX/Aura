@@ -52,7 +52,7 @@ jobs:
         with:
           ref: main
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: pip
@@ -74,12 +74,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           clean: false
+
       - name: Get changed migration files
         id: file
         run: |
           echo 'added<<EOF' >> "$GITHUB_OUTPUT"
           git diff --diff-filter=A --name-only origin/main HEAD -- 'aura/**/migrations/*' >> "$GITHUB_OUTPUT"
           echo 'EOF' >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements/base.txt
+            requirements/local.txt
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/local.txt
 
       - name: Generate SQL for migration
         uses: getsentry/action-migrations@4d8ed0388dfc0774302bbfd5204e518f9ac4f066

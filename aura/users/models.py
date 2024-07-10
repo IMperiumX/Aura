@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from decimal import Decimal
 from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
@@ -126,6 +127,8 @@ class AbstractProfile(AuditModel):
 
         abstract = True
 
+    __repr__ = sane_repr("id", "user")
+
     def __str__(self):
         return f"{self.user}"
 
@@ -133,11 +136,11 @@ class AbstractProfile(AuditModel):
 class Patient(AbstractProfile):
     """A model to represent a patient"""
 
-    medical_record_number = models.CharField(max_length=20)
+    medical_record_number = models.CharField(max_length=50)
     insurance_provider = models.CharField(max_length=100)
-    insurance_policy_number = models.CharField(max_length=20)
+    insurance_policy_number = models.CharField(max_length=50)
     emergency_contact_name = models.CharField(max_length=100)
-    emergency_contact_phone = models.CharField(max_length=20)
+    emergency_contact_phone = models.CharField(max_length=30)
     allergies = models.TextField()
     medical_conditions = models.TextField()
     medical_history = models.JSONField(null=True, blank=True)
@@ -159,6 +162,7 @@ class Therapist(AbstractProfile):
     license_number = models.CharField(max_length=50)
     specialties = models.CharField(max_length=255)
     years_of_experience = models.PositiveIntegerField(
+        default=0,
         verbose_name="Years of Experience",
     )
     availability = models.JSONField(
@@ -188,6 +192,7 @@ class Coach(AbstractProfile):
         max_digits=3,
         decimal_places=2,
         verbose_name="Rating",
+        default=Decimal(0.0),
     )
     specialization = models.CharField(max_length=100)
     weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
