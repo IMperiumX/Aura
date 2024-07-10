@@ -71,6 +71,11 @@ class HealthAssessment(StatusModel, TimeStampedModel):
     def __str__(self):
         return f"{self.patient} - {self.assessment_type}"
 
+    def get_recommendations(self):
+        from .services import RecommendationEngine
+
+        return RecommendationEngine.get_mental_health_recommendations(self)
+
 
 class HealthRiskPrediction(TimeStampedModel):
     """A model to represent potential health risks and preventive measures"""
