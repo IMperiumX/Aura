@@ -9,11 +9,15 @@ from model_utils.models import TimeStampedModel
 class HealthAssessment(StatusModel, TimeStampedModel):
     """A model to represent a health risk assessment"""
 
+    DRAFT = "draft"
+    COMPLETED = "completed"
+    IN_PROGRESS = "in_progress"
+    SUBMITTED = "submitted"
     STATUS = (
-        ("draft", _("Draft")),
-        ("completed", _("Completed")),
-        ("in_progress", _("In Progress")),
-        ("submitted", _("Submitted")),
+        (DRAFT, _("Draft")),
+        (COMPLETED, _("Completed")),
+        (IN_PROGRESS, _("In Progress")),
+        (SUBMITTED, _("Submitted")),
     )
 
     class AssessmentType(models.TextChoices):
