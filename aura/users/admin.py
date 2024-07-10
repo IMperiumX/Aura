@@ -22,24 +22,33 @@ class PatientInline(admin.StackedInline):
     """ """
 
     model = Patient
-    can_delete = False
+    fk_name = "user"
     verbose_name_plural = "Patients"
+    can_delete = False
+    show_change_link = True
+    classes = ["collapse"]
 
 
 class CoachInline(admin.StackedInline):
     """ """
 
     model = Coach
-    can_delete = False
+    fk_name = "user"
     verbose_name_plural = "Coaches"
+    can_delete = False
+    show_change_link = True
+    classes = ["collapse"]
 
 
 class TherapistInline(admin.StackedInline):
     """ """
 
     model = Therapist
-    can_delete = False
+    fk_name = "user"
     verbose_name_plural = "Therapists"
+    can_delete = False
+    show_change_link = True
+    classes = ["collapse"]
 
 
 @admin.register(User)
@@ -109,12 +118,12 @@ class UserAdmin(auth_admin.UserAdmin):
             return []
         inline_instances = super().get_inline_instances(request, obj)
 
+        if hasattr(obj, "coach_profile"):
+            inline_instances.append(CoachInline(self.model, self.admin_site))
         if hasattr(obj, "patient_profile"):
             inline_instances.append(PatientInline(self.model, self.admin_site))
-        elif hasattr(obj, "therapist_profile"):
+        if hasattr(obj, "therapist_profile"):
             inline_instances.append(TherapistInline(self.model, self.admin_site))
-        elif hasattr(obj, "coach_profile"):
-            inline_instances.append(CoachInline(self.model, self.admin_site))
         return inline_instances
 
 
