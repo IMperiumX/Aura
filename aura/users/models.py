@@ -2,11 +2,14 @@ from collections.abc import Callable
 from decimal import Decimal
 from typing import ClassVar
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from pgvector.django import VectorField
+from sentence_transformers import SentenceTransformer
 
 from .fields import AutoOneToOneField
 from .managers import UserManager
@@ -115,6 +118,10 @@ class AbstractProfile(AuditModel):
         max_length=1,
         choices=GenderType.choices,
     )
+    embedding = VectorField(
+        dimensions=settings.EMBEDDING_MODEL_DIMENSIONS,
+        null=True,
+    )
 
     user = AutoOneToOneField(
         "users.User",
@@ -176,6 +183,15 @@ class Therapist(AbstractProfile):
 
         verbose_name_plural = "Therapists"
 
+    def save(self, *args, **kwargs):
+        if not self.embedding:
+            model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+            profile_text = (
+                f"{self.specialties} {self.years_of_experience} {self.availability}"
+            )
+            self.embedding = model.encode(profile_text).tolist()
+        super().save(*args, **kwargs)
+
 
 class Coach(AbstractProfile):
     """A model to represent a coach"""
@@ -203,3 +219,25 @@ class Coach(AbstractProfile):
 
         order_with_respect_to = "rating"
         verbose_name_plural = "Coaches"
+
+
+# physician
+class Physician(AbstractProfile):
+    """A model to represent a physician"""
+
+    license_number = models.CharField(max_length=50)
+    specialties = models.CharField(max_length=255)
+    years_of_experience = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Years of Experience",
+    )
+    availability = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name=_("Availability Schedule"),
+    )
+
+    class Meta:
+        """ """
+
+        verbose_name_plural = "Physicians"

@@ -1,9 +1,14 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import StatusModel
 from model_utils.models import TimeStampedModel
+from pgvector.django import VectorField
+from sentence_transformers import SentenceTransformer
+
+from aura.assessments.services import RecommendationEngine
 
 
 class HealthAssessment(StatusModel, TimeStampedModel):
@@ -27,6 +32,13 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         CARDIOVASCULAR = "cardiovascular", "Cardiovascular"
         DIABETES = "diabetes", "Diabetes"
         MENTAL_HEALTH = "mental_health", "Mental Health"
+        ANXIETY = "anxiety", "Anxiety"
+        DEPRESSION = "depression", "Depression"
+        BIPOLAR_DISORDER = "bipolar_disorder", "Bipolar Disorder"
+        OCD = "ocd", "OCD"
+        PTSD = "ptsd", "PTSD"
+        POST_PARTUM_DEPRESSION = "post_partum_depression", "Post-partum Depression"
+        PANIC_DISORDER = "panic_disorder", "Panic Disorder"
 
     class RiskLevel(models.TextChoices):
         """Choices for the risk level of health assessment"""
@@ -36,7 +48,7 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         HIGH = "high", "High"
 
     assessment_type = models.CharField(
-        max_length=15,
+        max_length=50,
         choices=AssessmentType.choices,
         verbose_name="Assessment Type",
         help_text=_("Type of health assessment conducted"),
@@ -63,6 +75,10 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="health_assessments",
     )
+    embedding = VectorField(
+        dimensions=settings.EMBEDDING_MODEL_DIMENSIONS,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Health Assessment"
@@ -72,9 +88,13 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         return f"{self.patient} - {self.assessment_type}"
 
     def get_recommendations(self):
-        from .services import RecommendationEngine
-
         return RecommendationEngine.get_mental_health_recommendations(self)
+
+    def save(self, *args, **kwargs):
+        if not self.embedding:
+            model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+            self.embedding = model.encode(self.result).tolist()
+        super().save(*args, **kwargs)
 
 
 class HealthRiskPrediction(TimeStampedModel):
