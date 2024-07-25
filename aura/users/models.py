@@ -7,6 +7,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
 from .managers import UserManager
@@ -160,11 +161,11 @@ class Therapist(AbstractProfile):
     """A model to represent a therapist"""
 
     license_number = models.CharField(max_length=50)
-    specialties = models.CharField(max_length=255)
     years_of_experience = models.PositiveIntegerField(
         default=0,
         verbose_name="Years of Experience",
     )
+    specialties = TaggableManager()
     availability = models.JSONField(
         null=True,
         blank=True,
