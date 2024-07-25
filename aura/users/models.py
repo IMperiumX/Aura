@@ -3,10 +3,14 @@ from decimal import Decimal
 from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import Group
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import AFTER_CREATE
+from django_lifecycle import LifecycleModelMixin
+from django_lifecycle import hook
 from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
@@ -100,7 +104,7 @@ class User(AbstractUser):
         self.is_password_expired = False
 
 
-class AbstractProfile(AuditModel):
+class AbstractProfile(LifecycleModelMixin, AuditModel):
     """An abstract model to represent a user's profile."""
 
     class GenderType(models.TextChoices):
@@ -132,6 +136,18 @@ class AbstractProfile(AuditModel):
 
     def __str__(self):
         return f"{self.user}"
+
+    @hook(AFTER_CREATE)
+    def add_to_group(self):
+        if hasattr(self, "patient_profile"):
+            group, _ = Group.objects.get_or_create(name="Patients")
+            self.groups.add(group)
+        elif hasattr(self, "therapist_profile"):
+            group, _ = Group.objects.get_or_create(name="Therapists")
+            self.groups.add(group)
+        elif hasattr(self, "coach_profile"):
+            group, _ = Group.objects.get_or_create(name="Coaches")
+            self.groups.add(group)
 
 
 class Patient(AbstractProfile):
