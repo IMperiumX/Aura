@@ -360,9 +360,9 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
-
 # Personalized assessments to match a Therapist
 EMBEDDING_MODEL_DIMENSIONS = env.int("EMBEDDING_MODEL_DIMENSIONS")
+
 TAGGIT_CASE_INSENSITIVE = True
 
 

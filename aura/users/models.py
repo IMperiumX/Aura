@@ -18,6 +18,7 @@ from model_utils.models import TimeStampedModel
 from pgvector.django import VectorField
 from rest_framework.authtoken.models import Token as DefaultTokenModel
 from sentence_transformers import SentenceTransformer
+from rest_framework.authtoken.models import Token as DefaultTokenModel
 from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
@@ -286,6 +287,7 @@ class Physician(AbstractProfile):
         """ """
 
         verbose_name_plural = "Physicians"
+
 
 
 class Review(TimeStampedModel):
