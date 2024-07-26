@@ -41,6 +41,16 @@ urlpatterns += [
         name="api-docs",
     ),
 ]
+if settings.USE_JWT:
+    from rest_framework_simplejwt.views import TokenVerifyView
+
+    from aura.core.jwt_auth import get_refresh_view
+
+    urlpatterns += [
+        path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+        path("token/refresh/", get_refresh_view().as_view(), name="token_refresh"),
+    ]
+
 
 if settings.DEBUG:
     # This allows the error pages to be debugged during development, just visit
