@@ -170,6 +170,7 @@ class TherapistAdmin(admin.ModelAdmin):
         "id",
         "created",
         "modified",
+        "specialty_list",
         "created_by",
         "updated_by",
         "avatar_url",
@@ -178,7 +179,6 @@ class TherapistAdmin(admin.ModelAdmin):
         "gender",
         "user",
         "license_number",
-        "specialties",
         "years_of_experience",
         "availability",
     )
@@ -190,6 +190,12 @@ class TherapistAdmin(admin.ModelAdmin):
         "date_of_birth",
         "user",
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("specialties")
+
+    def specialty_list(self, obj):
+        return ", ".join(o.name for o in obj.specialties.all())
 
 
 @admin.register(Coach)

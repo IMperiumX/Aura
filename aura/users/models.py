@@ -4,12 +4,21 @@ from typing import ClassVar
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import Group
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import AFTER_CREATE
+from django_lifecycle import LifecycleModelMixin
+from django_lifecycle import hook
+from model_utils.models import TimeStampedModel
 from pgvector.django import VectorField
+from rest_framework.authtoken.models import Token as DefaultTokenModel
 from sentence_transformers import SentenceTransformer
+from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
 from .managers import UserManager
@@ -40,6 +49,30 @@ def sane_repr(*attrs: str) -> Callable[[object], str]:
         return "<{} at 0x{:x}: {}>".format(cls, id(self), ", ".join(pairs))
 
     return _repr
+
+
+def get_token_model():
+    token_model = import_string(settings.TOKEN_MODEL)
+    session_login = settings.SESSION_LOGIN
+    use_jwt = settings.USE_JWT
+
+    if not any((session_login, token_model, use_jwt)):
+        raise ImproperlyConfigured(
+            "No authentication is configured for rest auth. You must enable one or "
+            "more of `TOKEN_MODEL`, `USE_JWT` or `SESSION_LOGIN`",
+        )
+    if (
+        token_model == DefaultTokenModel
+        and "rest_framework.authtoken" not in settings.INSTALLED_APPS
+    ):
+        raise ImproperlyConfigured(
+            "You must include `rest_framework.authtoken` in INSTALLED_APPS "
+            "or set TOKEN_MODEL to None",
+        )
+    return token_model
+
+
+TokenModel = get_token_model()
 
 
 class User(AbstractUser):
@@ -102,7 +135,7 @@ class User(AbstractUser):
         self.is_password_expired = False
 
 
-class AbstractProfile(AuditModel):
+class AbstractProfile(LifecycleModelMixin, AuditModel):
     """An abstract model to represent a user's profile."""
 
     class GenderType(models.TextChoices):
@@ -139,6 +172,18 @@ class AbstractProfile(AuditModel):
     def __str__(self):
         return f"{self.user}"
 
+    @hook(AFTER_CREATE)
+    def add_to_group(self):
+        if hasattr(self, "patient_profile"):
+            group, _ = Group.objects.get_or_create(name="Patients")
+            self.groups.add(group)
+        elif hasattr(self, "therapist_profile"):
+            group, _ = Group.objects.get_or_create(name="Therapists")
+            self.groups.add(group)
+        elif hasattr(self, "coach_profile"):
+            group, _ = Group.objects.get_or_create(name="Coaches")
+            self.groups.add(group)
+
 
 class Patient(AbstractProfile):
     """A model to represent a patient"""
@@ -167,11 +212,11 @@ class Therapist(AbstractProfile):
     """A model to represent a therapist"""
 
     license_number = models.CharField(max_length=50)
-    specialties = models.CharField(max_length=255)
     years_of_experience = models.PositiveIntegerField(
         default=0,
         verbose_name="Years of Experience",
     )
+    specialties = TaggableManager()
     availability = models.JSONField(
         null=True,
         blank=True,
@@ -241,3 +286,44 @@ class Physician(AbstractProfile):
         """ """
 
         verbose_name_plural = "Physicians"
+
+
+class Review(TimeStampedModel):
+    """A model to represent a review."""
+
+    class ReviewSource(models.TextChoices):
+        """Choices for the source of the review."""
+
+        GOOGLE_PLAY_STORE = "gps", _("Google Play Store")
+        APPLE_APP_STORE = "aas", _("Apple App Store")
+        WEB = "web", _("Web")
+        EMAIL = "email", _("Email")
+
+    class ReviewTopic(models.TextChoices):
+        """Choices for the topic of the review."""
+
+        THERAPY = "therapy", _("Therapy")
+        PSYCHIATRY = "psychiatry", _("Psychiatry")
+        COACHING = "coaching", _("Coaching")
+        MENTAL_HEALTH = "mental_health", _("Mental Health")
+        WELLNESS = "wellness", _("Wellness")
+
+    source = models.CharField(
+        max_length=100,
+        choices=ReviewSource.choices,
+    )
+    topic = models.CharField(
+        max_length=100,
+        choices=ReviewTopic.choices,
+    )
+    rating = models.PositiveIntegerField()
+    review = models.TextField()
+
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+
+    def __str__(self):
+        return f"{self.user} - {self.rating}"

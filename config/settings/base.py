@@ -4,6 +4,9 @@
 from pathlib import Path
 
 import environ
+import ldap
+from django_auth_ldap.config import GroupOfNamesType
+from django_auth_ldap.config import LDAPSearch
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # aura/
@@ -91,6 +94,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
     "django_filters",
     "recurrence",
+    "taggit",
 ]
 
 LOCAL_APPS = [
@@ -111,7 +115,7 @@ MIGRATION_MODULES = {"sites": "aura.contrib.sites.migrations"}
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
+    "aura.users.backend.AuraAuthBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
@@ -155,6 +159,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "aura.users.middleware.LDAPSSOMiddleware",
 ]
 
 # STATIC
@@ -335,6 +340,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
+        "aura.core.jwt_auth.JWTCookieAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -349,7 +355,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "aura API",
     "DESCRIPTION": "Documentation of API endpoints of aura",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SCHEMA_PATH_PREFIX": "/api/",
 }
 # Your stuff...
@@ -357,3 +363,74 @@ SPECTACULAR_SETTINGS = {
 
 # Personalized assessments to match a Therapist
 EMBEDDING_MODEL_DIMENSIONS = env.int("EMBEDDING_MODEL_DIMENSIONS")
+TAGGIT_CASE_INSENSITIVE = True
+
+
+# LDAP Configuration
+# ------------------------------------------------------------------------------
+# Test LDAP server: https://www.forumsys.com/2022/05/10/online-ldap-test-server/
+AUTH_LDAP_SERVER_URI = env("DJANGO_LDAP_SERVER_URI")
+
+AUTH_LDAP_BIND_DN = env("AUTH_LDAP_BIND_DN")
+AUTH_LDAP_BIND_PASSWORD = env("DJANGO_LDAP_PASSWORD")
+AUTH_LDAP_USER_SEARCH = LDAPSearch(
+    "ou=users,dc=example,dc=com",
+    ldap.SCOPE_SUBTREE,
+    "(uid=%(user)s)",
+)
+
+# Set up the basic group parameters.
+AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+    "ou=groups,dc=example,dc=com",
+    ldap.SCOPE_SUBTREE,
+    "(objectClass=groupOfNames)",
+)
+AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
+
+# group restrictions
+AUTH_LDAP_REQUIRE_GROUP = "cn=enabled,ou=groups,dc=example,dc=com"
+AUTH_LDAP_DENY_GROUP = "cn=disabled,ou=groups,dc=example,dc=com"
+
+# Populate the Django user from the LDAP directory.
+AUTH_LDAP_USER_ATTR_MAP = {
+    "first_name": "givenName",
+    "last_name": "sn",
+    "email": "mail",
+}
+
+# User flags based on group membership
+AUTH_LDAP_USER_FLAGS_BY_GROUP = {
+    "is_active": "cn=active,ou=groups,dc=example,dc=com",
+    "is_staff": "cn=staff,ou=groups,dc=example,dc=com",
+    "is_superuser": "cn=superuser,ou=groups,dc=example,dc=com",
+}
+
+# Use LDAP group membership to calculate group permissions.
+AUTH_LDAP_FIND_GROUP_PERMS = True
+
+# Cache distinguished names and group memberships for an hour to minimize
+# LDAP traffic.
+AUTH_LDAP_CACHE_TIMEOUT = 3600
+
+# REST Custom Authentication
+API_TOKEN_USE_AND_UPDATE_HASH_RATE = 0.5
+USE_JWT = True
+SESSION_LOGIN = False
+TOKEN_MODEL = "rest_framework.authtoken.models.Token"
+TOKEN_CREATOR = "aura.core.utils.default_create_token"
+JWT_SERIALIZER = "dj_rest_auth.serializers.JWTSerializer"
+JWT_TOKEN_CLAIMS_SERIALIZER = (
+    "rest_framework_simplejwt.serializers.TokenObtainPairSerializer"
+)
+
+
+JWT_AUTH_COOKIE = None
+JWT_AUTH_REFRESH_COOKIE = None
+JWT_AUTH_REFRESH_COOKIE_PATH = "/"
+JWT_AUTH_SECURE = False
+JWT_AUTH_HTTPONLY = True
+JWT_AUTH_SAMESITE = "Lax"
+JWT_AUTH_COOKIE_DOMAIN = None
+JWT_AUTH_RETURN_EXPIRATION = False
+JWT_AUTH_COOKIE_USE_CSRF = False
+JWT_AUTH_COOKIE_ENFORCE_CSRF_ON_UNAUTHENTICATED = False

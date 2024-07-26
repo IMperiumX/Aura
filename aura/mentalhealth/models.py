@@ -103,6 +103,24 @@ class TherapySession(TimeStampedModel):
         return f"{self.therapist} - {self.patient} - {self.recurrences}"
 
 
+class TherapyApproach(models.Model):
+    """
+    A model to represent a therapy approach.
+    """
+
+    name = models.CharField(
+        max_length=255,
+    )
+    description = models.TextField()
+
+    class Meta:
+        verbose_name = "Therapy Approach"
+        verbose_name_plural = "Therapy Approaches"
+
+    def __str__(self):
+        return self.name
+
+
 class ChatbotInteraction(TimeStampedModel):
     """
     A model to represent a chatbot interaction.
