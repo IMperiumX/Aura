@@ -2,16 +2,20 @@ from collections.abc import Callable
 from decimal import Decimal
 from typing import ClassVar
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import Group
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import AFTER_CREATE
 from django_lifecycle import LifecycleModelMixin
 from django_lifecycle import hook
 from model_utils.models import TimeStampedModel
+from rest_framework.authtoken.models import Token as DefaultTokenModel
 from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
@@ -43,6 +47,30 @@ def sane_repr(*attrs: str) -> Callable[[object], str]:
         return "<{} at 0x{:x}: {}>".format(cls, id(self), ", ".join(pairs))
 
     return _repr
+
+
+def get_token_model():
+    token_model = import_string(settings.TOKEN_MODEL)
+    session_login = settings.SESSION_LOGIN
+    use_jwt = settings.USE_JWT
+
+    if not any((session_login, token_model, use_jwt)):
+        raise ImproperlyConfigured(
+            "No authentication is configured for rest auth. You must enable one or "
+            "more of `TOKEN_MODEL`, `USE_JWT` or `SESSION_LOGIN`",
+        )
+    if (
+        token_model == DefaultTokenModel
+        and "rest_framework.authtoken" not in settings.INSTALLED_APPS
+    ):
+        raise ImproperlyConfigured(
+            "You must include `rest_framework.authtoken` in INSTALLED_APPS "
+            "or set TOKEN_MODEL to None",
+        )
+    return token_model
+
+
+TokenModel = get_token_model()
 
 
 class User(AbstractUser):

@@ -339,6 +339,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
+        "aura.core.jwt_auth.JWTCookieAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -409,3 +410,23 @@ AUTH_LDAP_CACHE_TIMEOUT = 3600
 
 # REST Custom Authentication
 API_TOKEN_USE_AND_UPDATE_HASH_RATE = 0.5
+USE_JWT = True
+SESSION_LOGIN = False
+TOKEN_MODEL = "rest_framework.authtoken.models.Token"
+TOKEN_CREATOR = "aura.core.utils.default_create_token"
+JWT_SERIALIZER = "dj_rest_auth.serializers.JWTSerializer"
+JWT_TOKEN_CLAIMS_SERIALIZER = (
+    "rest_framework_simplejwt.serializers.TokenObtainPairSerializer"
+)
+
+
+JWT_AUTH_COOKIE = None
+JWT_AUTH_REFRESH_COOKIE = None
+JWT_AUTH_REFRESH_COOKIE_PATH = "/"
+JWT_AUTH_SECURE = False
+JWT_AUTH_HTTPONLY = True
+JWT_AUTH_SAMESITE = "Lax"
+JWT_AUTH_COOKIE_DOMAIN = None
+JWT_AUTH_RETURN_EXPIRATION = False
+JWT_AUTH_COOKIE_USE_CSRF = False
+JWT_AUTH_COOKIE_ENFORCE_CSRF_ON_UNAUTHENTICATED = False
