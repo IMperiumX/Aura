@@ -406,3 +406,6 @@ AUTH_LDAP_FIND_GROUP_PERMS = True
 # Cache distinguished names and group memberships for an hour to minimize
 # LDAP traffic.
 AUTH_LDAP_CACHE_TIMEOUT = 3600
+
+# REST Custom Authentication
+API_TOKEN_USE_AND_UPDATE_HASH_RATE = 0.5
