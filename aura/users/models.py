@@ -15,10 +15,10 @@ from django_lifecycle import AFTER_CREATE
 from django_lifecycle import LifecycleModelMixin
 from django_lifecycle import hook
 from model_utils.models import TimeStampedModel
+from pgvector.django import HnswIndex
 from pgvector.django import VectorField
 from rest_framework.authtoken.models import Token as DefaultTokenModel
 from sentence_transformers import SentenceTransformer
-from rest_framework.authtoken.models import Token as DefaultTokenModel
 from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
@@ -159,8 +159,9 @@ class AbstractProfile(LifecycleModelMixin, AuditModel):
 
     user = AutoOneToOneField(
         "users.User",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="%(class)s_profile",
+        null=True,
     )
 
     class Meta:
@@ -228,6 +229,15 @@ class Therapist(AbstractProfile):
         """ """
 
         verbose_name_plural = "Therapists"
+        indexes = [
+            HnswIndex(
+                name="th_27072024_embedding_index",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.embedding:
@@ -287,7 +297,6 @@ class Physician(AbstractProfile):
         """ """
 
         verbose_name_plural = "Physicians"
-
 
 
 class Review(TimeStampedModel):

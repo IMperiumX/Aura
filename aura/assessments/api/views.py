@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from aura.assessments.models import HealthAssessment
 from aura.assessments.models import HealthRiskPrediction
-from aura.assessments.services import RecommendationEngine
+from aura.core.services import RecommendationEngine
 from aura.users.api.serializers import TherapistSerializer
 
 from .serializers import HealthAssessmentSerializer
@@ -59,7 +59,7 @@ class HealthAssessmentViewSet(viewsets.ModelViewSet):
     )
     def recommend_therapist(self, request, pk=None):
         assessment = self.get_object()
-        best_match = RecommendationEngine.find_best_match(assessment)
+        best_match = RecommendationEngine().find_best_match(assessment)
 
         serializer = self.get_serializer(best_match)
 

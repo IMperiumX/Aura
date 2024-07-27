@@ -5,10 +5,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import StatusModel
 from model_utils.models import TimeStampedModel
+from pgvector.django import HnswIndex
 from pgvector.django import VectorField
 from sentence_transformers import SentenceTransformer
 
-from aura.assessments.services import RecommendationEngine
+from aura.core.services import RecommendationEngine
 
 
 class HealthAssessment(StatusModel, TimeStampedModel):
@@ -83,12 +84,21 @@ class HealthAssessment(StatusModel, TimeStampedModel):
     class Meta:
         verbose_name = "Health Assessment"
         verbose_name_plural = "Health Assessments"
+        indexes = [
+            HnswIndex(
+                name="ha_27072024_embedding_index",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
 
     def __str__(self):
         return f"{self.patient} - {self.assessment_type}"
 
-    def get_recommendations(self):
-        return RecommendationEngine.get_mental_health_recommendations(self)
+    def get_therapist_recommendations(self):
+        return RecommendationEngine().get_therapist_recommendations(self)
 
     def save(self, *args, **kwargs):
         if not self.embedding:
