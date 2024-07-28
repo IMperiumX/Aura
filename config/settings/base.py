@@ -75,6 +75,7 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     # "django.contrib.humanize", # Handy template tags
     "django.contrib.admin",
     "django.forms",
@@ -359,6 +360,9 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Personalized assessments to match a Therapist
+EMBEDDING_MODEL_DIMENSIONS = env.int("EMBEDDING_MODEL_DIMENSIONS")
+
 TAGGIT_CASE_INSENSITIVE = True
 
 
@@ -430,3 +434,12 @@ JWT_AUTH_COOKIE_DOMAIN = None
 JWT_AUTH_RETURN_EXPIRATION = False
 JWT_AUTH_COOKIE_USE_CSRF = False
 JWT_AUTH_COOKIE_ENFORCE_CSRF_ON_UNAUTHENTICATED = False
+
+
+# LLama Index Configuration
+LLAMA_INDEX_CACHE_DIR = env("LLAMA_INDEX_CACHE_DIR")
+TOKENIZER_NAME = env("TOKENIZER_NAME")
+LLAMA_GGUFF_MODEL_PATH = env("LLAMA_GGUFF_MODEL_PATH")
+EMBED_MODEL_NAME = env("EMBED_MODEL_NAME")
+
+USE_GPU = env.int("USE_GPU")

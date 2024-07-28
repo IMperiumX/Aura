@@ -15,7 +15,10 @@ from django_lifecycle import AFTER_CREATE
 from django_lifecycle import LifecycleModelMixin
 from django_lifecycle import hook
 from model_utils.models import TimeStampedModel
+from pgvector.django import HnswIndex
+from pgvector.django import VectorField
 from rest_framework.authtoken.models import Token as DefaultTokenModel
+from sentence_transformers import SentenceTransformer
 from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
@@ -149,11 +152,16 @@ class AbstractProfile(LifecycleModelMixin, AuditModel):
         max_length=1,
         choices=GenderType.choices,
     )
+    embedding = VectorField(
+        dimensions=settings.EMBEDDING_MODEL_DIMENSIONS,
+        null=True,
+    )
 
     user = AutoOneToOneField(
         "users.User",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="%(class)s_profile",
+        null=True,
     )
 
     class Meta:
@@ -221,6 +229,24 @@ class Therapist(AbstractProfile):
         """ """
 
         verbose_name_plural = "Therapists"
+        indexes = [
+            HnswIndex(
+                name="th_27072024_embedding_index",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.embedding:
+            model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+            profile_text = (
+                f"{self.specialties} {self.years_of_experience} {self.availability}"
+            )
+            self.embedding = model.encode(profile_text).tolist()
+        super().save(*args, **kwargs)
 
 
 class Coach(AbstractProfile):
@@ -249,6 +275,28 @@ class Coach(AbstractProfile):
 
         order_with_respect_to = "rating"
         verbose_name_plural = "Coaches"
+
+
+# physician
+class Physician(AbstractProfile):
+    """A model to represent a physician"""
+
+    license_number = models.CharField(max_length=50)
+    specialties = models.CharField(max_length=255)
+    years_of_experience = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Years of Experience",
+    )
+    availability = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name=_("Availability Schedule"),
+    )
+
+    class Meta:
+        """ """
+
+        verbose_name_plural = "Physicians"
 
 
 class Review(TimeStampedModel):

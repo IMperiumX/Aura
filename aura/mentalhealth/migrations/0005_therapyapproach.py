@@ -29,4 +29,21 @@ class Migration(migrations.Migration):
                 "verbose_name_plural": "Therapy Approaches",
             },
         ),
+        migrations.AddField(
+            model_name="therapysession",
+            name="traget_audience",
+            field=models.CharField(
+                choices=[
+                    ("individual", "Individual"),
+                    ("couples", "Couples"),
+                    ("teens", "Teens"),
+                    ("medication", "Medication"),
+                    ("veterans", "Veterans"),
+                ],
+                default="individual",
+                max_length=10,
+                verbose_name="Session Type",
+            ),
+            preserve_default=False,
+        ),
     ]

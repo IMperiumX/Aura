@@ -29,6 +29,17 @@ class TherapySession(TimeStampedModel):
         CANCELLED = "cancelled", "Cancelled"
         COMPLETED = "completed", "Completed"
 
+    class TargetAudienceType(models.TextChoices):
+        """
+        Choices for the type of therapy session.
+        """
+
+        INDIVIDUAL = "individual", "Individual"
+        COUPLES = "couples", "Couples"
+        TEENS = "teens", "Teens"
+        MEDICATION = "medication", "Medication"
+        VETERANS = "veterans", "Veterans"
+
     session_type = models.CharField(
         max_length=5,
         choices=SessionType.choices,
@@ -75,6 +86,12 @@ class TherapySession(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="therapy_sessions_as_patient",
         verbose_name="Patient",
+    )
+
+    traget_audience = models.CharField(
+        max_length=10,
+        choices=TargetAudienceType.choices,
+        verbose_name="Session Type",
     )
 
     class Meta:

@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
 from rest_framework import serializers
 
+from aura.users.models import Therapist
 from aura.users.models import User
 
 UserModel = get_user_model()
@@ -21,6 +22,12 @@ class UserSerializer(serializers.ModelSerializer[User]):
         extra_kwargs = {
             "url": {"view_name": "api:user-detail", "lookup_field": "pk"},
         }
+
+
+class TherapistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Therapist
+        exclude = ["embedding"]
 
 
 class LoginSerializer(serializers.Serializer):
