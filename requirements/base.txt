@@ -28,3 +28,12 @@ djangorestframework-simplejwt==5.3.1 # https://github.com/jazzband/djangorestfra
 # DRF-spectacular for api documentation
 drf-spectacular==0.27.2  # https://github.com/tfranzel/drf-spectacular
 sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
+
+# RAG application
+llama-index-readers-database
+llama-index-embeddings-huggingface
+llama-index-vector-stores-postgres
+llama-index-llms-llama-cpp
+llama-index
+pgvector
+psycopg2
