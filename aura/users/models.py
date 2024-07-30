@@ -237,14 +237,7 @@ class Therapist(AbstractProfile):
                 opclasses=["vector_cosine_ops"],
             ),
         ]
-f, *args, **kwargs):
-    #     if not self.embedding:
-    #         model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
-    #         profile_text = (
-    #             f"{self.specialties} {self.years_of_experience} {self.availability}"
-    #         )
-    #         self.embedding = model.encode(profile_text).tolist()
-    #     super().save(*a
+
 
 class Coach(AbstractProfile):
     """A model to represent a coach"""
