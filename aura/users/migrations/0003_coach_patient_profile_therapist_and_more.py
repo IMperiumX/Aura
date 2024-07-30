@@ -124,11 +124,11 @@ class Migration(migrations.Migration):
                         choices=[("m", " Male"), ("f", "Female")], max_length=1
                     ),
                 ),
-                ("medical_record_number", models.CharField(max_length=20)),
+                ("medical_record_number", models.CharField(max_length=100)),
                 ("insurance_provider", models.CharField(max_length=100)),
-                ("insurance_policy_number", models.CharField(max_length=20)),
+                ("insurance_policy_number", models.CharField(max_length=100)),
                 ("emergency_contact_name", models.CharField(max_length=100)),
-                ("emergency_contact_phone", models.CharField(max_length=20)),
+                ("emergency_contact_phone", models.CharField(max_length=100)),
                 ("allergies", models.TextField()),
                 ("medical_conditions", models.TextField()),
                 ("medical_history", models.JSONField(blank=True, null=True)),
@@ -185,7 +185,7 @@ class Migration(migrations.Migration):
                     models.CharField(max_length=120, verbose_name="avatar url"),
                 ),
                 ("bio", models.TextField(blank=True, verbose_name="Biography")),
-                ("date_of_birth", models.DateField()),
+                ("date_of_birth", models.DateField(null=True)),
                 (
                     "gender",
                     models.CharField(
@@ -253,10 +253,6 @@ class Migration(migrations.Migration):
             options={
                 "verbose_name_plural": "Therapists",
             },
-        ),
-        migrations.RemoveField(
-            model_name="patientprofile",
-            name="user",
         ),
         migrations.RemoveField(
             model_name="therapistprofile",

@@ -5,8 +5,6 @@ import django.db.models.deletion
 import django.utils.timezone
 import django_lifecycle.mixins
 import model_utils.fields
-import pgvector.django.indexes
-import pgvector.django.vector
 import taggit.managers
 from decimal import Decimal
 from django.conf import settings
@@ -62,10 +60,6 @@ class Migration(migrations.Migration):
                     models.CharField(
                         choices=[("m", " Male"), ("f", "Female")], max_length=1
                     ),
-                ),
-                (
-                    "embedding",
-                    pgvector.django.vector.VectorField(dimensions=384, null=True),
                 ),
                 ("license_number", models.CharField(max_length=50)),
                 ("specialties", models.CharField(max_length=255)),
@@ -148,9 +142,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.DeleteModel(
-            name="PatientProfile",
-        ),
-        migrations.DeleteModel(
             name="Profile",
         ),
         migrations.DeleteModel(
@@ -172,11 +163,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="coach",
-            name="embedding",
-            field=pgvector.django.vector.VectorField(dimensions=384, null=True),
-        ),
-        migrations.AddField(
-            model_name="coach",
             name="updated_by",
             field=models.ForeignKey(
                 null=True,
@@ -194,7 +180,7 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="%(class)s_profile",
                 to=settings.AUTH_USER_MODEL,
-                null=True
+                null=True,
             ),
             preserve_default=False,
         ),
@@ -208,11 +194,6 @@ class Migration(migrations.Migration):
                 to=settings.AUTH_USER_MODEL,
                 verbose_name="Created By",
             ),
-        ),
-        migrations.AddField(
-            model_name="patient",
-            name="embedding",
-            field=pgvector.django.vector.VectorField(dimensions=384, null=True),
         ),
         migrations.AddField(
             model_name="patient",
@@ -233,7 +214,7 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="%(class)s_profile",
                 to=settings.AUTH_USER_MODEL,
-                null=True
+                null=True,
             ),
             preserve_default=False,
         ),
@@ -247,11 +228,6 @@ class Migration(migrations.Migration):
                 to=settings.AUTH_USER_MODEL,
                 verbose_name="Created By",
             ),
-        ),
-        migrations.AddField(
-            model_name="therapist",
-            name="embedding",
-            field=pgvector.django.vector.VectorField(dimensions=384, null=True),
         ),
         migrations.AddField(
             model_name="therapist",
@@ -272,7 +248,7 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="%(class)s_profile",
                 to=settings.AUTH_USER_MODEL,
-                null=True
+                null=True,
             ),
             preserve_default=False,
         ),
@@ -299,17 +275,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="patient",
             name="emergency_contact_phone",
-            field=models.CharField(max_length=30),
+            field=models.CharField(max_length=100),
         ),
         migrations.AlterField(
             model_name="patient",
             name="insurance_policy_number",
-            field=models.CharField(max_length=50),
+            field=models.CharField(max_length=100),
         ),
         migrations.AlterField(
             model_name="patient",
             name="medical_record_number",
-            field=models.CharField(max_length=50),
+            field=models.CharField(max_length=100),
         ),
         migrations.AlterField(
             model_name="therapist",
@@ -337,16 +313,6 @@ class Migration(migrations.Migration):
         migrations.AlterOrderWithRespectTo(
             name="coach",
             order_with_respect_to="rating",
-        ),
-        migrations.AddIndex(
-            model_name="therapist",
-            index=pgvector.django.indexes.HnswIndex(
-                ef_construction=64,
-                fields=["embedding"],
-                m=16,
-                name="th_27072024_embedding_index",
-                opclasses=["vector_cosine_ops"],
-            ),
         ),
         migrations.AddField(
             model_name="physician",
