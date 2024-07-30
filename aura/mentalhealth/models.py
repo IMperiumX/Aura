@@ -88,7 +88,7 @@ class TherapySession(TimeStampedModel):
         verbose_name="Patient",
     )
 
-    traget_audience = models.CharField(
+    target_audience = models.CharField(
         max_length=10,
         choices=TargetAudienceType.choices,
         verbose_name="Session Type",
