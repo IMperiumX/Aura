@@ -7,7 +7,6 @@ from model_utils.models import StatusModel
 from model_utils.models import TimeStampedModel
 from pgvector.django import HnswIndex
 from pgvector.django import VectorField
-from sentence_transformers import SentenceTransformer
 
 from aura.core.services import RecommendationEngine
 
@@ -99,12 +98,6 @@ class HealthAssessment(StatusModel, TimeStampedModel):
 
     def get_therapist_recommendations(self):
         return RecommendationEngine().get_therapist_recommendations(self)
-
-    def save(self, *args, **kwargs):
-        if not self.embedding:
-            model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
-            self.embedding = model.encode(self.result).tolist()
-        super().save(*args, **kwargs)
 
 
 class HealthRiskPrediction(TimeStampedModel):

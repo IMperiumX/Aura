@@ -18,7 +18,6 @@ from model_utils.models import TimeStampedModel
 from pgvector.django import HnswIndex
 from pgvector.django import VectorField
 from rest_framework.authtoken.models import Token as DefaultTokenModel
-from sentence_transformers import SentenceTransformer
 from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
@@ -238,16 +237,14 @@ class Therapist(AbstractProfile):
                 opclasses=["vector_cosine_ops"],
             ),
         ]
-
-    def save(self, *args, **kwargs):
-        if not self.embedding:
-            model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
-            profile_text = (
-                f"{self.specialties} {self.years_of_experience} {self.availability}"
-            )
-            self.embedding = model.encode(profile_text).tolist()
-        super().save(*args, **kwargs)
-
+f, *args, **kwargs):
+    #     if not self.embedding:
+    #         model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+    #         profile_text = (
+    #             f"{self.specialties} {self.years_of_experience} {self.availability}"
+    #         )
+    #         self.embedding = model.encode(profile_text).tolist()
+    #     super().save(*a
 
 class Coach(AbstractProfile):
     """A model to represent a coach"""
