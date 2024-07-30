@@ -34,6 +34,22 @@ DATABASE = settings.DATABASES["default"]
 
 
 class RecommendationEngine:
+    """
+    RAG pipeline
+
+    get data into an LLM, and a component of more sophisticated agentic systems.
+
+    Loading & Ingestion
+
+    Indexing and Embedding
+
+    Storing in a specialized database known as a Vector Store
+
+    Querying: Every indexing strategy has a corresponding querying strategy, LLM improve the relevance, speed and accuracy of what you retrieve before returning it to you.
+
+    Turning it into structured responses such as an API.
+    """
+
     def get_therapist_recommendations(self, health_assessment):
         from pgvector.django import CosineDistance
 
