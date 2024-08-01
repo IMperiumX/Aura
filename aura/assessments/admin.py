@@ -1,10 +1,8 @@
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.db.models import Q
 from django.utils.translation import ngettext
 
-from .models import HealthAssessment
-from .models import HealthRiskPrediction
+from .models import HealthAssessment, HealthRiskPrediction
 
 
 @admin.register(HealthAssessment)

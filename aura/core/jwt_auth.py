@@ -1,9 +1,7 @@
 from django.conf import settings as api_settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from rest_framework import exceptions
-from rest_framework import serializers
-from rest_framework import status
+from rest_framework import exceptions, serializers, status
 from rest_framework.authentication import CSRFCheck
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
@@ -96,7 +94,8 @@ class CookieTokenRefreshSerializer(TokenRefreshSerializer):
         if cookie_name and cookie_name in request.COOKIES:
             return request.COOKIES.get(cookie_name)
 
-        from rest_framework_simplejwt.exceptions import InvalidToken  # Circular import
+        from rest_framework_simplejwt.exceptions import \
+            InvalidToken  # Circular import
 
         raise InvalidToken(_("No valid refresh token found."))
 

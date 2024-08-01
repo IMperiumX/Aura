@@ -59,8 +59,7 @@ class AuraAuthBackend(ModelBackend, LDAPBackend):
         return user
 
     def create_user_profile(self, user, ldap_user):
-        from users.models import Patient
-        from users.models import Therapist
+        from users.models import Patient, Therapist
 
         # Check LDAP groups or attributes to determine user type
         ldap_groups = self.get_group_permissions(ldap_user)
@@ -86,8 +85,7 @@ class AuraAuthBackend(ModelBackend, LDAPBackend):
 
     @transaction.atomic
     def configure_user(self, request, ldap_user, **kwargs):
-        from users.models import Patient
-        from users.models import Therapist
+        from users.models import Patient, Therapist
 
         """
         Configures a user after authentication and returns the updated User object.

@@ -1,15 +1,14 @@
 import hashlib
 import secrets
-from typing import Any
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from dj_rest_auth.models import TokenModel as ApiToken
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.utils.encoding import force_str
-from rest_framework.authentication import BasicAuthentication
-from rest_framework.authentication import get_authorization_header
+from rest_framework.authentication import (BasicAuthentication,
+                                           get_authorization_header)
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 

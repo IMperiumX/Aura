@@ -3,20 +3,16 @@ from decimal import Decimal
 from typing import ClassVar
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import AbstractUser, Group
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import AFTER_CREATE
-from django_lifecycle import LifecycleModelMixin
-from django_lifecycle import hook
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 from model_utils.models import TimeStampedModel
-from pgvector.django import HnswIndex
-from pgvector.django import VectorField
+from pgvector.django import HnswIndex, VectorField
 from rest_framework.authtoken.models import Token as DefaultTokenModel
 from taggit.managers import TaggableManager
 
