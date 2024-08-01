@@ -34,8 +34,6 @@ class QuietBasicAuthentication(BasicAuthentication):
         self,
         user: int | User | None | AnonymousUser,
         request_auth: Any,
-        entity_id_tag: str | None = None,
-        **tags,
     ) -> tuple[User | AnonymousUser, ApiToken | None]:
         if isinstance(user, int):
             user = User.objects.filter(user_id=user).last()
@@ -164,7 +162,4 @@ class UserAuthTokenAuthentication(StandardAuthentication):
         return self.transform_auth(
             user,
             token,
-            "api_token",
-            api_token_type=self.token_name,
-            api_token_is_sentry_app=getattr(user, "is_sentry_app", False),
         )

@@ -422,6 +422,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
@@ -433,7 +434,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "aura API",
     "DESCRIPTION": "Documentation of API endpoints of aura",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
     "SCHEMA_PATH_PREFIX": "/api/",
 }
 # Your stuff...
@@ -524,18 +525,18 @@ USE_GPU = env.int("USE_GPU")
 
 # Sentry Settings
 # settings.py
-import sentry_sdk
+# import sentry_sdk
 
-sentry_sdk.init(
-    dsn="https://4c4199f5099472936f54160c0de99544@o1085295.ingest.us.sentry.io/4507687936196608",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
-    profiles_sample_rate=1.0,
-)
+# sentry_sdk.init(
+#     dsn="https://4c4199f5099472936f54160c0de99544@o1085295.ingest.us.sentry.io/4507687936196608",
+#     # Set traces_sample_rate to 1.0 to capture 100%
+#     # of transactions for performance monitoring.
+#     traces_sample_rate=1.0,
+#     # Set profiles_sample_rate to 1.0 to profile 100%
+#     # of sampled transactions.
+#     # We recommend adjusting this value in production.
+#     profiles_sample_rate=1.0,
+# )
 
 
 # Internal metrics
