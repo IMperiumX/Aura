@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -110,8 +112,8 @@ class HealthRiskPrediction(TimeStampedModel):
         help_text=_("Measures to prevent the identified health issue"),
     )
     confidence_level = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
+        max_digits=Decimal(5),
+        decimal_places=Decimal(2),
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text=_("Confidence level of the prediction"),
     )
