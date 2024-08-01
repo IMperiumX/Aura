@@ -1,15 +1,12 @@
 import contextlib
 
 from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from django.urls import exceptions as url_exceptions
 from django.utils.translation import gettext_lazy as _
-from rest_framework import exceptions
-from rest_framework import serializers
+from rest_framework import exceptions, serializers
 
-from aura.users.models import Therapist
-from aura.users.models import User
+from aura.users.models import Patient, Therapist, User
 
 UserModel = get_user_model()
 
@@ -28,6 +25,13 @@ class TherapistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Therapist
         exclude = ["embedding"]
+
+
+class PatientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patient
+        exclude = ["embedding"]
+        read_only_fields = ["id"]
 
 
 class LoginSerializer(serializers.Serializer):
