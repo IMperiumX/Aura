@@ -76,4 +76,4 @@ class PatientFactory(DjangoModelFactory):
     weight = Faker("random_int", min=50, max=100)
     height = Faker("random_int", min=150, max=200)
 
-    user = SubFactory("aura.users.users_factory.UserFactory")
+    user = SubFactory("aura.users.tests.factories.UserFactory")

@@ -17,7 +17,7 @@ class HealthAssessmentFactory(factory.django.DjangoModelFactory):
     recommendations = factory.Faker("paragraph")
     responses = factory.Faker("json")
     result = factory.Faker("paragraph")
-    patient = factory.SubFactory("aura.users.users_factory.PatientFactory")
+    patient = factory.SubFactory("aura.users.tests.factories.PatientFactory")
 
 
 class HealthRiskPredictionFactory(factory.django.DjangoModelFactory):
@@ -35,6 +35,6 @@ class HealthRiskPredictionFactory(factory.django.DjangoModelFactory):
     )
     source = factory.Faker("word")
     assessment = factory.SubFactory(
-        "aura.assessments.assessments_factory.HealthAssessmentFactory",
+        "aura.assessments.tests.factories.HealthAssessmentFactory",
     )
-    patient = factory.SubFactory("aura.users.users_factory.PatientFactory")
+    patient = factory.SubFactory("aura.users.tests.factories.PatientFactory")
