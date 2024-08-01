@@ -1,16 +1,14 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
-from rest_framework import viewsets
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from aura.assessments.models import HealthAssessment
-from aura.assessments.models import HealthRiskPrediction
+from aura.assessments.models import HealthAssessment, HealthRiskPrediction
 from aura.core.services import RecommendationEngine
 from aura.users.api.serializers import TherapistSerializer
 
-from .serializers import HealthAssessmentSerializer
-from .serializers import HealthRiskPredictionSerializer
+from .serializers import (HealthAssessmentSerializer,
+                          HealthRiskPredictionSerializer)
 
 
 class HealthAssessmentViewSet(viewsets.ModelViewSet):
@@ -47,7 +45,6 @@ class HealthAssessmentViewSet(viewsets.ModelViewSet):
         return self.queryset.filter(patient=self.request.user.patient_profile)
 
     def get_serializer(self, *args, **kwargs):
-        print(self.action)
         if self.action == "recommend_therapist":
             return TherapistSerializer(*args, **kwargs)
         return super().get_serializer(*args, **kwargs)
