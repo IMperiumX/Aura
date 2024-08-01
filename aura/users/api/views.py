@@ -7,14 +7,13 @@ from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
-from rest_framework.mixins import (ListModelMixin, RetrieveModelMixin,
-                                   UpdateModelMixin)
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from users.api.serializers import LoginSerializer
 
 from aura.core.utils import jwt_encode
+from aura.users.api.serializers import LoginSerializer
 from aura.users.models import User, get_token_model
 
 from .serializers import UserSerializer
@@ -101,8 +100,7 @@ class LoginView(GenericAPIView):
         serializer_class = self.get_response_serializer()
 
         if api_settings.USE_JWT:
-            from rest_framework_simplejwt.settings import \
-                api_settings as jwt_settings
+            from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
             access_token_expiration = (
                 timezone.now() + jwt_settings.ACCESS_TOKEN_LIFETIME
