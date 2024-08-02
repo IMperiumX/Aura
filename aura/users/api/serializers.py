@@ -4,40 +4,70 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.urls import exceptions as url_exceptions
 from django.utils.translation import gettext_lazy as _
-from rest_framework import exceptions, serializers
+from rest_framework import exceptions
+from rest_framework.serializers import (
+    CharField,
+    EmailField,
+    HyperlinkedModelSerializer,
+    ModelSerializer,
+    Serializer,
+    ValidationError,
+)
 
-from aura.users.models import Patient, Therapist, User
+from aura.users.models import Patient, Review, Therapist, User
 
 UserModel = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer[User]):
+class ReviewSerializer(HyperlinkedModelSerializer):
+    class Meta:
+        model = Review
+        fields = [
+            "url",
+            "id",
+            "reviewer",
+            "content",
+            "rating",
+            "topic",
+            "created",
+        ]
+
+
+class UserSerializer(HyperlinkedModelSerializer[User]):
+    reviews = ReviewSerializer(many=True, read_only=True)
+
     class Meta:
         model = User
-        fields = ["name", "url"]
+        fields = [
+            "url",
+            "id",
+            "name",
+            "email",
+            "reviews",
+        ]
 
         extra_kwargs = {
             "url": {"view_name": "api:user-detail", "lookup_field": "pk"},
         }
 
 
-class TherapistSerializer(serializers.ModelSerializer):
+class TherapistSerializer(ModelSerializer):
     class Meta:
         model = Therapist
         exclude = ["embedding"]
 
 
-class PatientSerializer(serializers.ModelSerializer):
+class PatientSerializer(HyperlinkedModelSerializer):
     class Meta:
         model = Patient
         exclude = ["embedding"]
-        read_only_fields = ["id"]
+        # fields = ['url', 'id', 'name', 'email']
 
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=False, allow_blank=True)
-    email = serializers.EmailField(required=False, allow_blank=True)
-    password = serializers.CharField(style={"input_type": "password"})
+class LoginSerializer(Serializer):
+    username = CharField(required=False, allow_blank=True)
+    email = EmailField(required=False, allow_blank=True)
+    password = CharField(style={"input_type": "password"})
 
     def authenticate(self, **kwargs):
         return authenticate(self.context["request"], **kwargs)
@@ -137,7 +167,7 @@ class LoginSerializer(serializers.Serializer):
                 verified=True,
             ).exists()
         ):
-            raise serializers.ValidationError(_("E-mail is not verified."))
+            raise ValidationError(_("E-mail is not verified."))
 
     def validate(self, attrs):
         username = attrs.get("username")
