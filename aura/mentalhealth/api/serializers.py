@@ -1,13 +1,26 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from aura.mentalhealth.models import TherapySession
+from aura.mentalhealth.models import ChatbotInteraction, TherapyApproach, TherapySession
+
+User = get_user_model()
 
 
-class TherapySessionSerializer(serializers.ModelSerializer):
+class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
+    # TODO: update to profile related detials
+    therapist = serializers.HyperlinkedRelatedField(
+        view_name="user-detail", read_only=True
+    )
+    patient = serializers.HyperlinkedRelatedField(
+        view_name="user-detail", read_only=True
+    )
+
     class Meta:
         model = TherapySession
         fields = [
+            "url",
             "id",
+            "session_type",
             "status",
             "summary",
             "notes",
@@ -15,9 +28,15 @@ class TherapySessionSerializer(serializers.ModelSerializer):
             "started_at",
             "ended_at",
             "created",
+            "recurrences",  # custom serialzier
+            "therapist",
+            "patient",
             "target_audience",
         ]
-        read_only_fields = ["id", "created"]
+        read_only_fields = [
+            "id",
+            "created",
+        ]  # XXX: add `status` and make sure that test passes
 
     def validate(self, data):
         # Custom validation: Ensure started_at and ended_at are not set for pending sessions
@@ -27,3 +46,4 @@ class TherapySessionSerializer(serializers.ModelSerializer):
                     "Started and ended times cannot be set for pending sessions."
                 )
         return data
+
