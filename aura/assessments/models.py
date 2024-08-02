@@ -69,6 +69,8 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         verbose_name="Result",
         help_text=_("Result of the health assessment"),
     )
+
+    # relations
     patient = models.ForeignKey(
         "users.Patient",
         on_delete=models.CASCADE,

@@ -316,11 +316,11 @@ class Review(TimeStampedModel):
     rating = models.PositiveIntegerField()
     review = models.TextField()
 
-    user = models.ForeignKey(
+    reviewer = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
         related_name="reviews",
     )
 
     def __str__(self):
-        return f"{self.user} - {self.rating}"
+        return f"{self.reviewer} - {self.rating}"
