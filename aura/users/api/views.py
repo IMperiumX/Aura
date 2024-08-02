@@ -11,12 +11,12 @@ from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateMode
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-
 from aura.core.utils import jwt_encode
 from aura.users.api.serializers import LoginSerializer
+from aura.users.api.serializers import UserSerializer
+from aura.users.api.serializers import ReviewSerializer
 from aura.users.models import User, get_token_model
 
-from .serializers import UserSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -41,6 +41,15 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
     def me(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def add_review(self, request, pk=None):
+        user = self.get_object()
+        serializer = ReviewSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(reviewer=user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(GenericAPIView):
