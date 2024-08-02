@@ -114,9 +114,9 @@ class HealthRiskPrediction(TimeStampedModel):
         help_text=_("Measures to prevent the identified health issue"),
     )
     confidence_level = models.DecimalField(
-        max_digits=Decimal(5),
-        decimal_places=Decimal(2),
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal(0)), MaxValueValidator(Decimal(100))],
         help_text=_("Confidence level of the prediction"),
     )
     source = models.CharField(
