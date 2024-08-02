@@ -47,3 +47,25 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
                 )
         return data
 
+
+class TherapyApproachSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = TherapyApproach
+        fields = ["url", "id", "name", "description"]
+
+
+class ChatbotInteractionSerializer(serializers.HyperlinkedModelSerializer):
+    user = serializers.HyperlinkedRelatedField(view_name="user-detail", read_only=True)
+
+    class Meta:
+        model = ChatbotInteraction
+        fields = [
+            "url",
+            "id",
+            "message",
+            "response",
+            "conversation_log",
+            "interaction_date",
+            "created",
+            "user",
+        ]
