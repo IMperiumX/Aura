@@ -314,7 +314,7 @@ class Review(TimeStampedModel):
         choices=ReviewTopic.choices,
     )
     rating = models.PositiveIntegerField()
-    review = models.TextField()
+    content = models.TextField()
 
     reviewer = models.ForeignKey(
         "users.User",
