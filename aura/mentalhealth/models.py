@@ -67,9 +67,10 @@ class TherapySession(TimeStampedModel):
         null=True,
         verbose_name="Ended At",
     )
-    created = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Created At",
+    target_audience = models.CharField(
+        max_length=10,
+        choices=TargetAudienceType.choices,
+        verbose_name="Session Type",
     )
 
     recurrences = RecurrenceField()
@@ -86,12 +87,6 @@ class TherapySession(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="therapy_sessions_as_patient",
         verbose_name="Patient",
-    )
-
-    target_audience = models.CharField(
-        max_length=10,
-        choices=TargetAudienceType.choices,
-        verbose_name="Session Type",
     )
 
     class Meta:
