@@ -2,7 +2,8 @@ from django.contrib import admin, messages
 from django.db.models import Q
 from django.utils.translation import ngettext
 
-from .models import HealthAssessment, HealthRiskPrediction
+from aura.assessments.models import HealthAssessment
+from aura.assessments.models import HealthRiskPrediction
 
 
 @admin.register(HealthAssessment)
@@ -30,6 +31,7 @@ class HealthAssessmentAdmin(admin.ModelAdmin):
     actions = [
         "mark_as_completed",
     ]
+    show_facets = admin.ShowFacets.ALLOW
 
     @admin.display(description="Mark selected assessments as completed")
     def mark_as_completed(self, request, queryset):
