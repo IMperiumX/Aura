@@ -502,24 +502,24 @@ AUTH_LDAP_CACHE_TIMEOUT = 3600
 API_TOKEN_USE_AND_UPDATE_HASH_RATE = 0.5
 USE_JWT = True
 SESSION_LOGIN = False
-TOKEN_MODEL = "rest_framework.authtoken.models.Token"
-TOKEN_CREATOR = "aura.core.utils.default_create_token"
-JWT_SERIALIZER = "dj_rest_auth.serializers.JWTSerializer"
-JWT_TOKEN_CLAIMS_SERIALIZER = (
-    "rest_framework_simplejwt.serializers.TokenObtainPairSerializer"
-)
 
 
-JWT_AUTH_COOKIE = None
+JWT_AUTH_COOKIE = "aura-jwt"  # "jwt-auth"
 JWT_AUTH_REFRESH_COOKIE = None
 JWT_AUTH_REFRESH_COOKIE_PATH = "/"
 JWT_AUTH_SECURE = False
-JWT_AUTH_HTTPONLY = True
+JWT_AUTH_HTTPONLY = False  # If you want to prevent client-side JavaScript from having access to the cookie
 JWT_AUTH_SAMESITE = "Lax"
 JWT_AUTH_COOKIE_DOMAIN = None
-JWT_AUTH_RETURN_EXPIRATION = False
+JWT_AUTH_RETURN_EXPIRATION = True
 JWT_AUTH_COOKIE_USE_CSRF = False
 JWT_AUTH_COOKIE_ENFORCE_CSRF_ON_UNAUTHENTICATED = False
+
+# set expiration times for JWT tokens
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
 
 
 # LLama Index Configuration
