@@ -54,16 +54,15 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
         # Custom validation: Ensure started_at and ended_at are not set for pending sessions
         if data.get("status") == TherapySession.SessionStatus.PENDING:
             if data.get("started_at") or data.get("ended_at"):
-                raise serializers.ValidationError(
-                    "Started and ended times cannot be set for pending sessions.",
-                )
+                msg = "Started and ended times cannot be set for pending sessions."
+                raise serializers.ValidationError(msg)
         return data
 
     def get_recurrences_humanized(self, obj):
         return [rule.to_text() for rule in obj.recurrences.rrules]
 
     def get_recurrences_dates(self, obj):
-        return [date for date in obj.recurrences.occurrences()]
+        return list(obj.recurrences.occurrences())
 
 
 class TherapyApproachSerializer(serializers.HyperlinkedModelSerializer):

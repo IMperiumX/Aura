@@ -65,7 +65,6 @@ class PatientSerializer(HyperlinkedModelSerializer[Patient]):
     class Meta:
         model = Patient
         exclude = ["embedding"]
-        # fields = ['url', 'id', 'name', 'email']
         extra_kwargs = {
             "url": {"view_name": "api:patients-detail", "lookup_field": "pk"},
         }
@@ -151,9 +150,9 @@ class LoginSerializer(Serializer):
             # which does not exist. This is the solution for it. See issue #264.
             try:
                 return self.get_auth_user_using_allauth(username, email, password)
-            except url_exceptions.NoReverseMatch:
+            except url_exceptions.NoReverseMatch as exc:
                 msg = _("Unable to log in with provided credentials.")
-                raise exceptions.ValidationError(msg)
+                raise exceptions.ValidationError(msg) from exc
         return self.get_auth_user_using_orm(username, email, password)
 
     @staticmethod
@@ -174,7 +173,8 @@ class LoginSerializer(Serializer):
                 verified=True,
             ).exists()
         ):
-            raise ValidationError(_("E-mail is not verified."))
+            msg = _("E-mail is not verified.")
+            raise ValidationError(msg)
 
     def validate(self, attrs):
         username = attrs.get("username")
@@ -221,8 +221,7 @@ class UserDetailsSerializer(ModelSerializer):
 
         from allauth.account.adapter import get_adapter
 
-        username = get_adapter().clean_username(username)
-        return username
+        return get_adapter().clean_username(username)
 
     class Meta:
         extra_fields = []
@@ -253,10 +252,7 @@ class JWTSerializer(Serializer):
         Required to allow using custom USER_DETAILS_SERIALIZER in
         JWTSerializer. Defining it here to avoid circular imports
         """
-        JWTUserDetailsSerializer = UserDetailsSerializer
-
-        user_data = JWTUserDetailsSerializer(obj["user"], context=self.context).data
-        return user_data
+        return UserDetailsSerializer(obj["user"], context=self.context).data
 
 
 class JWTSerializerWithExpiration(JWTSerializer):

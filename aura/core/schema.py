@@ -30,8 +30,7 @@ class RestAuthLoginView(OpenApiViewExtension):
 
         if use_jwt:
             return JWTSerializer
-        else:
-            return TokenSerializer
+        return TokenSerializer
 
 
 class RestAuthJWTSerializer(OpenApiSerializerExtension):
@@ -43,7 +42,7 @@ class RestAuthJWTSerializer(OpenApiSerializerExtension):
 
             user = UserDetailsSerializer()
 
-        return auto_schema._map_serializer(Fixed, direction)
+        return auto_schema._map_serializer(Fixed, direction)  # noqa: SLF001
 
 
 class CookieTokenRefreshSerializerExtension(TokenRefreshSerializerExtension):
@@ -63,7 +62,7 @@ class SimpleJWTCookieScheme(SimpleJWTScheme):
 
     target_class = "aura.core.authentication.JWTCookieAuthentication"
     optional = True
-    name = ["jwtHeaderAuth", "jwtCookieAuth"]  # type: ignore
+    name = ["jwtHeaderAuth", "jwtCookieAuth"]
 
     def get_security_requirement(self, auto_schema):
         return [{name: []} for name in self.name]

@@ -98,7 +98,8 @@ class CookieTokenRefreshSerializer(TokenRefreshSerializer):
 
         from rest_framework_simplejwt.exceptions import InvalidToken  # Circular import
 
-        raise InvalidToken(_("No valid refresh token found."))
+        msg = _("No valid refresh token found.")
+        raise InvalidToken(msg)
 
     def validate(self, attrs):
         attrs["refresh"] = self.extract_refresh_token()
@@ -156,7 +157,8 @@ class JWTCookieAuthentication(JWTAuthentication):
         reason = check.process_view(request, None, (), {})
         if reason:
             # CSRF failed, bail with explicit error message
-            raise exceptions.PermissionDenied(f"CSRF Failed: {reason}")
+            msg = f"CSRF Failed: {reason!r}"
+            raise exceptions.PermissionDenied(msg)
 
     def authenticate(self, request):
         cookie_name = api_settings.JWT_AUTH_COOKIE

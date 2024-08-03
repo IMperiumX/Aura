@@ -22,7 +22,7 @@ class UserFactory(DjangoModelFactory):
     @post_generation
     def password(
         self,
-        create: bool,
+        create,
         extracted: Sequence[Any],
         **kwargs,
     ):

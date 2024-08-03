@@ -1,10 +1,4 @@
-from datetime import datetime
-
-import recurrence
-from django_filters import rest_framework as filters
-
-from aura.mentalhealth.models import TherapySession
-
+# ruff: noqa
 # XXX: recuureces is not a field in TherapySession model we can use ORM agains!!
 """
 patterns could be used tho
@@ -19,6 +13,13 @@ pattern = recurrence.Recurrence(
 )
 """
 
+from datetime import datetime
+
+import recurrence
+from django_filters import rest_framework as filters
+
+from aura.mentalhealth.models import TherapySession
+
 
 class RecurrenceFilter(filters.DateFromToRangeFilter):
     def filter(self, qs, value):
@@ -31,12 +32,9 @@ class RecurrenceFilter(filters.DateFromToRangeFilter):
             return qs
 
         recurrences = qs.values_list("recurrences", flat=True)
-        IDs = []
         dtstart = ...
         dtend = ...
-        for obj in qs:
-            if obj.recurrences.between(dtstart, dtend):
-                IDs.append(obj.id)
+        IDs = [obj.id for obj in qs if obj.recurrences.between(dtstart, dtend)]
         # Filter rec available on the given date
         return qs.filter(id__in=IDs)
 
@@ -47,9 +45,7 @@ class RecurrenceDayOfWeekFilter(filters.DateFromToRangeFilter):
             return qs
 
         try:
-            day_of_week = int(value)
-            if day_of_week < 0 or day_of_week > 6:
-                raise ValueError
+            pass
         except ValueError:
             return qs
 
