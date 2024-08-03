@@ -78,3 +78,16 @@ class PatientFactory(DjangoModelFactory):
     height = Faker("random_int", min=150, max=200)
 
     user = SubFactory("aura.users.tests.factories.UserFactory")
+
+
+class TherapistFactory(DjangoModelFactory):
+    """Factory for Therapist model."""
+
+    class Meta:
+        """Meta class for Therapist"""
+
+        model = "users.Therapist"
+
+    avatar_url = Faker("image_url")
+    bio = Faker("text")
+    license_number = Faker("ssn")
