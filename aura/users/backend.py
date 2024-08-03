@@ -23,10 +23,12 @@ class AuraAuthBackend(ModelBackend, LDAPBackend):
 
         if ldap_user:
             return self.get_or_create_user(ldap_user, "ldap")
+        logger.debug("[AuraAuthBackend] LDAP authentication: User not found ")
 
         # If LDAP auth fails, fall back to the database
         if username is None:
             username = kwargs.get(User.USERNAME_FIELD)
+        logger.debug("[AuraAuthBackend] Authenticating with username and password")
         return ModelBackend().authenticate(
             request,
             username=username,
@@ -107,7 +109,7 @@ class AuraAuthBackend(ModelBackend, LDAPBackend):
         # Handle potential conflicts (user in both groups)
         if is_therapist and is_patient:
             # Log this conflict and default to patient
-            msg = f"User {user.username} is in both therapist and patient groups.\
+            msg = f"User {user} is in both therapist and patient groups.\
                     Defaulting to patient."
             logger.debug(msg)
             is_therapist = False
