@@ -1,5 +1,4 @@
-from django.conf import settings as api_settings
-from django.utils.module_loading import import_string
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 def default_create_token(token_model, user, serializer):
@@ -8,7 +7,5 @@ def default_create_token(token_model, user, serializer):
 
 
 def jwt_encode(user):
-    JWTTokenClaimsSerializer = import_string(api_settings.JWT_TOKEN_CLAIMS_SERIALIZER)
-
-    refresh = JWTTokenClaimsSerializer.get_token(user)
+    refresh = TokenObtainPairSerializer.get_token(user)
     return refresh.access_token, refresh
