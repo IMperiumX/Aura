@@ -77,13 +77,13 @@ class TherapySession(TimeStampedModel):
 
     # relations
     therapist = models.ForeignKey(
-        "users.User",
+        "users.Therapist",
         on_delete=models.CASCADE,
         related_name="therapy_sessions_as_therapist",
         verbose_name="Therapist",
     )
     patient = models.ForeignKey(
-        "users.User",
+        "users.Patient",
         on_delete=models.CASCADE,
         related_name="therapy_sessions_as_patient",
         verbose_name="Patient",
