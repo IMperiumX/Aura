@@ -11,6 +11,7 @@ class UserFactory(DjangoModelFactory):
 
     email = Faker("email")
     name = Faker("name")
+    username = Faker("user_name")
     last_password_change = Faker(
         "date_time_this_month",
         tzinfo=timezone.get_current_timezone(),
@@ -77,16 +78,3 @@ class PatientFactory(DjangoModelFactory):
     height = Faker("random_int", min=150, max=200)
 
     user = SubFactory("aura.users.tests.factories.UserFactory")
-
-
-class TherapistFactory(DjangoModelFactory):
-    """Factory for Therapist model."""
-
-    class Meta:
-        """Meta class for Therapist"""
-
-        model = "users.Therapist"
-
-    avatar_url = Faker("image_url")
-    bio = Faker("text")
-    license_number = Faker("ssn")
