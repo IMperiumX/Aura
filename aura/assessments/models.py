@@ -1,12 +1,11 @@
+from decimal import Decimal
+
 from django.conf import settings
-from django.core.validators import MaxValueValidator
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from model_utils.models import StatusModel
-from model_utils.models import TimeStampedModel
-from pgvector.django import HnswIndex
-from pgvector.django import VectorField
+from model_utils.models import StatusModel, TimeStampedModel
+from pgvector.django import HnswIndex, VectorField
 
 from aura.core.services import RecommendationEngine
 
@@ -70,6 +69,8 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         verbose_name="Result",
         help_text=_("Result of the health assessment"),
     )
+
+    # relations
     patient = models.ForeignKey(
         "users.Patient",
         on_delete=models.CASCADE,
@@ -115,7 +116,7 @@ class HealthRiskPrediction(TimeStampedModel):
     confidence_level = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        validators=[MinValueValidator(Decimal(0)), MaxValueValidator(Decimal(100))],
         help_text=_("Confidence level of the prediction"),
     )
     source = models.CharField(

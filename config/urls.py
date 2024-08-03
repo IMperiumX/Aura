@@ -2,12 +2,10 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include
-from django.urls import path
+from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
-from drf_spectacular.views import SpectacularAPIView
-from drf_spectacular.views import SpectacularSwaggerView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
@@ -44,7 +42,7 @@ urlpatterns += [
 if settings.USE_JWT:
     from rest_framework_simplejwt.views import TokenVerifyView
 
-    from aura.core.jwt_auth import get_refresh_view
+    from aura.core.authentication import get_refresh_view
 
     urlpatterns += [
         path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),

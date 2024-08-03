@@ -1,37 +1,33 @@
-from django.conf import settings as api_settings
-from django.contrib.auth import login as django_login
-from django.utils import timezone
-from django.utils.decorators import method_decorator
-from django.utils.module_loading import import_string
-from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.mixins import UpdateModelMixin
-from rest_framework.permissions import AllowAny
+from django.conf import settings as api_settings
+
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from users.api.serializers import LoginSerializer
+from rest_framework.permissions import AllowAny
 
+from aura.users.api.serializers import UserSerializer
+from aura.users.api.serializers import PatientSerializer
+from aura.users.api.serializers import ReviewSerializer
+from aura.users.api.serializers import LoginSerializer
 from aura.core.utils import jwt_encode
 from aura.users.models import User
-from aura.users.models import get_token_model
+from aura.users.models import Patient
+from rest_framework.authtoken.models import Token
 
-from .serializers import UserSerializer
-
-sensitive_post_parameters_m = method_decorator(
-    sensitive_post_parameters(
-        "password",
-        "old_password",
-        "new_password1",
-        "new_password2",
-    ),
-)
+from aura.users.mixins import LoginMixin
 
 
-class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+class UserViewSet(
+    LoginMixin,
+    RetrieveModelMixin,
+    ListModelMixin,
+    UpdateModelMixin,
+    GenericViewSet,
+):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     lookup_field = "pk"
@@ -40,118 +36,81 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
         assert isinstance(self.request.user.id, int)
         return self.queryset.filter(id=self.request.user.id)
 
+    def get_throttles(self):
+        if self.action == "login":
+            self.throttle_scope = "aura_auth"
+        return super().get_throttles()
+
     @action(detail=False)
     def me(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(status=status.HTTP_200_OK, data=serializer.data)
 
+    @action(detail=True, methods=["post"])
+    def add_review(self, request, pk=None):
+        user = self.get_object()
+        serializer = ReviewSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(reviewer=user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class LoginView(GenericAPIView):
-    """
-    Check the credentials and return the REST Token
-    if the credentials are valid and authenticated.
-    Calls Django Auth login method to register User ID
-    in Django session framework
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        serializer_class=LoginSerializer,
+    )
+    def login(self, request):
+        """
+        Authenticates the user and generates the necessary tokens or session login.
+            1. JWT
+            2. Session login
+            3. Token
 
-    Accept the following POST parameters: username, password
-    Return the REST Framework Token Object's key.
-    """
+        Args:
+            request (HttpRequest): The HTTP request object.
 
-    permission_classes = (AllowAny,)
-    serializer_class = LoginSerializer
-    throttle_scope = "aura_auth"
+        Returns:
+            HttpResponse: The HTTP response object.
 
-    user = None
-    access_token = None
-    token = None
+        Raises:
+            ValidationError: If the serializer data is invalid.
 
-    @sensitive_post_parameters_m
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+        """
+        self.request = request
+        self.serializer = self.get_serializer(data=self.request.data)
+        self.serializer.is_valid(raise_exception=True)
 
-    def process_login(self):
-        django_login(self.request, self.user)
-
-    def get_response_serializer(self):
-        if api_settings.USE_JWT:
-            if api_settings.JWT_AUTH_RETURN_EXPIRATION:
-                response_serializer = api_settings.JWT_SERIALIZER_WITH_EXPIRATION
-            else:
-                response_serializer = import_string(api_settings.JWT_SERIALIZER)
-
-        else:
-            response_serializer = api_settings.TOKEN_SERIALIZER
-        return response_serializer
-
-    def login(self):
         self.user = self.serializer.validated_data["user"]
-        token_model = get_token_model()
+        token_model = Token
 
         if api_settings.USE_JWT:
             self.access_token, self.refresh_token = jwt_encode(self.user)
+        if api_settings.SESSION_LOGIN:
+            self.process_login()
         elif token_model:
-            self.token = import_string(api_settings.TOKEN_CREATOR)(
+            from aura.core.utils import default_create_token
+
+            self.token = default_create_token(
                 token_model,
                 self.user,
                 self.serializer,
             )
 
-        if api_settings.SESSION_LOGIN:
-            self.process_login()
-
-    def get_response(self):
-        serializer_class = self.get_response_serializer()
-
-        if api_settings.USE_JWT:
-            from rest_framework_simplejwt.settings import api_settings as jwt_settings
-
-            access_token_expiration = (
-                timezone.now() + jwt_settings.ACCESS_TOKEN_LIFETIME
-            )
-            refresh_token_expiration = (
-                timezone.now() + jwt_settings.REFRESH_TOKEN_LIFETIME
-            )
-            return_expiration_times = api_settings.JWT_AUTH_RETURN_EXPIRATION
-            auth_httponly = api_settings.JWT_AUTH_HTTPONLY
-
-            data = {
-                "user": self.user,
-                "access": self.access_token,
-            }
-
-            if not auth_httponly:
-                data["refresh"] = self.refresh_token
-            else:
-                # Wasnt sure if the serializer needed this
-                data["refresh"] = ""
-
-            if return_expiration_times:
-                data["access_expiration"] = access_token_expiration
-                data["refresh_expiration"] = refresh_token_expiration
-
-            serializer = serializer_class(
-                instance=data,
-                context=self.get_serializer_context(),
-            )
-        elif self.token:
-            serializer = serializer_class(
-                instance=self.token,
-                context=self.get_serializer_context(),
-            )
-        else:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        response = Response(serializer.data, status=status.HTTP_200_OK)
-        if api_settings.USE_JWT:
-            from aura.core.jwt_auth import set_jwt_cookies
-
-            set_jwt_cookies(response, self.access_token, self.refresh_token)
-        return response
-
-    def post(self, request, *args, **kwargs):
-        self.request = request
-        self.serializer = self.get_serializer(data=self.request.data)
-        self.serializer.is_valid(raise_exception=True)
-
-        self.login()
         return self.get_response()
+
+
+class PatientViewSet(
+    RetrieveModelMixin,
+    ListModelMixin,
+    UpdateModelMixin,
+    GenericViewSet,
+):
+    serializer_class = PatientSerializer
+    queryset = Patient.objects.all()
+    lookup_field = "pk"
+
+    def get_queryset(self, *args, **kwargs):
+        assert isinstance(self.request.user.id, int)
+        return self.queryset.filter(id=self.request.user.id)

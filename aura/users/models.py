@@ -1,28 +1,20 @@
 from collections.abc import Callable
 from decimal import Decimal
 from typing import ClassVar
-
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import Group
-from django.core.exceptions import ImproperlyConfigured
+from django.contrib.auth.models import AbstractUser, Group
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import AFTER_CREATE
-from django_lifecycle import LifecycleModelMixin
-from django_lifecycle import hook
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 from model_utils.models import TimeStampedModel
-from pgvector.django import HnswIndex
-from pgvector.django import VectorField
-from rest_framework.authtoken.models import Token as DefaultTokenModel
+from pgvector.django import HnswIndex, VectorField
 from taggit.managers import TaggableManager
 
 from .fields import AutoOneToOneField
 from .managers import UserManager
-from .mixins import AuditModel
+from aura.users.mixins import AuditModel
 
 
 def sane_repr(*attrs: str) -> Callable[[object], str]:
@@ -51,30 +43,6 @@ def sane_repr(*attrs: str) -> Callable[[object], str]:
     return _repr
 
 
-def get_token_model():
-    token_model = import_string(settings.TOKEN_MODEL)
-    session_login = settings.SESSION_LOGIN
-    use_jwt = settings.USE_JWT
-
-    if not any((session_login, token_model, use_jwt)):
-        raise ImproperlyConfigured(
-            "No authentication is configured for rest auth. You must enable one or "
-            "more of `TOKEN_MODEL`, `USE_JWT` or `SESSION_LOGIN`",
-        )
-    if (
-        token_model == DefaultTokenModel
-        and "rest_framework.authtoken" not in settings.INSTALLED_APPS
-    ):
-        raise ImproperlyConfigured(
-            "You must include `rest_framework.authtoken` in INSTALLED_APPS "
-            "or set TOKEN_MODEL to None",
-        )
-    return token_model
-
-
-TokenModel = get_token_model()
-
-
 class User(AbstractUser):
     """Default custom user model for aura.
     If adding fields that need to be filled at user signup,
@@ -88,7 +56,6 @@ class User(AbstractUser):
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
     email = models.EmailField(_("email address"), unique=True, max_length=100)
-    username = None  # type: ignore[assignment]
 
     is_password_expired = models.BooleanField(
         _("password expired"),
@@ -184,7 +151,6 @@ class AbstractProfile(LifecycleModelMixin, AuditModel):
         elif hasattr(self, "coach_profile"):
             group, _ = Group.objects.get_or_create(name="Coaches")
             self.groups.add(group)
-
 
 class Patient(AbstractProfile):
     """A model to represent a patient"""
@@ -318,13 +284,13 @@ class Review(TimeStampedModel):
         choices=ReviewTopic.choices,
     )
     rating = models.PositiveIntegerField()
-    review = models.TextField()
+    content = models.TextField()
 
-    user = models.ForeignKey(
+    reviewer = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
         related_name="reviews",
     )
 
     def __str__(self):
-        return f"{self.user} - {self.rating}"
+        return f"{self.reviewer} - {self.rating}"

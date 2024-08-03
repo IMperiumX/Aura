@@ -1,19 +1,29 @@
 from collections.abc import Sequence
 from typing import Any
 
-from factory import Faker
-from factory import post_generation
+from django.utils import timezone
+from factory import Faker, SubFactory, post_generation
 from factory.django import DjangoModelFactory
-
-from aura.users.models import User
 
 
 class UserFactory(DjangoModelFactory):
+    """Factory for User model."""
+
     email = Faker("email")
     name = Faker("name")
+    username = Faker("user_name")
+    last_password_change = Faker(
+        "date_time_this_month",
+        tzinfo=timezone.get_current_timezone(),
+    )
 
     @post_generation
-    def password(self, create: bool, extracted: Sequence[Any], **kwargs):  # noqa: FBT001
+    def password(
+        self,
+        create: bool,
+        extracted: Sequence[Any],
+        **kwargs,
+    ):  # noqa: FBT001
         password = (
             extracted
             if extracted
@@ -36,5 +46,48 @@ class UserFactory(DjangoModelFactory):
             instance.save()
 
     class Meta:
-        model = User
+        model = "users.User"
         django_get_or_create = ["email"]
+
+
+class PatientFactory(DjangoModelFactory):
+    """Factory for Patient model."""
+
+    class Meta:
+        """Meta class for Patient"""
+
+        model = "users.Patient"
+
+    avatar_url = Faker("image_url")
+    bio = Faker("text")
+    date_of_birth = Faker("date_of_birth", minimum_age=18)
+    medical_record_number = Faker("ssn")
+    insurance_provider = Faker("company")
+    insurance_policy_number = Faker("ssn")
+    emergency_contact_name = Faker("name")
+
+    # set to EGY and USA number
+    emergency_contact_phone = Faker("phone_number")
+    allergies = Faker("text")
+    medical_conditions = Faker("text")
+    medical_history = Faker("json")
+    current_medications = Faker("json")
+    health_data = Faker("json")
+    preferences = Faker("json")
+    weight = Faker("random_int", min=50, max=100)
+    height = Faker("random_int", min=150, max=200)
+
+    user = SubFactory("aura.users.tests.factories.UserFactory")
+
+
+class TherapistFactory(DjangoModelFactory):
+    """Factory for Therapist model."""
+
+    class Meta:
+        """Meta class for Therapist"""
+
+        model = "users.Therapist"
+
+    avatar_url = Faker("image_url")
+    bio = Faker("text")
+    license_number = Faker("ssn")

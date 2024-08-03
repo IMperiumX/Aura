@@ -1,21 +1,17 @@
 import hashlib
 import secrets
-from typing import Any
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from dj_rest_auth.models import TokenModel as ApiToken
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.utils.encoding import force_str
-from rest_framework.authentication import BasicAuthentication
-from rest_framework.authentication import get_authorization_header
+from rest_framework.authentication import BasicAuthentication, get_authorization_header
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
+from aura.users.models import User
+from rest_framework.authtoken.models import Token as ApiToken
 
 AURA_AUTH_TOKEN_PREFIX = "aura_"
-
-User = get_user_model()
 
 
 class TokenStrLookupRequiredError(Exception):
@@ -35,8 +31,6 @@ class QuietBasicAuthentication(BasicAuthentication):
         self,
         user: int | User | None | AnonymousUser,
         request_auth: Any,
-        entity_id_tag: str | None = None,
-        **tags,
     ) -> tuple[User | AnonymousUser, ApiToken | None]:
         if isinstance(user, int):
             user = User.objects.filter(user_id=user).last()
@@ -165,7 +159,4 @@ class UserAuthTokenAuthentication(StandardAuthentication):
         return self.transform_auth(
             user,
             token,
-            "api_token",
-            api_token_type=self.token_name,
-            api_token_is_sentry_app=getattr(user, "is_sentry_app", False),
         )

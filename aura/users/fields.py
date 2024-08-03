@@ -2,7 +2,8 @@ from typing import Any
 
 from django.db import models
 from django.db.models import ForeignKey
-from django.db.models.fields.related_descriptors import ReverseOneToOneDescriptor
+from django.db.models.fields.related_descriptors import \
+    ReverseOneToOneDescriptor
 from django.db.transaction import atomic
 
 

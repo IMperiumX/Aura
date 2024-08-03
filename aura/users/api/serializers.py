@@ -2,38 +2,78 @@ import contextlib
 
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
 from django.urls import exceptions as url_exceptions
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
-from rest_framework import serializers
+from rest_framework.serializers import CharField
+from rest_framework.serializers import EmailField
+from rest_framework.serializers import HyperlinkedModelSerializer
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import Serializer
+from rest_framework.serializers import ValidationError
+from rest_framework.serializers import SerializerMethodField
+from rest_framework.serializers import DateTimeField
 
+from aura.users.models import Patient
+from aura.users.models import Review
 from aura.users.models import Therapist
 from aura.users.models import User
+from rest_framework.authtoken.models import Token
 
-UserModel = get_user_model()
+
+class ReviewSerializer(HyperlinkedModelSerializer):
+    class Meta:
+        model = Review
+        fields = [
+            "url",
+            "id",
+            "reviewer",
+            "content",
+            "rating",
+            "topic",
+            "created",
+        ]
 
 
-class UserSerializer(serializers.ModelSerializer[User]):
+class UserSerializer(HyperlinkedModelSerializer[User]):
+    reviews = ReviewSerializer(many=True, read_only=True)
+
     class Meta:
         model = User
-        fields = ["name", "url"]
+        fields = [
+            "url",
+            "id",
+            "name",
+            "email",
+            "reviews",
+        ]
 
         extra_kwargs = {
-            "url": {"view_name": "api:user-detail", "lookup_field": "pk"},
+            "url": {"view_name": "api:users-detail", "lookup_field": "pk"},
         }
 
 
-class TherapistSerializer(serializers.ModelSerializer):
+class TherapistSerializer(ModelSerializer):
     class Meta:
         model = Therapist
         exclude = ["embedding"]
 
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=False, allow_blank=True)
-    email = serializers.EmailField(required=False, allow_blank=True)
-    password = serializers.CharField(style={"input_type": "password"})
+class PatientSerializer(HyperlinkedModelSerializer[Patient]):
+    user = UserSerializer()
+    class Meta:
+        model = Patient
+        exclude = ["embedding"]
+        # fields = ['url', 'id', 'name', 'email']
+        extra_kwargs = {
+            "url": {"view_name": "api:patients-detail", "lookup_field": "pk"},
+        }
+
+
+class LoginSerializer(Serializer):
+    username = CharField(required=False, allow_blank=True)
+    email = EmailField(required=False, allow_blank=True)
+    password = CharField(style={"input_type": "password"})
 
     def authenticate(self, **kwargs):
         return authenticate(self.context["request"], **kwargs)
@@ -89,8 +129,8 @@ class LoginSerializer(serializers.Serializer):
 
     def get_auth_user_using_orm(self, username, email, password):
         if email:
-            with contextlib.suppress(UserModel.DoesNotExist):
-                username = UserModel.objects.get(email__iexact=email).get_username()
+            with contextlib.suppress(User.DoesNotExist):
+                username = User.objects.get(email__iexact=email).get_username()
 
         if username:
             return self._validate_username_email(username, "", password)
@@ -133,7 +173,7 @@ class LoginSerializer(serializers.Serializer):
                 verified=True,
             ).exists()
         ):
-            raise serializers.ValidationError(_("E-mail is not verified."))
+            raise ValidationError(_("E-mail is not verified."))
 
     def validate(self, attrs):
         username = attrs.get("username")
@@ -154,3 +194,74 @@ class LoginSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+
+class TokenSerializer(ModelSerializer):
+    """
+    Serializer for Token model.
+    """
+
+    class Meta:
+        model = Token
+        fields = ("key",)
+
+
+class UserDetailsSerializer(ModelSerializer):
+    """
+    User model w/o password
+    """
+
+    @staticmethod
+    def validate_username(username):
+        if "allauth.account" not in settings.INSTALLED_APPS:
+            # We don't need to call the all-auth
+            # username validator unless its installed
+            return username
+
+        from allauth.account.adapter import get_adapter
+
+        username = get_adapter().clean_username(username)
+        return username
+
+    class Meta:
+        extra_fields = []
+        if hasattr(User, "USERNAME_FIELD"):
+            extra_fields.append(User.USERNAME_FIELD)
+        if hasattr(User, "EMAIL_FIELD"):
+            extra_fields.append(User.EMAIL_FIELD)
+        if hasattr(User, "first_name"):
+            extra_fields.append("first_name")
+        if hasattr(User, "last_name"):
+            extra_fields.append("last_name")
+        model = User
+        fields = ("pk", *extra_fields)
+        read_only_fields = ("email",)
+
+
+class JWTSerializer(Serializer):
+    """
+    Serializer for JWT authentication.
+    """
+
+    access = CharField()
+    refresh = CharField()
+    user = SerializerMethodField()
+
+    def get_user(self, obj):
+        """
+        Required to allow using custom USER_DETAILS_SERIALIZER in
+        JWTSerializer. Defining it here to avoid circular imports
+        """
+        JWTUserDetailsSerializer = UserDetailsSerializer
+
+        user_data = JWTUserDetailsSerializer(obj["user"], context=self.context).data
+        return user_data
+
+
+class JWTSerializerWithExpiration(JWTSerializer):
+    """
+    Serializer for JWT authentication with expiration times.
+    """
+
+    access_expiration = DateTimeField()
+    refresh_expiration = DateTimeField()

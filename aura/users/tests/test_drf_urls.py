@@ -1,14 +1,13 @@
-from django.urls import resolve
-from django.urls import reverse
+from django.urls import resolve, reverse
 
 from aura.users.models import User
 
 
 def test_user_detail(user: User):
     assert (
-        reverse("api:user-detail", kwargs={"pk": user.pk}) == f"/api/users/{user.pk}/"
+        reverse("api:users-detail", kwargs={"pk": user.pk}) == f"/api/users/{user.pk}/"
     )
-    assert resolve(f"/api/users/{user.pk}/").view_name == "api:user-detail"
+    assert resolve(f"/api/users/{user.pk}/").view_name == "api:users-detail"
 
 
 def test_user_list():

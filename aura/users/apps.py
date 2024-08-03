@@ -10,7 +10,5 @@ class UsersConfig(AppConfig):
 
     def ready(self):
         with contextlib.suppress(ImportError):
-            from aura import (
-                schema,
-            )  # https://drf-spectacular.readthedocs.io/en/latest/blueprints.html
+            from aura.core import schema
             import aura.users.signals  # noqa: F401

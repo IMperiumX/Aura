@@ -1,12 +1,11 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
-
+from datetime import timedelta
 from pathlib import Path
 
 import environ
 import ldap
-from django_auth_ldap.config import GroupOfNamesType
-from django_auth_ldap.config import LDAPSearch
+from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # aura/
@@ -261,7 +260,7 @@ DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=Fals
 # more details on how to customize your logging configuration.
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": False,
+    "disable_existing_loggers": True,
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
@@ -275,6 +274,85 @@ LOGGING = {
         },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
+}
+
+{
+    "version": 1,
+    "disable_existing_loggers": True,
+    "handlers": {
+        "null": {"class": "logging.NullHandler"},
+        "console": {"class": "sentry.logging.handlers.StructLogHandler"},
+        # This `internal` logger is separate from the `Logging` integration in the SDK. Since
+        # we have this to record events, in `sdk.py` we set the integration's `event_level` to
+        # None, so that it records breadcrumbs for all log calls but doesn't send any events.
+        "internal": {
+            "level": "ERROR",
+            "class": "sentry_sdk.integrations.logging.EventHandler",
+        },
+        "metrics": {
+            "level": "WARNING",
+            "filters": ["important_django_request"],
+            "class": "sentry.logging.handlers.MetricsLogHandler",
+        },
+        "django_internal": {
+            "level": "WARNING",
+            "filters": ["important_django_request"],
+            "class": "sentry_sdk.integrations.logging.EventHandler",
+        },
+    },
+    "filters": {
+        "important_django_request": {
+            "()": "sentry.logging.handlers.MessageContainsFilter",
+            "contains": ["CSRF"],
+        }
+    },
+    "root": {"level": "NOTSET", "handlers": ["console", "internal"]},
+    # LOGGING.overridable is a list of loggers including root that will change
+    # based on the overridden level defined above.
+    "overridable": ["celery", "sentry"],
+    "loggers": {
+        "celery": {"level": "WARNING"},
+        "sentry": {"level": "INFO"},
+        "sentry_plugins": {"level": "INFO"},
+        "sentry.files": {"level": "WARNING"},
+        "sentry.minidumps": {"handlers": ["internal"], "propagate": False},
+        "sentry.reprocessing": {"handlers": ["internal"], "propagate": False},
+        "sentry.interfaces": {"handlers": ["internal"], "propagate": False},
+        # This only needs to go to Sentry for now.
+        "sentry.similarity": {"handlers": ["internal"], "propagate": False},
+        "sentry.errors": {"handlers": ["console"], "propagate": False},
+        "sentry_sdk.errors": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "sentry.rules": {"handlers": ["console"], "propagate": False},
+        "sentry.profiles": {"level": "INFO"},
+        "multiprocessing": {
+            "handlers": ["console"],
+            # https://github.com/celery/celery/commit/597a6b1f3359065ff6dbabce7237f86b866313df
+            # This commit has not been rolled into any release and leads to a
+            # large amount of errors when working with postgres.
+            "level": "CRITICAL",
+            "propagate": False,
+        },
+        "celery.worker.job": {"handlers": ["console"], "propagate": False},
+        "arroyo": {"level": "INFO", "handlers": ["console"], "propagate": False},
+        "static_compiler": {"level": "INFO"},
+        "django.request": {
+            "level": "WARNING",
+            "handlers": ["console", "metrics", "django_internal"],
+            "propagate": False,
+        },
+        "toronado": {"level": "ERROR", "handlers": ["null"], "propagate": False},
+        "urllib3.connectionpool": {
+            "level": "ERROR",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "boto3": {"level": "WARNING", "handlers": ["console"], "propagate": False},
+        "botocore": {"level": "WARNING", "handlers": ["console"], "propagate": False},
+    },
 }
 
 # Celery
@@ -340,10 +418,13 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
-        "aura.core.jwt_auth.JWTCookieAuthentication",
+        "aura.core.authentication.JWTCookieAuthentication",
     ),
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "URL_FIELD_NAME": "url",
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
@@ -357,6 +438,13 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SCHEMA_PATH_PREFIX": "/api/",
+    "SWAGGER_UI_CONFIG": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "filter": True,
+        "defaultModelsExpandDepth": 2,
+    },
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
@@ -416,24 +504,24 @@ AUTH_LDAP_CACHE_TIMEOUT = 3600
 API_TOKEN_USE_AND_UPDATE_HASH_RATE = 0.5
 USE_JWT = True
 SESSION_LOGIN = False
-TOKEN_MODEL = "rest_framework.authtoken.models.Token"
-TOKEN_CREATOR = "aura.core.utils.default_create_token"
-JWT_SERIALIZER = "dj_rest_auth.serializers.JWTSerializer"
-JWT_TOKEN_CLAIMS_SERIALIZER = (
-    "rest_framework_simplejwt.serializers.TokenObtainPairSerializer"
-)
 
 
-JWT_AUTH_COOKIE = None
+JWT_AUTH_COOKIE = "aura-jwt"  # "jwt-auth"
 JWT_AUTH_REFRESH_COOKIE = None
 JWT_AUTH_REFRESH_COOKIE_PATH = "/"
 JWT_AUTH_SECURE = False
-JWT_AUTH_HTTPONLY = True
+JWT_AUTH_HTTPONLY = False  # If you want to prevent client-side JavaScript from having access to the cookie
 JWT_AUTH_SAMESITE = "Lax"
 JWT_AUTH_COOKIE_DOMAIN = None
-JWT_AUTH_RETURN_EXPIRATION = False
+JWT_AUTH_RETURN_EXPIRATION = True
 JWT_AUTH_COOKIE_USE_CSRF = False
 JWT_AUTH_COOKIE_ENFORCE_CSRF_ON_UNAUTHENTICATED = False
+
+# set expiration times for JWT tokens
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
 
 
 # LLama Index Configuration
@@ -443,3 +531,18 @@ LLAMA_GGUFF_MODEL_PATH = env("LLAMA_GGUFF_MODEL_PATH")
 EMBED_MODEL_NAME = env("EMBED_MODEL_NAME")
 
 USE_GPU = env.int("USE_GPU")
+
+# Sentry Settings
+# settings.py
+# import sentry_sdk
+
+# sentry_sdk.init(
+#     dsn="https://4c4199f5099472936f54160c0de99544@o1085295.ingest.us.sentry.io/4507687936196608",
+#     # Set traces_sample_rate to 1.0 to capture 100%
+#     # of transactions for performance monitoring.
+#     traces_sample_rate=1.0,
+#     # Set profiles_sample_rate to 1.0 to profile 100%
+#     # of sampled transactions.
+#     # We recommend adjusting this value in production.
+#     profiles_sample_rate=1.0,
+# )
