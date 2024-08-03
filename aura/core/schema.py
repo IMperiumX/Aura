@@ -20,6 +20,25 @@ class RestAuthLoginView(OpenApiViewExtension):
             return TokenSerializer
 
 
+class RestAuthJWTSerializer(OpenApiSerializerExtension):
+    target_class = "aura.users.api.serializers.JWTSerializer"
+
+    def map_serializer(self, auto_schema, direction):
+        class Fixed(self.target_class):
+            from aura.users.api.serializers import UserDetailsSerializer
+
+            user = UserDetailsSerializer()
+
+        return auto_schema._map_serializer(Fixed, direction)
+
+
+class CookieTokenRefreshSerializerExtension(TokenRefreshSerializerExtension):
+    target_class = "aura.core.authentication.CookieTokenRefreshSerializer"
+    optional = True
+
+    def get_name(self):
+        return "TokenRefresh"
+
 
 class SimpleJWTCookieScheme(SimpleJWTScheme):
     """
