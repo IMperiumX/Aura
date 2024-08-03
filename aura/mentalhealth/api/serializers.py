@@ -15,6 +15,9 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
         view_name="api:users-detail", read_only=True
     )
 
+    recurrences_humanized = serializers.SerializerMethodField()
+    recurrences_dates = serializers.SerializerMethodField()
+
     class Meta:
         model = TherapySession
         fields = [
@@ -29,6 +32,8 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
             "ended_at",
             "created",
             "recurrences",  # custom serialzier
+            "recurrences_humanized",
+            "recurrences_dates",
             "therapist",
             "patient",
             "target_audience",
@@ -37,6 +42,9 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
             "id",
             "created",
         ]  # XXX: add `status` and make sure that test passes
+        extra_kwargs = {
+            "url": {"view_name": "api:sessions-detail", "lookup_field": "pk"},
+        }
 
     def validate(self, data):
         # Custom validation: Ensure started_at and ended_at are not set for pending sessions
@@ -47,15 +55,26 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
                 )
         return data
 
+    def get_recurrences_humanized(self, obj):
+        return [rule.to_text() for rule in obj.recurrences.rrules]
+
+    def get_recurrences_dates(self, obj):
+        from recurrence.base import Recurrence
+        return [date for date in obj.recurrences.occurrences()]
+
 
 class TherapyApproachSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = TherapyApproach
         fields = ["url", "id", "name", "description"]
 
+        extra_kwargs = {
+            "url": {"view_name": "api:approaches-detail", "lookup_field": "pk"},
+        }
+
 
 class ChatbotInteractionSerializer(serializers.HyperlinkedModelSerializer):
-    user = serializers.HyperlinkedRelatedField(view_name="user-detail", read_only=True)
+    user = serializers.HyperlinkedRelatedField(view_name="users-detail", read_only=True)
 
     class Meta:
         model = ChatbotInteraction
@@ -69,3 +88,9 @@ class ChatbotInteractionSerializer(serializers.HyperlinkedModelSerializer):
             "created",
             "user",
         ]
+        extra_kwargs = {
+            "url": {
+                "view_name": "api:chatbot-interactions-detail",
+                "lookup_field": "pk",
+            },
+        }
