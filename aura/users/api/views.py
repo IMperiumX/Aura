@@ -1,9 +1,3 @@
-from django.conf import settings as api_settings
-from django.contrib.auth import login as django_login
-from django.utils import timezone
-from django.utils.decorators import method_decorator
-from django.utils.module_loading import import_string
-from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
@@ -105,3 +99,18 @@ class UserViewSet(
             )
 
         return self.get_response()
+
+
+class PatientViewSet(
+    RetrieveModelMixin,
+    ListModelMixin,
+    UpdateModelMixin,
+    GenericViewSet,
+):
+    serializer_class = PatientSerializer
+    queryset = Patient.objects.all()
+    lookup_field = "pk"
+
+    def get_queryset(self, *args, **kwargs):
+        assert isinstance(self.request.user.id, int)
+        return self.queryset.filter(id=self.request.user.id)
