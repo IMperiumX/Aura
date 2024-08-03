@@ -5,20 +5,20 @@ from django.contrib.auth import authenticate
 from django.urls import exceptions as url_exceptions
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
+from rest_framework.authtoken.models import Token
 from rest_framework.serializers import CharField
+from rest_framework.serializers import DateTimeField
 from rest_framework.serializers import EmailField
 from rest_framework.serializers import HyperlinkedModelSerializer
 from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import Serializer
-from rest_framework.serializers import ValidationError
 from rest_framework.serializers import SerializerMethodField
-from rest_framework.serializers import DateTimeField
+from rest_framework.serializers import ValidationError
 
 from aura.users.models import Patient
 from aura.users.models import Review
 from aura.users.models import Therapist
 from aura.users.models import User
-from rest_framework.authtoken.models import Token
 
 
 class ReviewSerializer(HyperlinkedModelSerializer):
@@ -61,10 +61,10 @@ class TherapistSerializer(ModelSerializer):
 
 class PatientSerializer(HyperlinkedModelSerializer[Patient]):
     user = UserSerializer()
+
     class Meta:
         model = Patient
         exclude = ["embedding"]
-        # fields = ['url', 'id', 'name', 'email']
         extra_kwargs = {
             "url": {"view_name": "api:patients-detail", "lookup_field": "pk"},
         }
@@ -150,9 +150,9 @@ class LoginSerializer(Serializer):
             # which does not exist. This is the solution for it. See issue #264.
             try:
                 return self.get_auth_user_using_allauth(username, email, password)
-            except url_exceptions.NoReverseMatch:
+            except url_exceptions.NoReverseMatch as exc:
                 msg = _("Unable to log in with provided credentials.")
-                raise exceptions.ValidationError(msg)
+                raise exceptions.ValidationError(msg) from exc
         return self.get_auth_user_using_orm(username, email, password)
 
     @staticmethod
@@ -173,7 +173,8 @@ class LoginSerializer(Serializer):
                 verified=True,
             ).exists()
         ):
-            raise ValidationError(_("E-mail is not verified."))
+            msg = _("E-mail is not verified.")
+            raise ValidationError(msg)
 
     def validate(self, attrs):
         username = attrs.get("username")
@@ -220,8 +221,7 @@ class UserDetailsSerializer(ModelSerializer):
 
         from allauth.account.adapter import get_adapter
 
-        username = get_adapter().clean_username(username)
-        return username
+        return get_adapter().clean_username(username)
 
     class Meta:
         extra_fields = []
@@ -252,10 +252,7 @@ class JWTSerializer(Serializer):
         Required to allow using custom USER_DETAILS_SERIALIZER in
         JWTSerializer. Defining it here to avoid circular imports
         """
-        JWTUserDetailsSerializer = UserDetailsSerializer
-
-        user_data = JWTUserDetailsSerializer(obj["user"], context=self.context).data
-        return user_data
+        return UserDetailsSerializer(obj["user"], context=self.context).data
 
 
 class JWTSerializerWithExpiration(JWTSerializer):

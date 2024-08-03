@@ -1,11 +1,14 @@
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from model_utils.models import StatusModel, TimeStampedModel
-from pgvector.django import HnswIndex, VectorField
+from model_utils.models import StatusModel
+from model_utils.models import TimeStampedModel
+from pgvector.django import HnswIndex
+from pgvector.django import VectorField
 
 from aura.core.services import RecommendationEngine
 

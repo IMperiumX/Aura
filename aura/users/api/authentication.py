@@ -1,16 +1,20 @@
 import hashlib
 import secrets
-from typing import Any, ClassVar
+from typing import Any
+from typing import ClassVar
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.utils.encoding import force_str
-from rest_framework.authentication import BasicAuthentication, get_authorization_header
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.authentication import get_authorization_header
+from rest_framework.authtoken.models import Token as ApiToken
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
-from aura.users.models import User
-from rest_framework.authtoken.models import Token as ApiToken
 
+from aura.users.models import User
+
+# ruff: noqa: S105
 AURA_AUTH_TOKEN_PREFIX = "aura_"
 
 
@@ -25,7 +29,7 @@ class TokenStrLookupRequiredError(Exception):
 
 class QuietBasicAuthentication(BasicAuthentication):
     def authenticate_header(self, request: Request) -> str:
-        return 'xBasic realm="%s"' % self.www_authenticate_realm
+        return f'xBasic realm="{self.www_authenticate_realm}"'
 
     def transform_auth(
         self,
@@ -62,7 +66,8 @@ class StandardAuthentication(QuietBasicAuthentication):
         if len(auth) == 1:
             msg = "Invalid token header. No credentials provided."
             raise AuthenticationFailed(msg)
-        if len(auth) > 2:
+        valid_token_length = 2
+        if len(auth) > valid_token_length:
             msg = "Invalid token header. Token string should not contain spaces."
             raise AuthenticationFailed(msg)
 
@@ -71,6 +76,14 @@ class StandardAuthentication(QuietBasicAuthentication):
 
 class UserAuthTokenAuthentication(StandardAuthentication):
     token_name = b"bearer"
+
+    def _find_token(self, hashed_token):
+        # Try to find the token by its hashed value first
+        if self.use_hashed_token:
+            return ApiToken.objects.select_related("user", "application").get(
+                hashed_token=hashed_token,
+            )
+        raise TokenStrLookupRequiredError
 
     def _find_or_update_token_by_hash(self, token_str: str) -> ApiToken:
         """
@@ -90,28 +103,23 @@ class UserAuthTokenAuthentication(StandardAuthentication):
 
         rate = settings.API_TOKEN_USE_AND_UPDATE_HASH_RATE
         random_rate = secrets.randbelow(100) / 100
-        use_hashed_token = rate > random_rate
+        self.use_hashed_token = rate > random_rate
 
         try:
-            # Try to find the token by its hashed value first
-            if use_hashed_token:
-                return ApiToken.objects.select_related("user", "application").get(
-                    hashed_token=hashed_token,
-                )
-            raise TokenStrLookupRequiredError
+            api_token = self._find_token(hashed_token)
         except (ApiToken.DoesNotExist, TokenStrLookupRequiredError):
             try:
                 # If we can't find it by hash, use the plaintext string
                 api_token = ApiToken.objects.select_related("user", "application").get(
                     token=token_str,
                 )
-            except ApiToken.DoesNotExist:
+            except ApiToken.DoesNotExist as exc:
                 # If the token does not exist by plaintext either,
                 # it is not a valid token
                 msg = "Invalid token"
-                raise AuthenticationFailed(msg) from None
+                raise AuthenticationFailed(msg) from exc
             else:
-                if use_hashed_token:
+                if self.use_hashed_token:
                     # Update it with the hashed value if found by plaintext
                     api_token.hashed_token = hashed_token
                     api_token.save(update_fields=["hashed_token"])
@@ -124,7 +132,8 @@ class UserAuthTokenAuthentication(StandardAuthentication):
 
         # Technically, this will not match if auth length is not 2
         # However, we want to run into `authenticate()` in this case, as this throws a more helpful error message
-        if len(auth) != 2:
+        expected_auth_length = 2
+        if len(auth) != expected_auth_length:
             return True
 
         token_str = force_str(auth[1])
@@ -145,16 +154,20 @@ class UserAuthTokenAuthentication(StandardAuthentication):
             )
 
         if not token:
-            raise AuthenticationFailed("Invalid token")
+            msg = "Invalid token"
+            raise AuthenticationFailed(msg)
 
         if token.is_expired():
-            raise AuthenticationFailed("Token expired")
+            msg = "Token expired"
+            raise AuthenticationFailed(msg)
 
         if user and hasattr(user, "is_active") and not user.is_active:
-            raise AuthenticationFailed("User inactive or deleted")
+            msg = "User inactive or deleted"
+            raise AuthenticationFailed(msg)
 
         if application_is_inactive:
-            raise AuthenticationFailed("UserApplication inactive or deleted")
+            msg = "UserApplication inactive or deleted"
+            raise AuthenticationFailed(msg)
 
         return self.transform_auth(
             user,

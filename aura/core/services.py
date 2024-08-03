@@ -12,13 +12,16 @@
 import re
 
 from django.conf import settings
-from llama_index.core import (Document, Settings, StorageContext,
-                              VectorStoreIndex)
+from llama_index.core import Document
+from llama_index.core import Settings
+from llama_index.core import StorageContext
+from llama_index.core import VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.readers.database import DatabaseReader
 from llama_index.vector_stores.postgres import PGVectorStore
 from rest_framework.response import Response
+
 # open-source
 from transformers import AutoTokenizer
 
@@ -105,8 +108,8 @@ class RecommendationEngine:
 
     def _provide_context(self):
         from llama_index.llms.llama_cpp import LlamaCPP
-        from llama_index.llms.llama_cpp.llama_utils import (
-            completion_to_prompt, messages_to_prompt)
+        from llama_index.llms.llama_cpp.llama_utils import completion_to_prompt
+        from llama_index.llms.llama_cpp.llama_utils import messages_to_prompt
 
         Settings.text_splitter = SentenceSplitter(chunk_size=1024)
 

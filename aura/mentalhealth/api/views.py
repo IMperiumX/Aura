@@ -1,6 +1,7 @@
 from datetime import timezone
 
 from django.utils.translation import gettext_lazy as _
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import permissions
 from rest_framework import status
@@ -9,18 +10,19 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
-from django_filters.rest_framework import DjangoFilterBackend
+
+from aura.mentalhealth.api.filters import TherapySessionFilter
 from aura.mentalhealth.api.serializers import ChatbotInteractionSerializer
 from aura.mentalhealth.api.serializers import TherapyApproachSerializer
 from aura.mentalhealth.api.serializers import TherapySessionSerializer
 from aura.mentalhealth.models import ChatbotInteraction
 from aura.mentalhealth.models import TherapyApproach
 from aura.mentalhealth.models import TherapySession
-from aura.users.api.permissions import ReadOnly
 from aura.users.api.permissions import IsPatient
 from aura.users.api.permissions import IsTherapist
+from aura.users.api.permissions import ReadOnly
 
-from aura.mentalhealth.api.filters import TherapySessionFilter
+
 class TherapyApproachViewSet(viewsets.ModelViewSet):
     queryset = TherapyApproach.objects.all()
     serializer_class = TherapyApproachSerializer
@@ -105,7 +107,7 @@ class ChatbotInteractionViewSet(viewsets.ModelViewSet):
         recent = ChatbotInteraction.objects.filter(
             user=request.user,
         ).order_by(
-            "-created"
+            "-created",
         )[:5]
         serializer = self.get_serializer(recent, many=True)
         return Response(serializer.data)

@@ -1,16 +1,18 @@
 import factory
-from django.db import models
-from factory.django import DjangoModelFactory
-from aura.mentalhealth import models
 from django.utils import timezone
+from factory.django import DjangoModelFactory
+
+from aura.mentalhealth.models import ChatbotInteraction
+from aura.mentalhealth.models import TherapyApproach
+from aura.mentalhealth.models import TherapySession
 
 
 class TherapySessionFactory(DjangoModelFactory):
     class Meta:
-        model = models.TherapySession
+        model = TherapySession
 
-    session_type = models.TherapySession.SessionType.CHAT
-    status = models.TherapySession.SessionStatus.PENDING
+    session_type = TherapySession.SessionType.CHAT
+    status = TherapySession.SessionStatus.PENDING
     summary = factory.Faker("text")
     notes = factory.Faker("text")
     scheduled_at = factory.Faker(
@@ -18,7 +20,7 @@ class TherapySessionFactory(DjangoModelFactory):
         end_date="+30d",
         tzinfo=timezone.get_current_timezone(),
     )
-    target_audience = models.TherapySession.TargetAudienceType.INDIVIDUAL
+    target_audience = TherapySession.TargetAudienceType.INDIVIDUAL
     therapist = factory.SubFactory("aura.users.tests.factories.TherapistFactory")
     patient = factory.SubFactory("aura.users.tests.factories.PatientFactory")
     recurrences = "RRULE:FREQ=WEEKLY;COUNT=10"
@@ -26,7 +28,7 @@ class TherapySessionFactory(DjangoModelFactory):
 
 class TherapyApproachFactory(DjangoModelFactory):
     class Meta:
-        model = models.TherapyApproach
+        model = TherapyApproach
 
     name = factory.Faker("word")
     description = factory.Faker("text")
@@ -34,7 +36,7 @@ class TherapyApproachFactory(DjangoModelFactory):
 
 class ChatbotInteractionFactory(DjangoModelFactory):
     class Meta:
-        model = models.ChatbotInteraction
+        model = ChatbotInteraction
 
     message = factory.Faker("text")
     response = factory.Faker("text")

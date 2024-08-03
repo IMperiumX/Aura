@@ -1,13 +1,14 @@
 from django.conf import settings
-from rest_framework.routers import DefaultRouter, SimpleRouter
+from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
 from aura.assessments.api.views import HealthAssessmentViewSet
 from aura.assessments.api.views import HealthRiskPredictionViewSet
 from aura.mentalhealth.api.views import ChatbotInteractionViewSet
 from aura.mentalhealth.api.views import TherapyApproachViewSet
 from aura.mentalhealth.api.views import TherapySessionViewSet
-from aura.users.api.views import UserViewSet
 from aura.users.api.views import PatientViewSet
+from aura.users.api.views import UserViewSet
 
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 
@@ -19,7 +20,7 @@ router.register(
 router.register(
     "patients",
     PatientViewSet,
-    basename="patients"
+    basename="patients",
 )
 router.register(
     "assessments",

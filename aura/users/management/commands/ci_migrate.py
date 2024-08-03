@@ -1,8 +1,9 @@
 import click
 from django.conf import settings
 from django.core.management import call_command as dj_call_command
-from django.core.management.base import (BaseCommand, CommandError,
-                                         CommandParser)
+from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
+from django.core.management.base import CommandParser
 from django.db import connections
 from django.db.utils import ProgrammingError
 

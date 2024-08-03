@@ -3,28 +3,28 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from aura.assessments.api.serializers import HealthAssessmentSerializer
-from aura.users.tests.factories import PatientFactory, UserFactory
-from aura.assessments.tests.factories import HealthAssessmentFactory
 from aura.assessments.models import HealthAssessment
+from aura.assessments.tests.factories import HealthAssessmentFactory
+from aura.users.tests.factories import PatientFactory
+from aura.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestHealthAssessmentViewSet:
-    @pytest.fixture
+    @pytest.fixture()
     def api_client(self):
         return APIClient()
 
-    @pytest.fixture
+    @pytest.fixture()
     def user(self):
         return UserFactory()
 
-    @pytest.fixture
+    @pytest.fixture()
     def patient_profile(self, user):
         return PatientFactory(user=user)
 
-    @pytest.fixture
+    @pytest.fixture()
     def health_assessment(self, patient_profile):
         return HealthAssessmentFactory(patient=patient_profile)
 

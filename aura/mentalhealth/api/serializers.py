@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from aura.mentalhealth.models import ChatbotInteraction, TherapyApproach, TherapySession
+from aura.mentalhealth.models import ChatbotInteraction
+from aura.mentalhealth.models import TherapyApproach
+from aura.mentalhealth.models import TherapySession
 
 User = get_user_model()
 
@@ -9,10 +11,12 @@ User = get_user_model()
 class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
     # TODO: update to profile related detials
     therapist = serializers.HyperlinkedRelatedField(
-        view_name="api:users-detail", read_only=True
+        view_name="api:users-detail",
+        read_only=True,
     )
     patient = serializers.HyperlinkedRelatedField(
-        view_name="api:users-detail", read_only=True
+        view_name="api:users-detail",
+        read_only=True,
     )
 
     recurrences_humanized = serializers.SerializerMethodField()
@@ -50,17 +54,15 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
         # Custom validation: Ensure started_at and ended_at are not set for pending sessions
         if data.get("status") == TherapySession.SessionStatus.PENDING:
             if data.get("started_at") or data.get("ended_at"):
-                raise serializers.ValidationError(
-                    "Started and ended times cannot be set for pending sessions."
-                )
+                msg = "Started and ended times cannot be set for pending sessions."
+                raise serializers.ValidationError(msg)
         return data
 
     def get_recurrences_humanized(self, obj):
         return [rule.to_text() for rule in obj.recurrences.rrules]
 
     def get_recurrences_dates(self, obj):
-        from recurrence.base import Recurrence
-        return [date for date in obj.recurrences.occurrences()]
+        return list(obj.recurrences.occurrences())
 
 
 class TherapyApproachSerializer(serializers.HyperlinkedModelSerializer):

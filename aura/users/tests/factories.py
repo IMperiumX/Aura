@@ -2,7 +2,9 @@ from collections.abc import Sequence
 from typing import Any
 
 from django.utils import timezone
-from factory import Faker, SubFactory, post_generation
+from factory import Faker
+from factory import SubFactory
+from factory import post_generation
 from factory.django import DjangoModelFactory
 
 
@@ -20,10 +22,10 @@ class UserFactory(DjangoModelFactory):
     @post_generation
     def password(
         self,
-        create: bool,
+        create,
         extracted: Sequence[Any],
         **kwargs,
-    ):  # noqa: FBT001
+    ):
         password = (
             extracted
             if extracted

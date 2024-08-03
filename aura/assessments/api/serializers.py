@@ -47,7 +47,8 @@ class HealthAssessmentSerializer(ModelSerializer[HealthAssessment]):
     def validate_responses(self, value):
         # Add custom validation for responses JSON field
         if not isinstance(value, dict):
-            raise ValidationError("Responses must be a JSON object")
+            msg = "Responses must be a JSON object"
+            raise ValidationError(msg)
         return value
 
 

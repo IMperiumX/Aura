@@ -39,8 +39,8 @@ class LoginMixin:
         django_login(self.request, self.user)
 
     def get_response_serializer(self):
-        from aura.users.api.serializers import JWTSerializerWithExpiration
         from aura.users.api.serializers import JWTSerializer
+        from aura.users.api.serializers import JWTSerializerWithExpiration
         from aura.users.api.serializers import TokenSerializer
 
         if api_settings.USE_JWT:
@@ -57,8 +57,9 @@ class LoginMixin:
         serializer_class = self.get_response_serializer()
 
         if api_settings.USE_JWT:
-            from rest_framework_simplejwt.settings import api_settings as jwt_settings
             from django.conf import settings
+            from rest_framework_simplejwt.settings import api_settings as jwt_settings
+
             access_token_expiration = (
                 timezone.now() + jwt_settings.ACCESS_TOKEN_LIFETIME
             )

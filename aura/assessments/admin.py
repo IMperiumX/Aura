@@ -1,4 +1,5 @@
-from django.contrib import admin, messages
+from django.contrib import admin
+from django.contrib import messages
 from django.db.models import Q
 from django.utils.translation import ngettext
 

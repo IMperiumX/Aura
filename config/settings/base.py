@@ -1,11 +1,13 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
+
 from datetime import timedelta
 from pathlib import Path
 
 import environ
 import ldap
-from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
+from django_auth_ldap.config import GroupOfNamesType
+from django_auth_ldap.config import LDAPSearch
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # aura/
@@ -276,84 +278,6 @@ LOGGING = {
     "root": {"level": "INFO", "handlers": ["console"]},
 }
 
-{
-    "version": 1,
-    "disable_existing_loggers": True,
-    "handlers": {
-        "null": {"class": "logging.NullHandler"},
-        "console": {"class": "sentry.logging.handlers.StructLogHandler"},
-        # This `internal` logger is separate from the `Logging` integration in the SDK. Since
-        # we have this to record events, in `sdk.py` we set the integration's `event_level` to
-        # None, so that it records breadcrumbs for all log calls but doesn't send any events.
-        "internal": {
-            "level": "ERROR",
-            "class": "sentry_sdk.integrations.logging.EventHandler",
-        },
-        "metrics": {
-            "level": "WARNING",
-            "filters": ["important_django_request"],
-            "class": "sentry.logging.handlers.MetricsLogHandler",
-        },
-        "django_internal": {
-            "level": "WARNING",
-            "filters": ["important_django_request"],
-            "class": "sentry_sdk.integrations.logging.EventHandler",
-        },
-    },
-    "filters": {
-        "important_django_request": {
-            "()": "sentry.logging.handlers.MessageContainsFilter",
-            "contains": ["CSRF"],
-        }
-    },
-    "root": {"level": "NOTSET", "handlers": ["console", "internal"]},
-    # LOGGING.overridable is a list of loggers including root that will change
-    # based on the overridden level defined above.
-    "overridable": ["celery", "sentry"],
-    "loggers": {
-        "celery": {"level": "WARNING"},
-        "sentry": {"level": "INFO"},
-        "sentry_plugins": {"level": "INFO"},
-        "sentry.files": {"level": "WARNING"},
-        "sentry.minidumps": {"handlers": ["internal"], "propagate": False},
-        "sentry.reprocessing": {"handlers": ["internal"], "propagate": False},
-        "sentry.interfaces": {"handlers": ["internal"], "propagate": False},
-        # This only needs to go to Sentry for now.
-        "sentry.similarity": {"handlers": ["internal"], "propagate": False},
-        "sentry.errors": {"handlers": ["console"], "propagate": False},
-        "sentry_sdk.errors": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "sentry.rules": {"handlers": ["console"], "propagate": False},
-        "sentry.profiles": {"level": "INFO"},
-        "multiprocessing": {
-            "handlers": ["console"],
-            # https://github.com/celery/celery/commit/597a6b1f3359065ff6dbabce7237f86b866313df
-            # This commit has not been rolled into any release and leads to a
-            # large amount of errors when working with postgres.
-            "level": "CRITICAL",
-            "propagate": False,
-        },
-        "celery.worker.job": {"handlers": ["console"], "propagate": False},
-        "arroyo": {"level": "INFO", "handlers": ["console"], "propagate": False},
-        "static_compiler": {"level": "INFO"},
-        "django.request": {
-            "level": "WARNING",
-            "handlers": ["console", "metrics", "django_internal"],
-            "propagate": False,
-        },
-        "toronado": {"level": "ERROR", "handlers": ["null"], "propagate": False},
-        "urllib3.connectionpool": {
-            "level": "ERROR",
-            "handlers": ["console"],
-            "propagate": False,
-        },
-        "boto3": {"level": "WARNING", "handlers": ["console"], "propagate": False},
-        "botocore": {"level": "WARNING", "handlers": ["console"], "propagate": False},
-    },
-}
 
 # Celery
 # ------------------------------------------------------------------------------
