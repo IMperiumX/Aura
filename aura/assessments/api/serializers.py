@@ -1,11 +1,13 @@
-from rest_framework import serializers
+from rest_framework.serializers import HyperlinkedModelSerializer
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ValidationError
 
 from aura.assessments.models import HealthAssessment
 from aura.assessments.models import HealthRiskPrediction
 from aura.users.api.serializers import PatientSerializer
 
 
-class HealthRiskPredictionSerializer(serializers.HyperlinkedModelSerializer):
+class HealthRiskPredictionSerializer(HyperlinkedModelSerializer[HealthRiskPrediction]):
     class Meta:
         model = HealthRiskPrediction
         fields = [
@@ -16,9 +18,12 @@ class HealthRiskPredictionSerializer(serializers.HyperlinkedModelSerializer):
             "confidence_level",
             "source",
         ]
+        extra_kwargs = {
+            "url": {"view_name": "api:predictions-detail", "lookup_field": "pk"},
+        }
 
 
-class HealthAssessmentSerializer(serializers.ModelSerializer):
+class HealthAssessmentSerializer(ModelSerializer[HealthAssessment]):
     patient = PatientSerializer(read_only=True)
     health_risk_predictions = HealthRiskPredictionSerializer(many=True, read_only=True)
 
@@ -42,11 +47,11 @@ class HealthAssessmentSerializer(serializers.ModelSerializer):
     def validate_responses(self, value):
         # Add custom validation for responses JSON field
         if not isinstance(value, dict):
-            raise serializers.ValidationError("Responses must be a JSON object")
+            raise ValidationError("Responses must be a JSON object")
         return value
 
 
-class HealthAssessmentCreateSerializer(serializers.ModelSerializer):
+class HealthAssessmentCreateSerializer(ModelSerializer):
     class Meta:
         model = HealthAssessment
         fields = ["assessment_type", "responses"]
