@@ -1,10 +1,9 @@
-from django.forms import DateInput
-from django_filters import rest_framework as filters
 from datetime import datetime
+
 import recurrence
+from django_filters import rest_framework as filters
 
 from aura.mentalhealth.models import TherapySession
-
 
 # XXX: recuureces is not a field in TherapySession model we can use ORM agains!!
 """
@@ -40,7 +39,6 @@ class RecurrenceFilter(filters.DateFromToRangeFilter):
                 IDs.append(obj.id)
         # Filter rec available on the given date
         return qs.filter(id__in=IDs)
-
 
 
 class RecurrenceDayOfWeekFilter(filters.DateFromToRangeFilter):
@@ -93,7 +91,7 @@ class TherapySessionFilter(filters.FilterSet):
             ("weekly", "Weekly"),
             ("monthly", "Monthly"),
             ("yearly", "Yearly"),
-        ]
+        ],
     )
 
     class Meta:

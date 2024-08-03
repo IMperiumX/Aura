@@ -1,15 +1,18 @@
 import hashlib
 import secrets
-from typing import Any, ClassVar
+from typing import Any
+from typing import ClassVar
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.utils.encoding import force_str
-from rest_framework.authentication import BasicAuthentication, get_authorization_header
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.authentication import get_authorization_header
+from rest_framework.authtoken.models import Token as ApiToken
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
+
 from aura.users.models import User
-from rest_framework.authtoken.models import Token as ApiToken
 
 AURA_AUTH_TOKEN_PREFIX = "aura_"
 

@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.contrib.rest_framework_simplejwt import SimpleJWTScheme
 from drf_spectacular.contrib.rest_framework_simplejwt import (
-    SimpleJWTScheme,
     TokenRefreshSerializerExtension,
 )
 from drf_spectacular.drainage import warn
-from drf_spectacular.extensions import OpenApiSerializerExtension, OpenApiViewExtension
+from drf_spectacular.extensions import OpenApiSerializerExtension
+from drf_spectacular.extensions import OpenApiViewExtension
 from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.utils import extend_schema
 
@@ -22,7 +23,8 @@ class RestAuthLoginView(OpenApiViewExtension):
         return Fixed
 
     def get_token_serializer_class(self):
-        from aura.users.api.serializers import JWTSerializer, TokenSerializer
+        from aura.users.api.serializers import JWTSerializer
+        from aura.users.api.serializers import TokenSerializer
 
         use_jwt = settings.USE_JWT
 
@@ -74,11 +76,11 @@ class SimpleJWTCookieScheme(SimpleJWTScheme):
             cookie_name = "jwt-auth"
             warn(
                 f'"JWT_AUTH_COOKIE" setting required for JWTCookieAuthentication. '
-                f"defaulting to {cookie_name}"
+                f"defaulting to {cookie_name}",
             )
 
         jwt_token_definition = super().get_security_definition(auto_schema) | {
-            "description": _("JWT Token from the header (no prefix)")
+            "description": _("JWT Token from the header (no prefix)"),
         }
         return [
             jwt_token_definition,  # JWT from header

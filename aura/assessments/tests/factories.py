@@ -1,8 +1,7 @@
 import factory
-from factory.django import DjangoModelFactory
 
-from aura.assessments.models import HealthAssessment, HealthRiskPrediction
-from aura.users.tests.factories import PatientFactory
+from aura.assessments.models import HealthAssessment
+from aura.assessments.models import HealthRiskPrediction
 
 
 class HealthAssessmentFactory(factory.django.DjangoModelFactory):

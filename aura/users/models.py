@@ -1,20 +1,26 @@
 from collections.abc import Callable
 from decimal import Decimal
 from typing import ClassVar
+
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser, Group
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import Group
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
+from django_lifecycle import AFTER_CREATE
+from django_lifecycle import LifecycleModelMixin
+from django_lifecycle import hook
 from model_utils.models import TimeStampedModel
-from pgvector.django import HnswIndex, VectorField
+from pgvector.django import HnswIndex
+from pgvector.django import VectorField
 from taggit.managers import TaggableManager
+
+from aura.users.mixins import AuditModel
 
 from .fields import AutoOneToOneField
 from .managers import UserManager
-from aura.users.mixins import AuditModel
 
 
 def sane_repr(*attrs: str) -> Callable[[object], str]:
@@ -151,6 +157,7 @@ class AbstractProfile(LifecycleModelMixin, AuditModel):
         elif hasattr(self, "coach_profile"):
             group, _ = Group.objects.get_or_create(name="Coaches")
             self.groups.add(group)
+
 
 class Patient(AbstractProfile):
     """A model to represent a patient"""

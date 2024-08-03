@@ -5,20 +5,20 @@ from django.contrib.auth import authenticate
 from django.urls import exceptions as url_exceptions
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
+from rest_framework.authtoken.models import Token
 from rest_framework.serializers import CharField
+from rest_framework.serializers import DateTimeField
 from rest_framework.serializers import EmailField
 from rest_framework.serializers import HyperlinkedModelSerializer
 from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import Serializer
-from rest_framework.serializers import ValidationError
 from rest_framework.serializers import SerializerMethodField
-from rest_framework.serializers import DateTimeField
+from rest_framework.serializers import ValidationError
 
 from aura.users.models import Patient
 from aura.users.models import Review
 from aura.users.models import Therapist
 from aura.users.models import User
-from rest_framework.authtoken.models import Token
 
 
 class ReviewSerializer(HyperlinkedModelSerializer):
@@ -61,6 +61,7 @@ class TherapistSerializer(ModelSerializer):
 
 class PatientSerializer(HyperlinkedModelSerializer[Patient]):
     user = UserSerializer()
+
     class Meta:
         model = Patient
         exclude = ["embedding"]

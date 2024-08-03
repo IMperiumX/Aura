@@ -1,11 +1,13 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
+
 from datetime import timedelta
 from pathlib import Path
 
 import environ
 import ldap
-from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
+from django_auth_ldap.config import GroupOfNamesType
+from django_auth_ldap.config import LDAPSearch
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # aura/

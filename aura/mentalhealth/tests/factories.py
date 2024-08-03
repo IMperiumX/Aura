@@ -1,8 +1,9 @@
 import factory
 from django.db import models
-from factory.django import DjangoModelFactory
-from aura.mentalhealth import models
 from django.utils import timezone
+from factory.django import DjangoModelFactory
+
+from aura.mentalhealth import models
 
 
 class TherapySessionFactory(DjangoModelFactory):
