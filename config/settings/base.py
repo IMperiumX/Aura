@@ -420,9 +420,11 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
         "aura.core.authentication.JWTCookieAuthentication",
     ),
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "URL_FIELD_NAME": "url",
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
