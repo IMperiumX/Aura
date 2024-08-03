@@ -194,3 +194,74 @@ class LoginSerializer(Serializer):
 
         attrs["user"] = user
         return attrs
+
+
+class TokenSerializer(ModelSerializer):
+    """
+    Serializer for Token model.
+    """
+
+    class Meta:
+        model = Token
+        fields = ("key",)
+
+
+class UserDetailsSerializer(ModelSerializer):
+    """
+    User model w/o password
+    """
+
+    @staticmethod
+    def validate_username(username):
+        if "allauth.account" not in settings.INSTALLED_APPS:
+            # We don't need to call the all-auth
+            # username validator unless its installed
+            return username
+
+        from allauth.account.adapter import get_adapter
+
+        username = get_adapter().clean_username(username)
+        return username
+
+    class Meta:
+        extra_fields = []
+        if hasattr(User, "USERNAME_FIELD"):
+            extra_fields.append(User.USERNAME_FIELD)
+        if hasattr(User, "EMAIL_FIELD"):
+            extra_fields.append(User.EMAIL_FIELD)
+        if hasattr(User, "first_name"):
+            extra_fields.append("first_name")
+        if hasattr(User, "last_name"):
+            extra_fields.append("last_name")
+        model = User
+        fields = ("pk", *extra_fields)
+        read_only_fields = ("email",)
+
+
+class JWTSerializer(Serializer):
+    """
+    Serializer for JWT authentication.
+    """
+
+    access = CharField()
+    refresh = CharField()
+    user = SerializerMethodField()
+
+    def get_user(self, obj):
+        """
+        Required to allow using custom USER_DETAILS_SERIALIZER in
+        JWTSerializer. Defining it here to avoid circular imports
+        """
+        JWTUserDetailsSerializer = UserDetailsSerializer
+
+        user_data = JWTUserDetailsSerializer(obj["user"], context=self.context).data
+        return user_data
+
+
+class JWTSerializerWithExpiration(JWTSerializer):
+    """
+    Serializer for JWT authentication with expiration times.
+    """
+
+    access_expiration = DateTimeField()
+    refresh_expiration = DateTimeField()
