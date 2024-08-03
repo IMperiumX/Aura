@@ -434,8 +434,15 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "aura API",
     "DESCRIPTION": "Documentation of API endpoints of aura",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SCHEMA_PATH_PREFIX": "/api/",
+    "SWAGGER_UI_CONFIG": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "filter": True,
+        "defaultModelsExpandDepth": 2,
+    },
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
