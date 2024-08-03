@@ -1,3 +1,15 @@
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from drf_spectacular.contrib.rest_framework_simplejwt import (
+    SimpleJWTScheme,
+    TokenRefreshSerializerExtension,
+)
+from drf_spectacular.drainage import warn
+from drf_spectacular.extensions import OpenApiSerializerExtension, OpenApiViewExtension
+from drf_spectacular.openapi import AutoSchema
+from drf_spectacular.utils import extend_schema
+
+
 class RestAuthLoginView(OpenApiViewExtension):
     target_class = "dj_rest_auth.views.LoginView"
 
@@ -51,3 +63,28 @@ class SimpleJWTCookieScheme(SimpleJWTScheme):
     optional = True
     name = ["jwtHeaderAuth", "jwtCookieAuth"]  # type: ignore
 
+    def get_security_requirement(self, auto_schema):
+        return [{name: []} for name in self.name]
+
+    def get_security_definition(self, auto_schema: AutoSchema):
+        from django.conf import settings
+
+        cookie_name = settings.JWT_AUTH_COOKIE
+        if not cookie_name:
+            cookie_name = "jwt-auth"
+            warn(
+                f'"JWT_AUTH_COOKIE" setting required for JWTCookieAuthentication. '
+                f"defaulting to {cookie_name}"
+            )
+
+        jwt_token_definition = super().get_security_definition(auto_schema) | {
+            "description": _("JWT Token from the header (no prefix)")
+        }
+        return [
+            jwt_token_definition,  # JWT from header
+            {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": cookie_name,
+            },
+        ]
