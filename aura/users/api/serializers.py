@@ -1,22 +1,24 @@
 import contextlib
 
 from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import authenticate
 from django.urls import exceptions as url_exceptions
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
-from rest_framework.serializers import (
-    CharField,
-    EmailField,
-    HyperlinkedModelSerializer,
-    ModelSerializer,
-    Serializer,
-    ValidationError,
-)
+from rest_framework.serializers import CharField
+from rest_framework.serializers import EmailField
+from rest_framework.serializers import HyperlinkedModelSerializer
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import Serializer
+from rest_framework.serializers import ValidationError
+from rest_framework.serializers import SerializerMethodField
+from rest_framework.serializers import DateTimeField
 
-from aura.users.models import Patient, Review, Therapist, User
-
-UserModel = get_user_model()
+from aura.users.models import Patient
+from aura.users.models import Review
+from aura.users.models import Therapist
+from aura.users.models import User
+from rest_framework.authtoken.models import Token
 
 
 class ReviewSerializer(HyperlinkedModelSerializer):
@@ -47,7 +49,7 @@ class UserSerializer(HyperlinkedModelSerializer[User]):
         ]
 
         extra_kwargs = {
-            "url": {"view_name": "api:user-detail", "lookup_field": "pk"},
+            "url": {"view_name": "api:users-detail", "lookup_field": "pk"},
         }
 
 
@@ -57,11 +59,15 @@ class TherapistSerializer(ModelSerializer):
         exclude = ["embedding"]
 
 
-class PatientSerializer(HyperlinkedModelSerializer):
+class PatientSerializer(HyperlinkedModelSerializer[Patient]):
+    user = UserSerializer()
     class Meta:
         model = Patient
         exclude = ["embedding"]
         # fields = ['url', 'id', 'name', 'email']
+        extra_kwargs = {
+            "url": {"view_name": "api:patients-detail", "lookup_field": "pk"},
+        }
 
 
 class LoginSerializer(Serializer):
@@ -123,8 +129,8 @@ class LoginSerializer(Serializer):
 
     def get_auth_user_using_orm(self, username, email, password):
         if email:
-            with contextlib.suppress(UserModel.DoesNotExist):
-                username = UserModel.objects.get(email__iexact=email).get_username()
+            with contextlib.suppress(User.DoesNotExist):
+                username = User.objects.get(email__iexact=email).get_username()
 
         if username:
             return self._validate_username_email(username, "", password)

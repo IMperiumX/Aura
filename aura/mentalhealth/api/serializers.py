@@ -9,10 +9,10 @@ User = get_user_model()
 class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
     # TODO: update to profile related detials
     therapist = serializers.HyperlinkedRelatedField(
-        view_name="user-detail", read_only=True
+        view_name="api:users-detail", read_only=True
     )
     patient = serializers.HyperlinkedRelatedField(
-        view_name="user-detail", read_only=True
+        view_name="api:users-detail", read_only=True
     )
 
     class Meta:
