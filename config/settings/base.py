@@ -544,15 +544,3 @@ USE_GPU = env.int("USE_GPU")
 #     # We recommend adjusting this value in production.
 #     profiles_sample_rate=1.0,
 # )
-
-
-# Internal metrics
-AURA_METRICS_BACKEND = "aura.core.utils.DummyMetricsBackend"
-AURA_METRICS_OPTIONS = {}
-AURA_METRICS_SAMPLE_RATE = 1.0
-AURA_METRICS_PREFIX = "aura."
-AURA_METRICS_SKIP_INTERNAL_PREFIXES: list[
-    str
-] = []  # Order this by most frequent prefixes.
-AURA_METRICS_SKIP_ALL_INTERNAL = False
-AURA_METRICS_DISALLOW_BAD_TAGS = "development"
