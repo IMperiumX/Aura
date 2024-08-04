@@ -278,3 +278,6 @@ aura/media/
 .pytest_cache/
 
 .env
+
+# Pycharm files
+.idea/
