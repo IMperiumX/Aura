@@ -5,6 +5,9 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import AFTER_UPDATE
+from django_lifecycle import LifecycleModel
+from django_lifecycle import hook
 from model_utils.models import StatusModel
 from model_utils.models import TimeStampedModel
 from pgvector.django import HnswIndex
@@ -83,6 +86,13 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         dimensions=settings.EMBEDDING_MODEL_DIMENSIONS,
         null=True,
     )
+    questions = models.ManyToManyField(
+        "assessments.Question",
+        related_name="health_assessments",
+        verbose_name="Questions",
+        help_text=_("Questions in the health assessment"),
+        through="assessments.HealthAssessmentQuestion",
+    )
 
     class Meta:
         verbose_name = "Health Assessment"
@@ -102,6 +112,50 @@ class HealthAssessment(StatusModel, TimeStampedModel):
 
     def get_therapist_recommendations(self):
         return RecommendationEngine().get_therapist_recommendations(self)
+
+
+class Question(LifecycleModel):
+    """A model to represent a question in a health assessment"""
+
+    text = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.text
+
+    @hook(AFTER_UPDATE, when="text", has_changed=True)
+    def update_assessment(self):
+        # Set the assessment to null
+        self.assessment = None
+        self.save()
+
+
+class HealthAssessmentQuestion(models.Model):
+    """A model to represent the relationship between a health assessment and a question"""
+
+    question = models.ForeignKey(
+        "assessments.Question",
+        on_delete=models.CASCADE,
+        related_name="health_assessment_questions",
+        verbose_name="Question",
+    )
+    health_assessment = models.ForeignKey(
+        "assessments.HealthAssessment",
+        on_delete=models.SET_NULL,
+        related_name="health_assessment_questions",
+        verbose_name="Health Assessment",
+        null=True,
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text=_("Order of the question in the assessment."),
+    )
+
+    class Meta:
+        verbose_name = "Health Assessment Question"
+        verbose_name_plural = "Health Assessment Questions"
+
+    def __str__(self):
+        return f"# {self.order}: {self.health_assessment} - {self.question}"
 
 
 class HealthRiskPrediction(TimeStampedModel):
