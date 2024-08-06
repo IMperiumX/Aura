@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import ChatbotInteraction
+from .models import Disorder
 from .models import TherapySession
 
 
@@ -47,3 +48,14 @@ class ChatbotInteractionAdmin(admin.ModelAdmin):
     )
     list_filter = ("interaction_date", "created", "user")
     date_hierarchy = "created"
+
+
+@admin.register(Disorder)
+class DisorderAdmin(admin.ModelAdmin):
+    """ """
+
+    list_display = (
+        "id",
+        "name",
+        "description",
+    )

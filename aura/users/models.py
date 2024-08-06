@@ -176,6 +176,13 @@ class Patient(AbstractProfile):
     weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)")
     height = models.FloatField(null=True, blank=True, verbose_name="Height (cm)")
 
+    # relations
+    disorders = models.ManyToManyField(
+        "mentalhealth.Disorder",
+        related_name="patients",
+        verbose_name="Disorders",
+    )
+
     class Meta:
         """ """
 

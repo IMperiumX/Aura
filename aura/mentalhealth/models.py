@@ -148,3 +148,41 @@ class ChatbotInteraction(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user}"
+
+
+class Disorder(models.Model):
+    """
+    A model to represent a disorder.
+    """
+
+    class DisorderType(models.TextChoices):
+        """
+        Choices for the type of disorder.
+        """
+
+        """mental disorders, physical disorders, genetic disorders, emotional and behavioral disorders, and functional disorders.[13]"""
+        MENTAL = "mental", "Mental"
+        PHYSICAL = "physical", "Physical"
+        GENETIC = "genetic", "Genetic"
+        EMOTIONAL = "emotional", "Emotional"
+        BEHAVIORAL = "behavioral", "Behavioral"
+        FUNCTIONAL = "functional", "Functional"
+
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+    )
+    type = models.CharField(
+        max_length=10,
+        choices=DisorderType.choices,
+        verbose_name="Disorder Type",
+    )
+    signs_and_symptoms = models.TextField()
+    description = models.TextField()
+    treatment = models.TextField()
+    symptoms = models.TextField()
+    causes = models.TextField()
+    prevention = models.TextField()
+
+    def __str__(self):
+        return f"{self.name} - {self.type}"

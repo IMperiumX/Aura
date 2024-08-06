@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from aura.mentalhealth.models import ChatbotInteraction
+from aura.mentalhealth.models import Disorder
 from aura.mentalhealth.models import TherapyApproach
 from aura.mentalhealth.models import TherapySession
 
@@ -95,4 +96,14 @@ class ChatbotInteractionSerializer(serializers.HyperlinkedModelSerializer):
                 "view_name": "api:chatbot-interactions-detail",
                 "lookup_field": "pk",
             },
+        }
+
+
+class DisorderSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Disorder
+        fields = ["url", "id", "name", "description"]
+
+        extra_kwargs = {
+            "url": {"view_name": "api:disorders-detail", "lookup_field": "pk"},
         }

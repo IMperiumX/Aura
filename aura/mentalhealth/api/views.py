@@ -13,9 +13,11 @@ from rest_framework.status import HTTP_204_NO_CONTENT
 
 from aura.mentalhealth.api.filters import TherapySessionFilter
 from aura.mentalhealth.api.serializers import ChatbotInteractionSerializer
+from aura.mentalhealth.api.serializers import DisorderSerializer
 from aura.mentalhealth.api.serializers import TherapyApproachSerializer
 from aura.mentalhealth.api.serializers import TherapySessionSerializer
 from aura.mentalhealth.models import ChatbotInteraction
+from aura.mentalhealth.models import Disorder
 from aura.mentalhealth.models import TherapyApproach
 from aura.mentalhealth.models import TherapySession
 from aura.users.api.permissions import IsPatient
@@ -111,3 +113,11 @@ class ChatbotInteractionViewSet(viewsets.ModelViewSet):
         )[:5]
         serializer = self.get_serializer(recent, many=True)
         return Response(serializer.data)
+
+
+class DisorderViewSet(viewsets.ModelViewSet):
+    queryset = Disorder.objects.all()
+    serializer_class = DisorderSerializer
+    permission_classes = [IsAuthenticated | ReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["name"]
