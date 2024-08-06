@@ -138,20 +138,6 @@ class PatientAdmin(admin.ModelAdmin):
         "avatar_url",
         "bio",
         "date_of_birth",
-        "gender",
-        "user",
-        "medical_record_number",
-        "insurance_provider",
-        "insurance_policy_number",
-        "emergency_contact_name",
-        "emergency_contact_phone",
-        "allergies",
-        "medical_conditions",
-        "medical_history",
-        "current_medications",
-        "health_data",
-        "preferences",
-        "weight",
         "height",
     )
     list_filter = (
@@ -162,6 +148,8 @@ class PatientAdmin(admin.ModelAdmin):
         "date_of_birth",
         "user",
     )
+    readonly_fields = ["embedding", "created_by", "updated_by"]
+    filter_horizontal = ["disorders"]
 
 
 @admin.register(Therapist)
