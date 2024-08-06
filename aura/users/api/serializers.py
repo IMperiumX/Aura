@@ -69,6 +69,8 @@ class PatientSerializer(HyperlinkedModelSerializer[Patient]):
         exclude = ["embedding"]
         extra_kwargs = {
             "url": {"view_name": "api:patients-detail", "lookup_field": "pk"},
+            "created_by": {"view_name": "api:users-detail"},
+            "updated_by": {"view_name": "api:users-detail"},
         }
 
 
