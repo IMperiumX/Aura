@@ -13,14 +13,16 @@ License: Apache Software License 2.0
 
 ## Features
 
+- **RESTful API**: Build and deploy a RESTful API for health and wellness services using Django REST framework.
+- **Access Control**: Implement role-based access control to manage user permissions and data privacy.
 - **Personalized Health Assessments**: Complete detailed health assessments to receive tailored recommendations for nutrition, fitness, mental health, and overall wellness.
 - **Virtual Health Coaches**: Connect with certified health coaches, nutritionists, fitness trainers, and mental health professionals for personalized guidance and support.
-- **Interactive Workouts**: Access a library of interactive workout videos, live fitness classes, and personalized exercise routines suited to individual goals and fitness levels.
-- **Nutrition Planning**: Utilize meal planning tools, healthy recipes, dietary recommendations, and nutritional guidance to make informed food choices.
 - **Mental Health Support**: Engage with mindfulness exercises, stress management techniques, and mental health resources to promote emotional well-being and reduce anxiety.
-- **Community Support**: Join a supportive online community to share experiences, participate in challenges, and motivate each other on your wellness journeys.
-- **Progress Tracking**: Track health metrics, set goals, monitor progress, and celebrate achievements to stay motivated and accountable.
-- **Integration with Wearable Devices**: Sync with popular wearable devices and health apps to track activity levels, sleep patterns, heart rate, and other vital health data for a holistic view of wellness.
+- **User Management** with multiple roles (Patient, Therapist, etc..): Manage user accounts, roles, and permissions for patients, therapists, and administrators.
+- **JWT** and **LDAP** Authentication: Secure user authentication and authorization using JSON Web Tokens and LDAP.
+- **Therapy Session Management**: Schedule, manage, and join virtual therapy sessions with mental health professionals.
+- **Recommendation Engine** using RAG (Retrieval-Augmented Generation): Generate personalized health and wellness recommendations using RAG.
+- **Admin Interface** for easy management: Manage users, health assessments, therapy sessions, and recommendations using the admin interface.
 
 ## Settings
 
