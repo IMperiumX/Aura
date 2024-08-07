@@ -1,6 +1,8 @@
 # Aura
 
-<img style="text-align: center;" src="https://github.com/IMperiumX/logos/blob/main/Aura/LOGO.png?raw=true" width=30% height=30%></img>
+<p align="center">
+      <img src="https://github.com/IMperiumX/logos/blob/main/Aura/LOGO.png?raw=true" width=30% height=30%></img>
+</p>
 
 The virtual health and wellness platform aims to provide a comprehensive solution for individuals seeking personalized health and wellness guidance, support, and resources in a convenient digital format.
 
