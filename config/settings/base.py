@@ -103,6 +103,7 @@ LOCAL_APPS = [
     # Your stuff: custom apps go here
     "aura.mentalhealth",
     "aura.assessments",
+    "aura.communication",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -470,3 +471,5 @@ USE_GPU = env.int("USE_GPU")
 #     # We recommend adjusting this value in production.
 #     profiles_sample_rate=1.0,
 # )
+
+DATA_RETENTION_PERIOD = 365
