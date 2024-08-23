@@ -281,3 +281,4 @@ aura/media/
 
 # Pycharm files
 .idea/
+.aider*
