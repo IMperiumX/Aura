@@ -41,3 +41,6 @@ llama-index-llms-llama-cpp
 llama-index
 pgvector
 psycopg2
+
+# File Sharing
+git+https://github.com/IMperiumX/django-cryptography
