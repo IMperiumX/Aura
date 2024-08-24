@@ -6,11 +6,26 @@
             "type": "debugpy",
             "request": "launch",
             "args": [
-                "runserver"
+                "runserver_plus"
             ],
             "django": true,
             "autoStartBrowser": false,
             "program": "${workspaceFolder}/manage.py"
+        },
+        {
+            "name": "Python Debugger: Uvicorn",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "config.asgi:application",
+                "--reload",
+                "--host",
+                "localhost",
+                "--port",
+                "8000"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }
