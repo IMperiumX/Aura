@@ -124,12 +124,10 @@ class Message(TimeStampedModel):
         verbose_name_plural = _("messages")
 
     def __str__(self):
-        return f"Message {self.id}: {self.text[:50]}"
+        return f"Message {self.id}"
 
-    # def get_absolute_url(self):
-    #     return reverse("communication:message-detail", kwargs={"pk": self.pk}) # NOQA: ERA001
     def get_absolute_url(self):
-        return self.thread.get_absolute_url()
+        return reverse("communication:message-detail", kwargs={"pk": self.pk})
 
     def mark_read(self):
         self.read_at = timezone.now()
