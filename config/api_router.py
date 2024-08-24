@@ -4,6 +4,8 @@ from rest_framework.routers import SimpleRouter
 
 from aura.assessments.api.views import HealthAssessmentViewSet
 from aura.assessments.api.views import HealthRiskPredictionViewSet
+from aura.communication.api.views import MessageViewSet
+from aura.communication.api.views import ThreadViewSet
 from aura.mentalhealth.api.views import ChatbotInteractionViewSet
 from aura.mentalhealth.api.views import DisorderViewSet
 from aura.mentalhealth.api.views import TherapyApproachViewSet
@@ -53,6 +55,16 @@ router.register(
     "disorders",
     DisorderViewSet,
     basename="disorders",
+)
+router.register(
+    "threads",
+    ThreadViewSet,
+    basename="threads",
+)
+router.register(
+    "messages",
+    MessageViewSet,
+    basename="messages",
 )
 
 app_name = "api"
