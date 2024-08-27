@@ -12,11 +12,11 @@
 - Data Encryption: Use end-to-end encryption for all communication.
 """
 
-from functools import partial
-
 # creat a robust data models for this feature
+import hashlib
+import logging
+
 from django.conf import settings
-from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -26,12 +26,13 @@ from model_utils.models import TimeStampedModel
 
 from aura.communication.managers import MessageManager
 from aura.communication.managers import ThreadManager
-from aura.core.utils import get_upload_path
 from aura.mentalhealth.models import TherapySession
 
 from . import MAX_LENGTH
 from . import MAX_LENGTH_SMALL
 from . import MAX_LENGTH_TINY
+
+logger = logging.getLogger(__name__)
 
 
 class Thread(TimeStampedModel):
@@ -164,66 +165,25 @@ class TherapySessionThread(Thread):
         return self.subject or f"Therapy Session Thread {self.id}: {self.subject}"
 
 
-def version_file(file_spec, vtype="copy"):
-    import shutil
-    from pathlib import Path
+class FileContent(models.Model):
+    hash = models.CharField(max_length=64, unique=True)
+    content = models.FileField(upload_to="file_contents/")
 
-    file_path = Path(file_spec)
-    if file_path.is_file():
-        # or, do other error checking:
-        if vtype not in ("copy", "rename"):
-            vtype = "copy"
-
-        # Determine root filename so the extension doesn't get longer
-        n = file_path.stem
-
-        # Is e an integer?
-        try:
-            root = n
-        except ValueError:
-            root = file_spec
-
-        # Find next available file version
-        for i in range(1000):
-            new_file = "%s.%03d" % (root, i)
-            if not Path(new_file).is_file():
-                if vtype == "copy":
-                    shutil.copy(file_spec, new_file)
-                else:
-                    file_path.rename(file_spec, new_file)
-                return 1
-
-    return 0
+    def __str__(self):
+        return self.hash
 
 
 class Attachment(TimeStampedModel):
-    """
-    An attachment represents a file attached to a message.
-    """
+    name = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=100)
+    size = models.PositiveIntegerField()
+    version_number = models.PositiveIntegerField(default=1)
+    file_content = models.ForeignKey(FileContent, on_delete=models.PROTECT)
 
-    file = encrypt(
-        models.FileField(
-            upload_to=get_upload_path,
-            validators=[
-                FileExtensionValidator(allowed_extensions=["pdf", "docx", "doc"]),
-            ],
-            verbose_name=_("file"),
-        ),
-    )
-    # file names and types, that helps support features like versionhistory, recovery, and sync.
-    # Add fields like version_number and previous_version
-    version_number = models.PositiveIntegerField(
-        default=partial(version_file, file.name),
-        # default=1,   # noqa: ERA001
-        verbose_name=_("version number"),
-    )
-
-    # relations
     message = models.ForeignKey(
         "communication.Message",
         on_delete=models.CASCADE,
         related_name="attachments",
-        verbose_name=_("message"),
     )
     previous_version = models.ForeignKey(
         "self",
@@ -231,15 +191,23 @@ class Attachment(TimeStampedModel):
         related_name="next_version",
         blank=True,
         null=True,
-        verbose_name=_("previous version"),
     )
 
-    class Meta:
-        verbose_name = _("attachment")
-        verbose_name_plural = _("attachments")
+    @property
+    def file(self):
+        return self.file_content.content
 
-    def __str__(self):
-        return f"Attachment {self.version_number}"
+    @classmethod
+    def create_from_file(cls, file, **kwargs):
+        file_hash = hashlib.sha256(file.read()).hexdigest()
+        file.seek(0)  # Reset file pointer
+
+        file_content, created = FileContent.objects.get_or_create(
+            hash=file_hash,
+            defaults={"content": file},
+        )
+
+        return cls.objects.create(file_content=file_content, size=file.size, **kwargs)
 
 
 class Folder(TimeStampedModel):
