@@ -13,6 +13,7 @@ from rest_framework.serializers import HyperlinkedModelSerializer
 from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import Serializer
 from rest_framework.serializers import SerializerMethodField
+from rest_framework.serializers import StringRelatedField
 from rest_framework.serializers import ValidationError
 
 from aura.mentalhealth.api.serializers import DisorderSerializer
@@ -54,10 +55,28 @@ class UserSerializer(HyperlinkedModelSerializer[User]):
         }
 
 
-class TherapistSerializer(ModelSerializer):
+class TherapistSerializer(HyperlinkedModelSerializer[Therapist]):
+    user = UserSerializer()
+    specialties = StringRelatedField(many=True)
+
     class Meta:
         model = Therapist
-        exclude = ["embedding"]
+        fields = [
+            "url",
+            "id",
+            "user",
+            "license_number",
+            "years_of_experience",
+            "specialties",
+            "availability",
+            "created_by",
+            "updated_by",
+        ]
+        extra_kwargs = {
+            "url": {"view_name": "api:therapists-detail", "lookup_field": "pk"},
+            "created_by": {"view_name": "api:users-detail"},
+            "updated_by": {"view_name": "api:users-detail"},
+        }
 
 
 class PatientSerializer(HyperlinkedModelSerializer[Patient]):
@@ -66,7 +85,27 @@ class PatientSerializer(HyperlinkedModelSerializer[Patient]):
 
     class Meta:
         model = Patient
-        exclude = ["embedding"]
+        fields = [
+            "url",
+            "id",
+            "user",
+            "medical_record_number",
+            "insurance_provider",
+            "insurance_policy_number",
+            "emergency_contact_name",
+            "emergency_contact_phone",
+            "allergies",
+            "medical_conditions",
+            "medical_history",
+            "current_medications",
+            "health_data",
+            "preferences",
+            "weight",
+            "height",
+            "disorders",
+            "created_by",
+            "updated_by",
+        ]
         extra_kwargs = {
             "url": {"view_name": "api:patients-detail", "lookup_field": "pk"},
             "created_by": {"view_name": "api:users-detail"},
