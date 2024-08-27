@@ -24,6 +24,52 @@ License: Apache Software License 2.0
 - **Recommendation Engine** using RAG (Retrieval-Augmented Generation): Generate personalized health and wellness recommendations using RAG.
 - **Admin Interface** for easy management: Manage users, health assessments, therapy sessions, and recommendations using the admin interface.
 
+### Technology Stack
+
+- Backend: Django (Python)
+- Database: PostgreSQL with pgvector for similarity search
+- AI/ML: LlamaIndex, Hugging Face Transformers
+- Real-time Communication: Django Channels, WebSockets
+- Authentication: JWT, LDAP integration
+- Deployment: Docker, AWS
+
+## Project Structure
+
+The project follows a modular structure with the following main components:
+
+- `aura/users`: User management and authentication
+- `aura/assessments`: Health assessment models and logic
+- `aura/mentalhealth`: Mental health disorder and therapy approach models
+- `aura/communication`: Real-time communication features
+- `aura/core`: Core services and utilities, including the AI recommendation engine
+
+## Key Implementations
+
+### AI-Powered Recommendation Engine
+
+The `RecommendationEngine` class implements a sophisticated RAG (Retrieval-Augmented Generation) pipeline for providing personalized therapist recommendations and answering user queries.
+
+### Health Assessment Model
+
+The `Assessment` model captures detailed health assessment data, including risk levels, responses, and recommendations. It uses pgvector for efficient similarity searches.
+
+### Real-time Communication
+
+The project uses Django Channels and WebSockets to enable real-time communication features, crucial for the platform's chat and video call functionalities.
+
+## Security and Compliance
+
+- HIPAA and GDPR compliant data handling
+- End-to-end encryption for all communications
+- Secure authentication using JWT and LDAP integration
+- Regular security audits and penetration testing
+
+## Deployment and Scalability
+
+- Containerized using Docker for easy deployment and scaling
+- AWS infrastructure for robust and scalable cloud hosting
+- Celery for handling background tasks and improving performance
+
 ## Settings
 
 Moved to [settings](http://cookiecutter-django.readthedocs.io/en/latest/settings.html).
