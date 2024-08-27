@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
@@ -15,4 +17,8 @@ def get_upload_path(instance, filename):
     """
     Return the upload path for the file.
     """
-    return f"uploads/{instance.__class__.__name__}/{instance.pk}/{filename}"
+
+    return Path(f"uploads/{instance.__class__.__name__}/{instance.pk}").mkdir(
+        parents=True,
+        exist_ok=True,
+    )
