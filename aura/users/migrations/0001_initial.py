@@ -7,13 +7,13 @@ import django.db.models.deletion
 import django.utils.timezone
 import django_lifecycle.mixins
 import model_utils.fields
-import pgvector.django.indexes
-import pgvector.django.vector
 import taggit.managers
 from decimal import Decimal
 from django.conf import settings
 from django.db import migrations, models
 
+from pgvector.django import HnswIndex
+from pgvector.django import VectorField
 from pgvector.django import VectorExtension
 class Migration(migrations.Migration):
     initial = True
@@ -195,7 +195,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "embedding",
-                    pgvector.django.vector.VectorField(dimensions=1024, null=True),
+                    VectorField(dimensions=1024, null=True),
                 ),
                 ("certification", models.CharField(max_length=100)),
                 ("areas_of_expertise", models.CharField(max_length=25)),
@@ -306,7 +306,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "embedding",
-                    pgvector.django.vector.VectorField(dimensions=1024, null=True),
+                    VectorField(dimensions=1024, null=True),
                 ),
                 ("medical_record_number", models.CharField(max_length=50)),
                 ("insurance_provider", models.CharField(max_length=100)),
@@ -414,7 +414,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "embedding",
-                    pgvector.django.vector.VectorField(dimensions=1024, null=True),
+                    VectorField(dimensions=1024, null=True),
                 ),
                 ("license_number", models.CharField(max_length=50)),
                 ("specialties", models.CharField(max_length=255)),
@@ -575,7 +575,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "embedding",
-                    pgvector.django.vector.VectorField(dimensions=1024, null=True),
+                    VectorField(dimensions=1024, null=True),
                 ),
                 ("license_number", models.CharField(max_length=50)),
                 (
@@ -632,7 +632,7 @@ class Migration(migrations.Migration):
             options={
                 "verbose_name_plural": "Therapists",
                 "indexes": [
-                    pgvector.django.indexes.HnswIndex(
+                    HnswIndex(
                         ef_construction=64,
                         fields=["embedding"],
                         m=16,
