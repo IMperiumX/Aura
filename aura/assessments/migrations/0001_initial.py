@@ -4,10 +4,10 @@ import django.core.validators
 import django.utils.timezone
 import django_lifecycle.mixins
 import model_utils.fields
-import pgvector.django.vector
 from decimal import Decimal
 from django.db import migrations, models
 
+from pgvector.django import VectorField
 
 class Migration(migrations.Migration):
     initial = True
@@ -122,7 +122,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "embedding",
-                    pgvector.django.vector.VectorField(dimensions=1024, null=True),
+                    VectorField(dimensions=1024, null=True),
                 ),
             ],
             options={

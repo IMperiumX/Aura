@@ -13,93 +13,61 @@ from model_utils.models import TimeStampedModel
 from pgvector.django import HnswIndex
 from pgvector.django import VectorField
 
-from aura.core.services import RecommendationEngine
 
+class Assessment(StatusModel, TimeStampedModel):
+    class Status(models.TextChoices):
+        DRAFT = "draft", _("Draft")
+        IN_PROGRESS = "in_progress", _("In Progress")
+        SUBMITTED = "submitted", _("Submitted")
+        COMPLETED = "completed", _("Completed")
 
-class HealthAssessment(StatusModel, TimeStampedModel):
-    """A model to represent a health risk assessment"""
-
-    DRAFT = "draft"
-    COMPLETED = "completed"
-    IN_PROGRESS = "in_progress"
-    SUBMITTED = "submitted"
-    STATUS = (
-        (DRAFT, _("Draft")),
-        (COMPLETED, _("Completed")),
-        (IN_PROGRESS, _("In Progress")),
-        (SUBMITTED, _("Submitted")),
-    )
-
-    class AssessmentType(models.TextChoices):
-        """Choices for the type of health assessment"""
-
-        GENERAL = "general", "General"
-        CARDIOVASCULAR = "cardiovascular", "Cardiovascular"
-        DIABETES = "diabetes", "Diabetes"
-        MENTAL_HEALTH = "mental_health", "Mental Health"
-        ANXIETY = "anxiety", "Anxiety"
-        DEPRESSION = "depression", "Depression"
-        BIPOLAR_DISORDER = "bipolar_disorder", "Bipolar Disorder"
-        OCD = "ocd", "OCD"
-        PTSD = "ptsd", "PTSD"
-        POST_PARTUM_DEPRESSION = "post_partum_depression", "Post-partum Depression"
-        PANIC_DISORDER = "panic_disorder", "Panic Disorder"
+    class Type(models.TextChoices):
+        GENERAL = "general", _("General")
+        CARDIOVASCULAR = "cardiovascular", _("Cardiovascular")
+        DIABETES = "diabetes", _("Diabetes")
+        MENTAL_HEALTH = "mental_health", _("Mental Health")
+        ANXIETY = "anxiety", _("Anxiety")
+        DEPRESSION = "depression", _("Depression")
+        BIPOLAR_DISORDER = "bipolar_disorder", _("Bipolar Disorder")
+        OCD = "ocd", _("OCD")
+        PTSD = "ptsd", _("PTSD")
+        POST_PARTUM_DEPRESSION = "post_partum_depression", _("Post-partum Depression")
+        PANIC_DISORDER = "panic_disorder", _("Panic Disorder")
 
     class RiskLevel(models.TextChoices):
-        """Choices for the risk level of health assessment"""
+        LOW = "low", _("Low")
+        MODERATE = "moderate", _("Moderate")
+        HIGH = "high", _("High")
 
-        LOW = "low", "Low"
-        MODERATE = "moderate", "Moderate"
-        HIGH = "high", "High"
-
+    patient = models.ForeignKey(
+        "users.Patient",
+        on_delete=models.CASCADE,
+        related_name="assessments",
+    )
     assessment_type = models.CharField(
         max_length=50,
-        choices=AssessmentType.choices,
-        verbose_name="Assessment Type",
-        help_text=_("Type of health assessment conducted"),
+        choices=Type.choices,
+        verbose_name=_("Assessment Type"),
     )
     risk_level = models.CharField(
         max_length=8,
         choices=RiskLevel.choices,
-        verbose_name="Risk Level",
-        help_text=_("Level of risk identified in the assessment"),
+        verbose_name=_("Risk Level"),
+        blank=True,
     )
-    recommendations = models.TextField(
-        help_text=_("Recommendations based on the assessment"),
-    )
-    responses = models.JSONField(
-        verbose_name="Responses",
-        help_text=_("Responses provided during the assessment"),
-    )
-    result = models.TextField(
-        verbose_name="Result",
-        help_text=_("Result of the health assessment"),
-    )
-
-    # relations
-    patient = models.ForeignKey(
-        "users.Patient",
-        on_delete=models.CASCADE,
-        related_name="health_assessments",
-    )
+    recommendations = models.TextField(blank=True)
+    result = models.TextField(blank=True)
     embedding = VectorField(
         dimensions=settings.EMBEDDING_MODEL_DIMENSIONS,
         null=True,
     )
-    questions = models.ManyToManyField(
-        "assessments.Question",
-        related_name="health_assessments",
-        verbose_name="Questions",
-        help_text=_("Questions in the health assessment"),
-        through="assessments.HealthAssessmentQuestion",
-    )
 
     class Meta:
-        verbose_name = "Health Assessment"
-        verbose_name_plural = "Health Assessments"
+        verbose_name = _("Assessment")
+        verbose_name_plural = _("Assessments")
         indexes = [
             HnswIndex(
-                name="ha_27072024_embedding_index",
+                name="assessment_embedding_index",
                 fields=["embedding"],
                 m=16,
                 ef_construction=64,
@@ -108,95 +76,61 @@ class HealthAssessment(StatusModel, TimeStampedModel):
         ]
 
     def __str__(self):
-        return f"{self.patient} - {self.assessment_type}"
-
-    def get_therapist_recommendations(self):
-        return RecommendationEngine().get_therapist_recommendations(self)
+        return f"{self.patient} - {self.get_assessment_type_display()} - {self.get_status_display()}"
 
 
 class Question(LifecycleModel):
-    """A model to represent a question in a health assessment"""
-
     text = models.CharField(max_length=255, unique=True)
+    assessment_type = models.CharField(
+        max_length=50,
+        choices=Assessment.Type.choices,
+        verbose_name=_("Assessment Type"),
+    )
 
     def __str__(self):
         return self.text
 
     @hook(AFTER_UPDATE, when="text", has_changed=True)
-    def update_assessment(self):
-        # Set the assessment to null
-        self.assessment = None
-        self.save()
+    def update_responses(self):
+        # Update related responses when question text changes
+        self.responses.update(is_valid=False)
 
 
-class HealthAssessmentQuestion(models.Model):
-    """A model to represent the relationship between a health assessment and a question"""
-
-    question = models.ForeignKey(
-        "assessments.Question",
+class Response(TimeStampedModel):
+    assessment = models.ForeignKey(
+        Assessment,
         on_delete=models.CASCADE,
-        related_name="health_assessment_questions",
-        verbose_name="Question",
+        related_name="responses",
     )
-    health_assessment = models.ForeignKey(
-        "assessments.HealthAssessment",
-        on_delete=models.SET_NULL,
-        related_name="health_assessment_questions",
-        verbose_name="Health Assessment",
-        null=True,
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="responses",
     )
-    order = models.PositiveIntegerField(
-        default=0,
-        help_text=_("Order of the question in the assessment."),
-    )
+    answer = models.TextField()
+    is_valid = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Health Assessment Question"
-        verbose_name_plural = "Health Assessment Questions"
+        unique_together = ["assessment", "question"]
 
     def __str__(self):
-        return f"# {self.order}: {self.health_assessment} - {self.question}"
+        return f"{self.assessment} - {self.question}"
 
 
-class HealthRiskPrediction(TimeStampedModel):
-    """A model to represent potential health risks and preventive measures"""
-
-    health_issue = models.CharField(
-        max_length=255,
-        verbose_name="Health Issue",
-        help_text=_("Specific health issue identified"),
+class RiskPrediction(TimeStampedModel):
+    assessment = models.ForeignKey(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name="risk_predictions",
     )
-    preventive_measures = models.TextField(
-        verbose_name="Preventive Measures",
-        help_text=_("Measures to prevent the identified health issue"),
-    )
+    health_issue = models.CharField(max_length=255)
+    preventive_measures = models.TextField()
     confidence_level = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal(0)), MaxValueValidator(Decimal(100))],
-        help_text=_("Confidence level of the prediction"),
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
     )
-    source = models.CharField(
-        max_length=100,
-        help_text=_("Source or method of the prediction"),
-    )
-
-    assessment = models.ForeignKey(
-        "assessments.HealthAssessment",
-        on_delete=models.CASCADE,
-        related_name="health_risk_predictions",
-        verbose_name="Health Assessment",
-    )
-    patient = models.ForeignKey(
-        "users.Patient",
-        on_delete=models.CASCADE,
-        related_name="health_risk_predictions",
-        verbose_name="User",
-    )
-
-    class Meta:
-        verbose_name = "Health Risk Prediction"
-        verbose_name_plural = "Health Risk Predictions"
+    source = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"{self.patient} - {self.health_issue}"
+        return f"{self.assessment} - {self.health_issue}"
