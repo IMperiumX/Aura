@@ -4,6 +4,7 @@ from rest_framework.routers import SimpleRouter
 
 from aura.assessments.api.views import HealthAssessmentViewSet
 from aura.assessments.api.views import HealthRiskPredictionViewSet
+from aura.communication.api.views import AttachmentViewSet
 from aura.communication.api.views import MessageViewSet
 from aura.communication.api.views import ThreadViewSet
 from aura.mentalhealth.api.views import ChatbotInteractionViewSet
@@ -66,6 +67,10 @@ router.register(
     MessageViewSet,
     basename="messages",
 )
-
+router.register(
+    "attachments",
+    AttachmentViewSet,
+    basename="attachments",
+)
 app_name = "api"
 urlpatterns = router.urls
