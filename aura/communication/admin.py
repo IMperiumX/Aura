@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import Attachment
+from .models import FileContent
 from .models import Folder
 from .models import Message
 from .models import TherapySessionThread
@@ -66,18 +67,33 @@ class TherapySessionThreadAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(FileContent)
+class FileContentAdmin(admin.ModelAdmin):
+    list_display = ("id", "hash", "content")
+
+
 @admin.register(Attachment)
 class AttachmentAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "created",
         "modified",
-        "file",
+        "name",
+        "content_type",
+        "size",
         "version_number",
+        "file_content",
         "message",
         "previous_version",
     )
-    list_filter = ("created", "modified", "message", "previous_version")
+    list_filter = (
+        "created",
+        "modified",
+        "file_content",
+        "message",
+        "previous_version",
+    )
+    search_fields = ("name",)
 
 
 @admin.register(Folder)
