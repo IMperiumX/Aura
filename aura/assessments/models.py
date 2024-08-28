@@ -21,6 +21,8 @@ class Assessment(StatusModel, TimeStampedModel):
         SUBMITTED = "submitted", _("Submitted")
         COMPLETED = "completed", _("Completed")
 
+    STATUS = Status.choices
+
     class Type(models.TextChoices):
         GENERAL = "general", _("General")
         CARDIOVASCULAR = "cardiovascular", _("Cardiovascular")
