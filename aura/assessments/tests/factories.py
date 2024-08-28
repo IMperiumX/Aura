@@ -1,16 +1,16 @@
 import factory
 
-from aura.assessments.models import HealthAssessment
-from aura.assessments.models import HealthRiskPrediction
+from aura.assessments.models import Assessment
+from aura.assessments.models import RiskPrediction
 
 
-class HealthAssessmentFactory(factory.django.DjangoModelFactory):
+class AssessmentFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = HealthAssessment
+        model = Assessment
 
     assessment_type = factory.Faker(
         "random_element",
-        elements=list(HealthAssessment.AssessmentType),
+        elements=list(Assessment.AssessmentType),
     )
     risk_level = factory.Faker("random_element", elements=["low", "moderate", "high"])
     recommendations = factory.Faker("paragraph")
@@ -19,9 +19,9 @@ class HealthAssessmentFactory(factory.django.DjangoModelFactory):
     patient = factory.SubFactory("aura.users.tests.factories.PatientFactory")
 
 
-class HealthRiskPredictionFactory(factory.django.DjangoModelFactory):
+class RiskPredictionFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = HealthRiskPrediction
+        model = RiskPrediction
 
     health_issue = factory.Faker("sentence")
     preventive_measures = factory.Faker("paragraph")
@@ -34,6 +34,6 @@ class HealthRiskPredictionFactory(factory.django.DjangoModelFactory):
     )
     source = factory.Faker("word")
     assessment = factory.SubFactory(
-        "aura.assessments.tests.factories.HealthAssessmentFactory",
+        "aura.assessments.tests.factories.AssessmentFactory",
     )
     patient = factory.SubFactory("aura.users.tests.factories.PatientFactory")

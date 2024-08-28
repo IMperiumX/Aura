@@ -2,8 +2,8 @@ from django.conf import settings
 from rest_framework.routers import DefaultRouter
 from rest_framework.routers import SimpleRouter
 
-from aura.assessments.api.views import HealthAssessmentViewSet
-from aura.assessments.api.views import HealthRiskPredictionViewSet
+from aura.assessments.api.views import AssessmentViewSet
+from aura.assessments.api.views import RiskPredictionViewSet
 from aura.communication.api.views import AttachmentViewSet
 from aura.communication.api.views import MessageViewSet
 from aura.communication.api.views import ThreadViewSet
@@ -28,12 +28,12 @@ router.register(
 )
 router.register(
     "assessments",
-    HealthAssessmentViewSet,
+    AssessmentViewSet,
     basename="assessments",
 )
 router.register(
     "predictions",
-    HealthRiskPredictionViewSet,
+    RiskPredictionViewSet,
     basename="predictions",
 )
 router.register(

@@ -3,15 +3,15 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from aura.assessments.models import HealthAssessment
-from aura.assessments.tests.factories import HealthAssessmentFactory
+from aura.assessments.models import Assessment
+from aura.assessments.tests.factories import AssessmentFactory
 from aura.users.tests.factories import PatientFactory
 from aura.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
 
-class TestHealthAssessmentViewSet:
+class TestAssessmentViewSet:
     @pytest.fixture()
     def api_client(self):
         return APIClient()
@@ -26,7 +26,7 @@ class TestHealthAssessmentViewSet:
 
     @pytest.fixture()
     def health_assessment(self, patient_profile):
-        return HealthAssessmentFactory(patient=patient_profile)
+        return AssessmentFactory(patient=patient_profile)
 
     def test_list_health_assessments(self, api_client, health_assessment, user):
         api_client.force_authenticate(user=user)
@@ -62,7 +62,7 @@ class TestHealthAssessmentViewSet:
         }
         response = api_client.post(url, data)
         assert response.status_code == status.HTTP_201_CREATED
-        assert HealthAssessment.objects.count() == 1
+        assert Assessment.objects.count() == 1
         assert response.data["patient"]["id"] == user.patient_profile.id
         assert response.data["status"] == "draft"
         assert response.data["assessment_type"] == "general"

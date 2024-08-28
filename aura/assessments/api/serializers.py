@@ -2,14 +2,14 @@ from rest_framework.serializers import HyperlinkedModelSerializer
 from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import ValidationError
 
-from aura.assessments.models import HealthAssessment
-from aura.assessments.models import HealthRiskPrediction
+from aura.assessments.models import Assessment
+from aura.assessments.models import RiskPrediction
 from aura.users.api.serializers import PatientSerializer
 
 
-class HealthRiskPredictionSerializer(HyperlinkedModelSerializer[HealthRiskPrediction]):
+class RiskPredictionSerializer(HyperlinkedModelSerializer[RiskPrediction]):
     class Meta:
-        model = HealthRiskPrediction
+        model = RiskPrediction
         fields = [
             "url",
             "id",
@@ -23,12 +23,12 @@ class HealthRiskPredictionSerializer(HyperlinkedModelSerializer[HealthRiskPredic
         }
 
 
-class HealthAssessmentSerializer(ModelSerializer[HealthAssessment]):
+class AssessmentSerializer(ModelSerializer[Assessment]):
     patient = PatientSerializer(read_only=True)
-    health_risk_predictions = HealthRiskPredictionSerializer(many=True, read_only=True)
+    health_risk_predictions = RiskPredictionSerializer(many=True, read_only=True)
 
     class Meta:
-        model = HealthAssessment
+        model = Assessment
         fields = [
             "id",
             "assessment_type",
@@ -52,7 +52,7 @@ class HealthAssessmentSerializer(ModelSerializer[HealthAssessment]):
         return value
 
 
-class HealthAssessmentCreateSerializer(ModelSerializer):
+class AssessmentCreateSerializer(ModelSerializer):
     class Meta:
-        model = HealthAssessment
+        model = Assessment
         fields = ["assessment_type", "responses"]

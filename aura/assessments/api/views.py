@@ -7,11 +7,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from aura.assessments.api.serializers import HealthAssessmentCreateSerializer
-from aura.assessments.api.serializers import HealthAssessmentSerializer
-from aura.assessments.api.serializers import HealthRiskPredictionSerializer
-from aura.assessments.models import HealthAssessment
-from aura.assessments.models import HealthRiskPrediction
+from aura.assessments.api.serializers import AssessmentCreateSerializer
+from aura.assessments.api.serializers import AssessmentSerializer
+from aura.assessments.api.serializers import RiskPredictionSerializer
+from aura.assessments.models import Assessment
+from aura.assessments.models import RiskPrediction
 from aura.core.services import RecommendationEngine
 from aura.users.api.permissions import IsPatient
 from aura.users.api.permissions import IsTherapist
@@ -19,9 +19,9 @@ from aura.users.api.serializers import TherapistSerializer
 from aura.users.models import Patient
 
 
-class HealthAssessmentViewSet(viewsets.ModelViewSet):
-    queryset = HealthAssessment.objects.all()
-    serializer_class = HealthAssessmentSerializer
+class AssessmentViewSet(viewsets.ModelViewSet):
+    queryset = Assessment.objects.all()
+    serializer_class = AssessmentSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
 
@@ -52,11 +52,11 @@ class HealthAssessmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         patient = Patient.objects.get(user=self.request.user)
-        serializer.save(patient=patient, status=HealthAssessment.IN_PROGRESS)
+        serializer.save(patient=patient, status=Assessment.IN_PROGRESS)
 
     def get_serializer(self, *args, **kwargs):
         if self.action == "create":
-            return HealthAssessmentCreateSerializer
+            return AssessmentCreateSerializer
         if self.action == "recommend_therapist":
             return TherapistSerializer(*args, **kwargs)
         return super().get_serializer(*args, **kwargs)
@@ -78,7 +78,7 @@ class HealthAssessmentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def submit_assessment(self, request, pk=None):
         assessment = self.get_object()
-        if assessment.status != HealthAssessment.IN_PROGRESS:
+        if assessment.status != Assessment.IN_PROGRESS:
             return Response(
                 {"status": _("Assessment cannot be submitted")},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -86,14 +86,14 @@ class HealthAssessmentViewSet(viewsets.ModelViewSet):
 
         # XXX: we'll just change the status and add a mock result
         # TODO: use RAG pipeline to process the assessment
-        # assessment.status = HealthAssessment.SUBMITTED
+        # assessment.status = Assessment.SUBMITTED
         # assessment.result = "Assessment processed successfully"
-        # assessment.risk_level = HealthAssessment.RiskLevel.MODERATE
+        # assessment.risk_level = Assessment.RiskLevel.MODERATE
         # assessment.recommendations = "Based on your responses, we recommend..."
         # assessment.save()
 
         # # Create a mock health risk prediction
-        # HealthRiskPrediction.objects.create(
+        # RiskPrediction.objects.create(
         #     health_issue="Potential cardiovascular issues",
         #     preventive_measures="Regular exercise and balanced diet",
         #     confidence_level=75.5,
@@ -108,14 +108,14 @@ class HealthAssessmentViewSet(viewsets.ModelViewSet):
     @action(detail=False)
     def my_assessments(self, request):
         patient = Patient.objects.get(user=request.user)
-        assessments = HealthAssessment.objects.filter(patient=patient)
+        assessments = Assessment.objects.filter(patient=patient)
         serializer = self.get_serializer(assessments, many=True)
         return Response(serializer.data)
 
 
-class HealthRiskPredictionViewSet(viewsets.ModelViewSet):
-    queryset = HealthRiskPrediction.objects.all()
-    serializer_class = HealthRiskPredictionSerializer
+class RiskPredictionViewSet(viewsets.ModelViewSet):
+    queryset = RiskPrediction.objects.all()
+    serializer_class = RiskPredictionSerializer
     permission_classes = [IsAuthenticated, IsPatient | IsTherapist]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = [

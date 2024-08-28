@@ -23,7 +23,7 @@ def test_fetch_documents_from_storage_initializes_db_reader_correctly(
     recommendation_engine,
     mock_db_reader,
 ):
-    query = 'SELECT "assessments_healthassessment"."id", "assessments_healthassessment"."recommendations", "assessments_healthassessment"."responses", "assessments_healthassessment"."result" FROM "assessments_healthassessment"'
+    query = 'SELECT "assessments_Assessment"."id", "assessments_Assessment"."recommendations", "assessments_Assessment"."responses", "assessments_Assessment"."result" FROM "assessments_Assessment"'
 
     db_url = settings.DATABASES["default"]
 
@@ -43,7 +43,7 @@ def test_fetch_documents_from_storage_calls_load_data_with_correct_query(
     recommendation_engine,
     mock_db_reader,
 ):
-    query = 'SELECT "assessments_healthassessment"."id", "assessments_healthassessment"."recommendations", "assessments_healthassessment"."responses", "assessments_healthassessment"."result" FROM "assessments_healthassessment"'
+    query = 'SELECT "assessments_Assessment"."id", "assessments_Assessment"."recommendations", "assessments_Assessment"."responses", "assessments_Assessment"."result" FROM "assessments_Assessment"'
 
     mock_instance = mock_db_reader.return_value
     mock_instance.load_data = MagicMock(return_value=[])
@@ -57,7 +57,7 @@ def test_fetch_documents_from_storage_returns_expected_documents(
     recommendation_engine,
     mock_db_reader,
 ):
-    query = 'SELECT "assessments_healthassessment"."id", "assessments_healthassessment"."recommendations", "assessments_healthassessment"."responses", "assessments_healthassessment"."result" FROM "assessments_healthassessment"'
+    query = 'SELECT "assessments_Assessment"."id", "assessments_Assessment"."recommendations", "assessments_Assessment"."responses", "assessments_Assessment"."result" FROM "assessments_Assessment"'
 
     expected_documents = [Document(text="doc1"), Document(text="doc2")]
     mock_instance = mock_db_reader.return_value
