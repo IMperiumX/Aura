@@ -75,10 +75,10 @@ class RecommendationEngine:
 
     def save_embeddings(self, documents: list[Document]) -> None:
         # TODO: post_save for intentded models
-        from assessments.models import HealthAssessment
+        from assessments.models import Assessment
 
         query = str(
-            HealthAssessment.objects.only(
+            Assessment.objects.only(
                 "responses",
                 "result",
                 "recommendations",
@@ -88,7 +88,7 @@ class RecommendationEngine:
         for document in documents:
             assessment_id = re.search(r"\d+", document.text).group(0)
 
-            assessment = HealthAssessment.objects.get(pk=assessment_id)
+            assessment = Assessment.objects.get(pk=assessment_id)
 
             embedding = Settings.embed_model.get_text_embedding(document.text)
             assessment.embedding = embedding
@@ -153,14 +153,14 @@ class RecommendationEngine:
         )
 
     def recommend_therapist(self, k=3):
-        from assessments.models import HealthAssessment
+        from assessments.models import Assessment
 
         fields = (
             "responses",
             "result",
             "recommendations",
         )
-        query = str(HealthAssessment.objects.only(*fields).query)
+        query = str(Assessment.objects.only(*fields).query)
         documents = self.fetch_documents_from_storage(query)
 
         vector_store = self.setup_pgvector_store()
