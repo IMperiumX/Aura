@@ -8,6 +8,7 @@ import pgvector.django
 from decimal import Decimal
 from django.db import migrations, models
 
+from pgvector.django import VectorExtension
 
 class Migration(migrations.Migration):
     initial = True
@@ -226,4 +227,5 @@ class Migration(migrations.Migration):
                 "abstract": False,
             },
         ),
+        VectorExtension(),
     ]

@@ -7,6 +7,7 @@ import model_utils.fields
 import recurrence.fields
 from django.db import migrations, models
 
+from pgvector.django import VectorExtension
 
 class Migration(migrations.Migration):
     initial = True
@@ -262,4 +263,6 @@ class Migration(migrations.Migration):
                 "ordering": ["scheduled_at"],
             },
         ),
+    VectorExtension(),
+
     ]
