@@ -22,7 +22,7 @@ django-recurrence==1.11.1 # https://github.com/jazzband/django-recurrence
 django-lifecycle==1.2.4 # https://github.com/rsinger86/django-lifecycle
 django-auth-ldap==4.8.0 # https://github.com/django-auth-ldap/django-auth-ldap
 django-taggit==5.0.1 # https://github.com/jazzband/django-taggit
-django-fsm==3.0.0 # https://github.com/viewflow/django-fsm
+django-viewflow==2.2.7 # https://github.com/viewflow/django-viewflow
 # Django REST Framework
 djangorestframework==3.15.2  # https://github.com/encode/django-rest-framework
 django-cors-headers==4.4.0  # https://github.com/adamchainz/django-cors-headers
