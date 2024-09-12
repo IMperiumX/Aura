@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from aura.mentalhealth.models import ChatbotInteraction
@@ -59,10 +62,12 @@ class TherapySessionSerializer(serializers.HyperlinkedModelSerializer):
                 raise serializers.ValidationError(msg)
         return data
 
-    def get_recurrences_humanized(self, obj):
+    @extend_schema_field(serializers.CharField)
+    def get_recurrences_humanized(self, obj) -> str:
         return [rule.to_text() for rule in obj.recurrences.rrules]
 
-    def get_recurrences_dates(self, obj):
+    @extend_schema_field(serializers.ListField(child=serializers.DateTimeField()))
+    def get_recurrences_dates(self, obj) -> list[datetime]:
         return list(obj.recurrences.occurrences())
 
 
