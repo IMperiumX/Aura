@@ -2,7 +2,6 @@
 
 import django.contrib.postgres.fields
 import django.utils.timezone
-import django_fsm
 import model_utils.fields
 import recurrence.fields
 from django.db import migrations, models
@@ -209,21 +208,6 @@ class Migration(migrations.Migration):
                         ],
                         max_length=5,
                         verbose_name="Session Type",
-                    ),
-                ),
-                (
-                    "status",
-                    django_fsm.FSMField(
-                        choices=[
-                            ("pending", "Pending"),
-                            ("accepted", "Accepted"),
-                            ("rejected", "Rejected"),
-                            ("cancelled", "Cancelled"),
-                            ("completed", "Completed"),
-                        ],
-                        default="pending",
-                        max_length=50,
-                        verbose_name="Status",
                     ),
                 ),
                 ("summary", models.TextField(blank=True)),
