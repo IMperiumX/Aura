@@ -75,10 +75,10 @@ class RecommendationEngine:
 
     def save_embeddings(self, documents: list[Document]) -> None:
         # TODO: post_save for intentded models
-        from assessments.models import Assessment
+        from assessments.models import PatientAssessment
 
         query = str(
-            Assessment.objects.only(
+            PatientAssessment.objects.only(
                 "responses",
                 "result",
                 "recommendations",
@@ -88,7 +88,7 @@ class RecommendationEngine:
         for document in documents:
             assessment_id = re.search(r"\d+", document.text).group(0)
 
-            assessment = Assessment.objects.get(pk=assessment_id)
+            assessment = PatientAssessment.objects.get(pk=assessment_id)
 
             embedding = Settings.embed_model.get_text_embedding(document.text)
             assessment.embedding = embedding
