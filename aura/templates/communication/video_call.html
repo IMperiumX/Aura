@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Video Call</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+  </head>
+  <body>
+    <h1>Video Call Room: {{ room_name }}</h1>
+    <video id="localVideo" autoplay muted>
+    </video>
+    <video id="remoteVideo" autoplay>
+    </video>
+    <script>
+      const roomName = "{{ room_name }}";
+      const localVideo = document.getElementById('localVideo');
+      const remoteVideo = document.getElementById('remoteVideo');
+
+      const constraints = {
+        video: true,
+        audio: true
+      };
+
+      let localStream;
+      let remoteStream;
+      let peerConnection;
+      const iceServers = {
+        'iceServers': [{
+          'urls': 'stun:stun.l.google.com:19302'
+        }]
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+          localVideo.srcObject = stream;
+          localStream = stream;
+        })
+        .catch(error => {
+          console.error('Error accessing media devices.', error);
+        });
+
+      const socket = new WebSocket(
+        'ws://' + window.location.host + '/ws/video_call/' + roomName + '/'
+      );
+
+      socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        switch (data.type) {
+          case 'offer':
+            handleOffer(data.offer);
+            break;
+          case 'answer':
+            handleAnswer(data.answer);
+            break;
+          case 'ice-candidate':
+            handleNewICECandidateMsg(data.candidate);
+            break;
+        }
+      };
+
+      socket.onopen = function(e) {
+        createPeerConnection();
+      };
+
+      function createPeerConnection() {
+        peerConnection = new RTCPeerConnection(iceServers);
+
+        peerConnection.onicecandidate = handleICECandidateEvent;
+        peerConnection.ontrack = handleTrackEvent;
+
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+      }
+
+      function handleOffer(offer) {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        peerConnection.createAnswer()
+          .then(answer => {
+            peerConnection.setLocalDescription(answer);
+            socket.send(JSON.stringify({
+              type: 'answer',
+              answer: answer
+            }));
+          })
+          .catch(error => console.error('Error creating answer.', error));
+      }
+
+      function handleAnswer(answer) {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+
+      function handleICECandidateEvent(event) {
+        if (event.candidate) {
+          socket.send(JSON.stringify({
+            type: 'ice-candidate',
+            candidate: event.candidate
+          }));
+        }
+      }
+
+      function handleNewICECandidateMsg(candidate) {
+        const iceCandidate = new RTCIceCandidate(candidate);
+        peerConnection.addIceCandidate(iceCandidate)
+          .catch(error => console.error('Error adding received ICE candidate.', error));
+      }
+
+      function handleTrackEvent(event) {
+        remoteVideo.srcObject = event.streams[0];
+      }
+
+      // Generate offer and send to other peer
+      peerConnection.createOffer()
+        .then(offer => {
+          peerConnection.setLocalDescription(offer);
+          socket.send(JSON.stringify({
+            type: 'offer',
+            offer: offer
+          }));
+        })
+        .catch(error => console.error('Error creating offer.', error));
+    </script>
+  </body>
+</html>

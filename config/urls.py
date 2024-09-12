@@ -21,6 +21,9 @@ urlpatterns = [
     # User management
     path("users/", include("aura.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    path(
+        "communication/", include("aura.communication.urls", namespace="communication")
+    ),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
