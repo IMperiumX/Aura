@@ -4,8 +4,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_fsm import FSMField
-from django_fsm import transition
 from model_utils.models import TimeStampedModel
 from recurrence.fields import RecurrenceField
 
@@ -40,9 +38,10 @@ class TherapySession(TimeStampedModel):
         choices=SessionType.choices,
         verbose_name=_("Session Type"),
     )
-    status = FSMField(
-        default=SessionStatus.PENDING,
+    status = models.CharField(
+        max_length=20,
         choices=SessionStatus.choices,
+        default=SessionStatus.PENDING,
         verbose_name=_("Status"),
     )
     summary = models.TextField(blank=True)
@@ -89,30 +88,6 @@ class TherapySession(TimeStampedModel):
     def __str__(self):
         return f"{self.therapist} - {self.patient} - {self.scheduled_at}"
 
-    @transition(
-        field=status,
-        source=SessionStatus.PENDING,
-        target=SessionStatus.ACCEPTED,
-    )
-    def accept(self):
-        self.started_at = timezone.now()
-
-    @transition(
-        field=status,
-        source=[SessionStatus.PENDING, SessionStatus.ACCEPTED],
-        target=SessionStatus.CANCELLED,
-    )
-    def cancel(self):
-        pass
-
-    @transition(
-        field=status,
-        source=SessionStatus.ACCEPTED,
-        target=SessionStatus.COMPLETED,
-    )
-    def complete(self):
-        self.ended_at = timezone.now()
-
     def clean(self):
         if self.ended_at and self.started_at and self.ended_at <= self.started_at:
             raise ValidationError(_("Ended at must be after started at."))
@@ -123,6 +98,12 @@ class TherapySession(TimeStampedModel):
 
 
 class TherapyApproach(TimeStampedModel):
+    """
+    Therapy approaches at Aura
+    e.g. Cognitive Behavioral Therapy, Mentalization Therapy
+
+    """
+
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
 
