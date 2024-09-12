@@ -282,3 +282,6 @@ aura/media/
 # Pycharm files
 .idea/
 .aider*
+
+# git simulate
+git-sim*/*
