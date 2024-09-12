@@ -2,12 +2,18 @@ import logging
 from pathlib import Path
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.db.models import Count
+from django.db.models import Q
+from django.http import HttpResponse
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.decorators import parser_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -32,11 +38,89 @@ logger = logging.getLogger(__name__)
 class ThreadViewSet(viewsets.ModelViewSet):
     queryset = Thread.objects.all()
     serializer_class = ThreadSerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["is_group", "is_active"]
+    search_fields = ["subject", "participants__username"]
+    ordering_fields = ["created", "modified"]
+
+    def get_queryset(self):
+        return self.queryset.filter(participants=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def add_participant(self, request, pk=None):
+        thread = self.get_object()
+        user_id = request.data.get("user_id")
+        if user_id:
+            thread.participants.add(user_id)
+            return Response({"status": "participant added"})
+        return Response(
+            {"error": "user_id is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @action(detail=False, methods=["get"])
+    def stats(self, request):
+        stats = self.get_queryset().aggregate(
+            total_threads=Count("id"),
+            active_threads=Count("id", filter=Q(is_active=True)),
+            group_threads=Count("id", filter=Q(is_group=True)),
+        )
+        return Response(stats)
 
 
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["thread", "sender", "read_at"]
+    search_fields = ["text"]
+
+    def get_queryset(self):
+        return self.queryset.filter(thread__participants=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def mark_read(self, request, pk=None):
+        message = self.get_object()
+        message.mark_read()
+        return Response({"status": "message marked as read"})
+
+    @action(detail=False, methods=["post"])
+    def bulk_mark_read(self, request):
+        thread_id = request.data.get("thread_id")
+        if thread_id:
+            messages = self.get_queryset().filter(
+                thread_id=thread_id,
+                read_at__isnull=True,
+            )
+            messages.update(read_at=timezone.now())
+            return Response({"status": f"{messages.count()} messages marked as read"})
+        return Response(
+            {"error": "thread_id is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class FolderViewSet(viewsets.ModelViewSet):
+    queryset = Folder.objects.all()
+    serializer_class = FolderSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+
+class TherapySessionThreadViewSet(ThreadViewSet):
+    queryset = TherapySessionThread.objects.all()
+    serializer_class = TherapySessionThreadSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(
+            Q(session__therapist=self.request.user)
+            | Q(session__patient=self.request.user),
+        )
 
 
 class AttachmentViewSet(viewsets.ModelViewSet):
@@ -102,8 +186,16 @@ class AttachmentViewSet(viewsets.ModelViewSet):
             mode = "ab"
 
         with temp_file_path.open(mode) as destination:
+            bytes_written = 0
             for chunk in file.chunks():
                 destination.write(chunk)
+                bytes_written += len(chunk)
+
+            progress = (chunk_number + 1) / total_chunks * 100
+            msg = f"Chunk {chunk_number + 1}/{total_chunks} processed. Progress: {progress:.2f}%"
+            logger.info(msg)
+
+        return bytes_written
 
     @action(
         detail=False,
@@ -137,12 +229,12 @@ class AttachmentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def get_queryset(self):
+        return self.queryset.filter(message__thread__participants=self.request.user)
 
-class FolderViewSet(viewsets.ModelViewSet):
-    queryset = Folder.objects.all()
-    serializer_class = FolderSerializer
-
-
-class TherapySessionThreadViewSet(viewsets.ModelViewSet):
-    queryset = TherapySessionThread.objects.all()
-    serializer_class = TherapySessionThreadSerializer
+    @action(detail=True, methods=["get"])
+    def download(self, request, pk=None):
+        attachment = self.get_object()
+        response = HttpResponse(attachment.file, content_type=attachment.content_type)
+        response["Content-Disposition"] = f'attachment; filename="{attachment.name}"'
+        return response
