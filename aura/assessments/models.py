@@ -41,11 +41,6 @@ class Assessment(StatusModel, TimeStampedModel):
         MODERATE = "moderate", _("Moderate")
         HIGH = "high", _("High")
 
-    patient = models.ForeignKey(
-        "users.Patient",
-        on_delete=models.CASCADE,
-        related_name="assessments",
-    )
     assessment_type = models.CharField(
         max_length=50,
         choices=Type.choices,
@@ -57,19 +52,62 @@ class Assessment(StatusModel, TimeStampedModel):
         verbose_name=_("Risk Level"),
         blank=True,
     )
-    recommendations = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.risk_level} - {self.get_assessment_type_display()} - {self.get_status_display()}"
+
+
+class Question(TimeStampedModel):
+    text = models.CharField(max_length=255, unique=True)
+    allow_multiple = models.BooleanField(default=False)
+
+    assessment = models.ForeignKey(
+        "assessments.Assessment",
+        on_delete=models.CASCADE,
+        related_name="questions",
+    )
+
+    def __str__(self):
+        return f"{self.text}, multiple: {self.allow_multiple}"
+
+
+class Response(TimeStampedModel):
+    text = models.TextField()
+
+    question = models.ForeignKey(
+        "assessments.Question",
+        on_delete=models.CASCADE,
+        related_name="responses",
+    )
+
+    def __str__(self):
+        return f"{self.text}"
+
+
+class PatientAssessment(TimeStampedModel, LifecycleModel):
+    patient = models.ForeignKey(
+        "users.Patient",
+        on_delete=models.CASCADE,
+        related_name="patient_assessments",
+    )
+    assessment = models.ForeignKey(
+        "assessments.Assessment",
+        on_delete=models.CASCADE,
+        related_name="patient_assessments",
+    )
+
     result = models.TextField(blank=True)
+    recommendations = models.TextField(blank=True)
+
     embedding = VectorField(
         dimensions=settings.EMBEDDING_MODEL_DIMENSIONS,
         null=True,
     )
 
     class Meta:
-        verbose_name = _("Assessment")
-        verbose_name_plural = _("Assessments")
         indexes = [
             HnswIndex(
-                name="assessment_embedding_index",
+                name="pa_embedding_index",
                 fields=["embedding"],
                 m=16,
                 ef_construction=64,
@@ -78,52 +116,35 @@ class Assessment(StatusModel, TimeStampedModel):
         ]
 
     def __str__(self):
-        return f"{self.patient} - {self.get_assessment_type_display()} - {self.get_status_display()}"
+        return f"{self.patient} - {self.assessment}"
 
+    @hook(AFTER_UPDATE, when="assessment__status", has_changed=True)
+    def update_patient_risk_level(self):
+        self.patient.update_risk_level()
 
-class Question(LifecycleModel):
-    text = models.CharField(max_length=255, unique=True)
-    assessment_type = models.CharField(
-        max_length=50,
-        choices=Assessment.Type.choices,
-        verbose_name=_("Assessment Type"),
-    )
+    @hook(AFTER_UPDATE, when="assessment__status", has_changed=True)
+    def update_patient_recommendations(self):
+        self.patient.update_recommendations()
 
-    def __str__(self):
-        return self.text
+    @hook(AFTER_UPDATE, when="assessment__status", has_changed=True)
+    def update_patient_result(self):
+        self.patient.update_result()
 
-    @hook(AFTER_UPDATE, when="text", has_changed=True)
-    def update_responses(self):
-        # Update related responses when question text changes
-        self.responses.update(is_valid=False)
+    @hook(AFTER_UPDATE, when="assessment__status", has_changed=True)
+    def update_patient_embedding(self):
+        self.patient.update_embedding()
 
-
-class Response(TimeStampedModel):
-    assessment = models.ForeignKey(
-        Assessment,
-        on_delete=models.CASCADE,
-        related_name="responses",
-    )
-    question = models.ForeignKey(
-        Question,
-        on_delete=models.CASCADE,
-        related_name="responses",
-    )
-    answer = models.TextField()
-    is_valid = models.BooleanField(default=True)
-
-    class Meta:
-        unique_together = ["assessment", "question"]
-
-    def __str__(self):
-        return f"{self.assessment} - {self.question}"
+    @hook(AFTER_UPDATE, when="assessment__status", has_changed=True)
+    def update_patient_risk_predictions(self):
+        self.patient.update_risk_predictions()
 
 
 class RiskPrediction(TimeStampedModel):
     assessment = models.ForeignKey(
-        Assessment,
+        "assessments.PatientAssessment",
         on_delete=models.CASCADE,
         related_name="risk_predictions",
+        verbose_name=_("Patient Assessment"),
     )
     health_issue = models.CharField(max_length=255)
     preventive_measures = models.TextField()
