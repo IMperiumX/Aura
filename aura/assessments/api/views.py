@@ -26,7 +26,6 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
 
     filterset_fields = [
-        "patient",
         "status",
         "assessment_type",
         "created",
@@ -119,7 +118,6 @@ class RiskPredictionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsPatient | IsTherapist]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = [
-        "patient",
         "created",
         "modified",
     ]
