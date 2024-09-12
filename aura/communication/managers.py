@@ -37,7 +37,7 @@ class MessageQuerySet(models.QuerySet):
         return self.last().sender
 
     def last_message_date(self):
-        return self.last().created_at
+        return self.last().created
 
 
 MessageManager = models.Manager.from_queryset(MessageQuerySet)
@@ -58,7 +58,7 @@ class ThreadQuerySet(models.QuerySet):
         )
 
     def with_last_message(self):
-        return self.annotate(last_message_date=models.Max("messages__created_at"))
+        return self.annotate(last_message_date=models.Max("messages__created"))
 
     def with_last_message_sender(self):
         return self.annotate(last_message_sender=models.Max("messages__sender"))
@@ -85,7 +85,7 @@ class ThreadQuerySet(models.QuerySet):
         return self.annotate(last_message_url=models.Max("messages__get_absolute_url"))
 
     def with_last_message_time(self):
-        return self.annotate(last_message_time=models.Max("messages__created_at"))
+        return self.annotate(last_message_time=models.Max("messages__created"))
 
 
 ThreadManager = models.Manager.from_queryset(ThreadQuerySet)
