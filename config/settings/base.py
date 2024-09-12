@@ -107,6 +107,8 @@ THIRD_PARTY_APPS = [
     "recurrence",
     "taggit",
     "channels",
+    "import_export",
+    "viewflow",
 ]
 
 LOCAL_APPS = [
@@ -385,6 +387,7 @@ SPECTACULAR_SETTINGS = {
         "defaultModelsExpandDepth": 2,
     },
 }
+
 # Your stuff...
 # ------------------------------------------------------------------------------
 # Personalized assessments to match a Therapist
