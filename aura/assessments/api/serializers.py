@@ -3,6 +3,7 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import ValidationError
 
 from aura.assessments.models import Assessment
+from aura.assessments.models import PatientAssessment
 from aura.assessments.models import RiskPrediction
 from aura.users.api.serializers import PatientSerializer
 
@@ -50,6 +51,29 @@ class AssessmentSerializer(ModelSerializer[Assessment]):
             msg = "Responses must be a JSON object"
             raise ValidationError(msg)
         return value
+
+
+class PatientAssessmentSerializer(HyperlinkedModelSerializer):
+    patient = PatientSerializer(read_only=True)
+    assessment = AssessmentSerializer(read_only=True)
+
+    class Meta:
+        model = PatientAssessment
+        fields = [
+            "url",
+            "id",
+            "patient",
+            "assessment",
+            "result",
+            "recommendations",
+            "embedding",
+        ]
+        extra_kwargs = {
+            "url": {
+                "view_name": "api:patient-assessments-detail",
+                "lookup_field": "pk",
+            },
+        }
 
 
 class AssessmentCreateSerializer(ModelSerializer):
