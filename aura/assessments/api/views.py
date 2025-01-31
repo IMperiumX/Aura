@@ -7,10 +7,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from aura.assessments.api.serializers import Assessment
 from aura.assessments.api.serializers import AssessmentCreateSerializer
-from aura.assessments.api.serializers import AssessmentSerializer
+from aura.assessments.api.serializers import PatientAssessmentSerializer
 from aura.assessments.api.serializers import RiskPredictionSerializer
-from aura.assessments.models import Assessment
+from aura.assessments.models import PatientAssessment
 from aura.assessments.models import RiskPrediction
 from aura.core.services import RecommendationEngine
 from aura.users.api.permissions import IsPatient
@@ -20,8 +21,8 @@ from aura.users.models import Patient
 
 
 class AssessmentViewSet(viewsets.ModelViewSet):
-    queryset = Assessment.objects.all()
-    serializer_class = AssessmentSerializer
+    queryset = PatientAssessment.objects.all()
+    serializer_class = PatientAssessmentSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
 
