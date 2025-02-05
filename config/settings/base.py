@@ -172,11 +172,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "aura.users.middleware.LDAPSSOMiddleware",
+    "aura.users.middleware.UserAuditLogMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    "aura.users.middleware.LDAPSSOMiddleware",
-    "aura.users.middleware.UserAuditLogMiddleware",
 ]
 
 # STATIC
@@ -377,8 +377,8 @@ SOCIALACCOUNT_FORMS = {"signup": "aura.users.forms.UserSocialSignupForm"}
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
         "aura.core.authentication.JWTCookieAuthentication",
     ),
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
@@ -512,7 +512,8 @@ USE_GPU = env.int("USE_GPU")
 #     profiles_sample_rate=1.0,
 # )
 
+# Message Configuration
 DATA_RETENTION_PERIOD = 365
 
-
-GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "GeoLite2-City.mmdb"
+# IP Address
+GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "test.mmdb"
