@@ -295,7 +295,7 @@ LOGGING = {
             "formatter": "verbose",
         },
         "file": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "formatter": "verbose",
             "filename": BASE_DIR / "logs/debug.log",
