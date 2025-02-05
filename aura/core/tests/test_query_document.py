@@ -5,7 +5,7 @@ import pytest
 from django.conf import settings
 from llama_index.core import Document
 
-from aura.core.services import RecommendationEngine
+from aura.core.services.recommendation import RecommendationEngine
 
 
 @pytest.fixture()

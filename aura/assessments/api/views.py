@@ -13,7 +13,7 @@ from aura.assessments.api.serializers import PatientAssessmentSerializer
 from aura.assessments.api.serializers import RiskPredictionSerializer
 from aura.assessments.models import PatientAssessment
 from aura.assessments.models import RiskPrediction
-from aura.core.services import RecommendationEngine
+from aura.core.services.recommendation import RecommendationEngine
 from aura.users.api.permissions import IsPatient
 from aura.users.api.permissions import IsTherapist
 from aura.users.api.serializers import TherapistSerializer

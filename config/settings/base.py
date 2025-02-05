@@ -113,6 +113,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "aura.users",
+    "aura.core",
     # Your stuff: custom apps go here
     "aura.mentalhealth",
     "aura.assessments",
@@ -171,10 +172,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "aura.users.middleware.LDAPSSOMiddleware",
+    "aura.users.middleware.UserAuditLogMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    "aura.users.middleware.LDAPSSOMiddleware",
 ]
 
 # STATIC
@@ -276,10 +278,14 @@ DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=Fals
 # more details on how to customize your logging configuration.
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
+    "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
+        },
+        "simple": {"format": "%(levelname)s %(funcName)s %(lineno)d %(message)s"},
+        "json": {
+            "()": "json_log_formatter.JSONFormatter",
         },
     },
     "handlers": {
@@ -288,8 +294,25 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "formatter": "verbose",
+            "filename": BASE_DIR / "logs/debug.log",
+        },
+        "json_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+        },
     },
-    "root": {"level": "INFO", "handlers": ["console"]},
+    "root": {"level": "INFO", "handlers": ["console", "json_console"]},
+    "loggers": {
+        "aura": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+            "propagate": False,
+        },
+    },
 }
 
 
@@ -354,8 +377,8 @@ SOCIALACCOUNT_FORMS = {"signup": "aura.users.forms.UserSocialSignupForm"}
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
         "aura.core.authentication.JWTCookieAuthentication",
     ),
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
@@ -489,4 +512,8 @@ USE_GPU = env.int("USE_GPU")
 #     profiles_sample_rate=1.0,
 # )
 
+# Message Configuration
 DATA_RETENTION_PERIOD = 365
+
+# IP Address
+GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "test.mmdb"

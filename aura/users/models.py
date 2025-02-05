@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from decimal import Decimal
 from typing import ClassVar
 
@@ -12,41 +11,15 @@ from django.utils.translation import gettext_lazy as _
 from django_lifecycle import AFTER_CREATE
 from django_lifecycle import LifecycleModelMixin
 from django_lifecycle import hook
-from model_utils.models import TimeStampedModel
 from pgvector.django import HnswIndex
 from pgvector.django import VectorField
 from taggit.managers import TaggableManager
 
+from aura.core.utils import sane_repr
 from aura.users.mixins import AuditModel
 
 from .fields import AutoOneToOneField
 from .managers import UserManager
-
-
-def sane_repr(*attrs: str) -> Callable[[object], str]:
-    """
-
-    :param *attrs: str:
-
-    """
-    if "id" not in attrs and "pk" not in attrs:
-        attrs = ("id", *attrs)
-
-    def _repr(self: object) -> str:
-        """
-
-        :param self: object:
-        :param self: object:
-        :param self: object:
-
-        """
-        cls = type(self).__name__
-
-        pairs = (f"{a}={getattr(self, a, None)!r}" for a in attrs)
-
-        return "<{} at 0x{:x}: {}>".format(cls, id(self), ", ".join(pairs))
-
-    return _repr
 
 
 class User(AbstractUser):
@@ -267,44 +240,3 @@ class Physician(AbstractProfile):
         """ """
 
         verbose_name_plural = "Physicians"
-
-
-class Review(TimeStampedModel):
-    """A model to represent a review."""
-
-    class ReviewSource(models.TextChoices):
-        """Choices for the source of the review."""
-
-        GOOGLE_PLAY_STORE = "gps", _("Google Play Store")
-        APPLE_APP_STORE = "aas", _("Apple App Store")
-        WEB = "web", _("Web")
-        EMAIL = "email", _("Email")
-
-    class ReviewTopic(models.TextChoices):
-        """Choices for the topic of the review."""
-
-        THERAPY = "therapy", _("Therapy")
-        PSYCHIATRY = "psychiatry", _("Psychiatry")
-        COACHING = "coaching", _("Coaching")
-        MENTAL_HEALTH = "mental_health", _("Mental Health")
-        WELLNESS = "wellness", _("Wellness")
-
-    source = models.CharField(
-        max_length=100,
-        choices=ReviewSource.choices,
-    )
-    topic = models.CharField(
-        max_length=100,
-        choices=ReviewTopic.choices,
-    )
-    rating = models.PositiveIntegerField()
-    content = models.TextField()
-
-    reviewer = models.ForeignKey(
-        "users.User",
-        on_delete=models.CASCADE,
-        related_name="reviews",
-    )
-
-    def __str__(self):
-        return f"{self.reviewer} - {self.rating}"
