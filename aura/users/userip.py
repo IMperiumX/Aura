@@ -6,8 +6,8 @@ from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
 
+from aura.audit_log.services.log import log_service
 from aura.core.geo import geo_by_addr
-from aura.core.log import log_service
 from aura.core.utils import sane_repr
 from aura.users.models import User
 
@@ -26,8 +26,6 @@ class UserIP(models.Model):
     last_seen = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        app_label = "sentry"
-        db_table = "sentry_userip"
         unique_together = (("user", "ip_address"),)
 
     __repr__ = sane_repr("user_id", "ip_address")
