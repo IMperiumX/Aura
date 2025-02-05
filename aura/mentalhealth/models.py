@@ -165,8 +165,8 @@ class Disorder(TimeStampedModel):
     signs_and_symptoms = models.TextField()
     description = models.TextField()
     treatment = models.TextField()
-    symptoms = ArrayField(models.CharField(max_length=255), blank=True)
-    causes = ArrayField(models.CharField(max_length=255), blank=True)
+    symptoms = ArrayField(models.CharField(max_length=255), blank=True, default=list)
+    causes = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     prevention = models.TextField()
 
     objects = DisorderManager()

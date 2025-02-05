@@ -8,6 +8,7 @@ from rest_framework.mixins import UpdateModelMixin
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import ModelViewSet
 
 from aura.core.utils import jwt_encode
 from aura.users.api.serializers import LoginSerializer
@@ -99,12 +100,7 @@ class UserViewSet(
         return self.get_response()
 
 
-class PatientViewSet(
-    RetrieveModelMixin,
-    ListModelMixin,
-    UpdateModelMixin,
-    GenericViewSet,
-):
+class PatientViewSet(ModelViewSet):
     serializer_class = PatientSerializer
     queryset = Patient.objects.all()
     lookup_field = "pk"
@@ -112,3 +108,31 @@ class PatientViewSet(
     def get_queryset(self, *args, **kwargs):
         assert isinstance(self.request.user.id, int)
         return self.queryset.filter(id=self.request.user.id)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        from aura import audit_log
+        from aura.audit_log.utils import create_audit_entry
+        from aura.mentalhealth.models import Disorder
+
+        user_data = serializer.validated_data.pop("user", None)
+        user_data["created_by"] = serializer.validated_data.pop("created_by", None)
+        user_data["updated_by"] = serializer.validated_data.pop("updated_by", None)
+        serializer.validated_data["user"] = User.objects.create_user(**user_data)
+
+        disorders = serializer.validated_data.pop("disorders", None)
+
+        serializer.save()
+        patient: Patient = serializer.instance
+        for disorder_data in disorders:
+            disorder, _ = Disorder.objects.get_or_create(**disorder_data)
+            patient.disorders.add(disorder)
+
+        create_audit_entry(
+            request=self.request,
+            target_object=patient.id,
+            event=audit_log.get_event_id("PATIENT_CREATED"),
+            data=patient.get_audit_log_data(),
+        )

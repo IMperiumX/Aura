@@ -1,6 +1,5 @@
 from rest_framework.serializers import HyperlinkedModelSerializer
 from rest_framework.serializers import ModelSerializer
-from rest_framework.serializers import ValidationError
 
 from aura.assessments.models import Assessment
 from aura.assessments.models import PatientAssessment
@@ -34,9 +33,6 @@ class AssessmentSerializer(ModelSerializer[Assessment]):
             "id",
             "assessment_type",
             "risk_level",
-            "recommendations",
-            "responses",
-            "result",
             "patient",
             "status",
             "created",
@@ -44,13 +40,6 @@ class AssessmentSerializer(ModelSerializer[Assessment]):
             "health_risk_predictions",
         ]
         read_only_fields = ["created", "modified"]
-
-    def validate_responses(self, value):
-        # Add custom validation for responses JSON field
-        if not isinstance(value, dict):
-            msg = "Responses must be a JSON object"
-            raise ValidationError(msg)
-        return value
 
 
 class PatientAssessmentSerializer(HyperlinkedModelSerializer):
@@ -79,4 +68,4 @@ class PatientAssessmentSerializer(HyperlinkedModelSerializer):
 class AssessmentCreateSerializer(ModelSerializer):
     class Meta:
         model = Assessment
-        fields = ["assessment_type", "responses"]
+        fields = ["assessment_type"]

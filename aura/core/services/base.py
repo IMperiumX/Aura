@@ -81,7 +81,7 @@ class DelegatingService:
                 try:
                     impl = self._singleton[key]
                 except KeyError:
-                    impl = self._singleton[key] = self._constructor()
+                    impl = self._singleton[key] = self._constructor
 
         return getattr(impl, item)
 
