@@ -145,6 +145,8 @@ ignore = [
     # Deactivated because it can make the code slow:
     # https://github.com/astral-sh/ruff/issues/7871
     "E501", # Line too long
+    "FBT001",
+    "FBT002",
 ]
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
