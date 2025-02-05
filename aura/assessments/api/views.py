@@ -27,22 +27,16 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
 
     filterset_fields = [
-        "status",
-        "assessment_type",
         "created",
         "modified",
     ]
     search_fields = [
         "patient",
-        "status",
-        "assessment_type",
         "created",
         "modified",
     ]
     ordering_fields = [
         "patient",
-        "status",
-        "assessment_type",
         "created",
         "modified",
     ]
