@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 from django.contrib.auth import authenticate
+from django.contrib.auth import get_user
 from django.contrib.auth import login
 from django.http import HttpResponseRedirect
+from django.utils.deprecation import MiddlewareMixin
+
+from aura.users.userip import UserIP
 
 
 class LDAPSSOMiddleware:
@@ -18,3 +24,10 @@ class LDAPSSOMiddleware:
                 return HttpResponseRedirect("/")
 
         return self.get_response(request)
+
+
+class UserAuditLogMiddleware(MiddlewareMixin):
+    def process_request(self, request) -> None:
+        user = get_user(request)
+        if user.is_authenticated:
+            UserIP.log(user, request.META["REMOTE_ADDR"])

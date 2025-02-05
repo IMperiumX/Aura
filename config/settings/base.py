@@ -170,11 +170,11 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "aura.users.middleware.LDAPSSOMiddleware",
+    "aura.users.middleware.UserAuditLogMiddleware",
 ]
 
 # STATIC
@@ -511,3 +511,6 @@ USE_GPU = env.int("USE_GPU")
 # )
 
 DATA_RETENTION_PERIOD = 365
+
+
+GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "GeoLite2-City.mmdb"
