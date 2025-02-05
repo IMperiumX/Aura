@@ -11,6 +11,9 @@ The virtual health and wellness platform aims to provide a comprehensive solutio
 
 License: Apache Software License 2.0
 
+## Architecture
+
+![aura arch](https://github.com/IMperiumX/logos/blob/main/Aura/aura_architecture.png?raw=true)
 ## Features
 
 - **RESTful API**: Build and deploy a RESTful API for health and wellness services using Django REST framework.
