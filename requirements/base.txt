@@ -32,16 +32,27 @@ drf-nested-routers==0.94.1
 
 # DRF-spectacular for api documentation
 drf-spectacular==0.27.2  # https://github.com/tfranzel/drf-spectacular
-sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
+# sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
 
 # RAG application
-llama-index-readers-database
-llama-index-embeddings-huggingface
-llama-index-vector-stores-postgres
-llama-index-llms-llama-cpp
-llama-index
-pgvector
-psycopg2
+llama-index-readers-database==0.3.0
+llama-index-embeddings-huggingface==0.5.1
+llama-index-vector-stores-postgres==0.4.2
+llama-index-llms-llama-cpp==0.4.2
+llama-index==0.12.15
 
-# File Sharing
+# Database
+pgvector==0.12.15
+psycopg2==0.12.15
+
+# Helper libraries
+python-magic==0.4.27
+pdfreader==0.1.15
 git+https://github.com/IMperiumX/django-cryptography
+
+# IP lookup
+maxminddb==2.6.3
+
+# JSON parsing
+json-log-formatter==1.1
+python-rapidjson==1.20
