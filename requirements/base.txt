@@ -39,11 +39,11 @@ llama-index==0.12.15 # https://llamaindex.ai
 llama-index-readers-database==0.3.0
 llama-index-embeddings-huggingface==0.5.1
 llama-index-vector-stores-postgres==0.4.2
-llama-index-llms-llama-cpp==0.4.2
+llama-index-llms-llama-cpp==0.4.0
 
 # Database
-pgvector==0.12.15 # https://github.com/pgvector/pgvector-python
-psycopg2==0.12.15 # https://psycopg.org/
+pgvector==0.3.6 # https://github.com/pgvector/pgvector-python
+psycopg2==2.9.10 # https://psycopg.org/
 
 # Helper libraries
 python-magic==0.4.27 # http://github.com/ahupp/python-magic
