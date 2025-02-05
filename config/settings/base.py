@@ -113,6 +113,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "aura.users",
+    "aura.core",
     # Your stuff: custom apps go here
     "aura.mentalhealth",
     "aura.assessments",
@@ -170,6 +171,7 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",

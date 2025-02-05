@@ -16,9 +16,9 @@ from rest_framework.serializers import SerializerMethodField
 from rest_framework.serializers import StringRelatedField
 from rest_framework.serializers import ValidationError
 
+from aura.core.models import Review
 from aura.mentalhealth.api.serializers import DisorderSerializer
 from aura.users.models import Patient
-from aura.users.models import Review
 from aura.users.models import Therapist
 from aura.users.models import User
 
