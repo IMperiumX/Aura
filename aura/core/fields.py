@@ -11,7 +11,7 @@ from aura.core.utils import decompress
 
 __all__ = ("GzippedDictField",)
 
-logger = logging.getLogger("sentry")
+logger = logging.getLogger("aura")
 
 
 class GzippedDictField(TextField):
