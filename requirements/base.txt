@@ -35,24 +35,25 @@ drf-spectacular==0.27.2  # https://github.com/tfranzel/drf-spectacular
 # sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
 
 # RAG application
+llama-index==0.12.15 # https://llamaindex.ai
 llama-index-readers-database==0.3.0
 llama-index-embeddings-huggingface==0.5.1
 llama-index-vector-stores-postgres==0.4.2
 llama-index-llms-llama-cpp==0.4.2
-llama-index==0.12.15
 
 # Database
-pgvector==0.12.15
-psycopg2==0.12.15
+pgvector==0.12.15 # https://github.com/pgvector/pgvector-python
+psycopg2==0.12.15 # https://psycopg.org/
 
 # Helper libraries
-python-magic==0.4.27
-pdfreader==0.1.15
+python-magic==0.4.27 # http://github.com/ahupp/python-magic
+pdfreader==0.1.15 # http://github.com/maxpmaxp/pdfreader
 git+https://github.com/IMperiumX/django-cryptography
 
 # IP lookup
-maxminddb==2.6.3
+maxminddb==2.6.3 # https://www.maxmind.com/
 
 # JSON parsing
-json-log-formatter==1.1
-python-rapidjson==1.20
+json-log-formatter==1.1 # https://github.com/marselester/json-log-formatter
+python-rapidjson==1.20 # https://github.com/python-rapidjson/python-rapidjson
+simplejson==3.19.3 # https://github.com/simplejson/simplejson
