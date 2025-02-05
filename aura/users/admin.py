@@ -14,6 +14,7 @@ from .models import Coach
 from .models import Patient
 from .models import Therapist
 from .models import User
+from .userip import UserIP
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     admin.autodiscover()
@@ -293,3 +294,17 @@ class CoachAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user")
+
+
+@admin.register(UserIP)
+class UserIPAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "ip_address",
+        "country_code",
+        "region_code",
+        "first_seen",
+        "last_seen",
+    )
+    list_filter = ("user", "first_seen", "last_seen")
