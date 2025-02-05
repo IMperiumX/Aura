@@ -35,6 +35,7 @@ class User(AbstractUser):
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
     email = models.EmailField(_("email address"), unique=True, max_length=100)
+    username = None  # type: ignore[assignment]
 
     is_password_expired = models.BooleanField(
         _("password expired"),
@@ -48,6 +49,13 @@ class User(AbstractUser):
         _("date of last password change"),
         null=True,
         help_text=_("The date the password was changed last."),
+    )
+
+    date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
+    last_active = models.DateTimeField(
+        _("last active"),
+        default=timezone.now,
+        null=True,
     )
 
     USERNAME_FIELD = "email"
@@ -160,6 +168,25 @@ class Patient(AbstractProfile):
         """ """
 
         verbose_name_plural = "Patients"
+
+    def get_audit_log_data(self):
+        return {
+            "email": self.user.email,
+            "medical_record_number": self.medical_record_number,
+            "insurance_provider": self.insurance_provider,
+            "insurance_policy_number": self.insurance_policy_number,
+            "emergency_contact_name": self.emergency_contact_name,
+            "emergency_contact_phone": self.emergency_contact_phone,
+            "allergies": self.allergies,
+            "medical_conditions": self.medical_conditions,
+            "medical_history": self.medical_history,
+            "current_medications": self.current_medications,
+            "health_data": self.health_data,
+            "preferences": self.preferences,
+            "weight": self.weight,
+            "height": self.height,
+            "disorders": [disorder.name for disorder in self.disorders.all()],
+        }
 
 
 class Therapist(AbstractProfile):

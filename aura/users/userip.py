@@ -6,7 +6,6 @@ from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
 
-from aura.audit_log.services.log import log_service
 from aura.core.geo import geo_by_addr
 from aura.core.utils import sane_repr
 from aura.users.models import User
@@ -20,8 +19,8 @@ class UserIP(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     ip_address = models.GenericIPAddressField()
-    country_code = models.CharField(max_length=16, default="")
-    region_code = models.CharField(max_length=16, default="")
+    country_code = models.CharField(max_length=16, null=True)  # noqa: DJ001
+    region_code = models.CharField(max_length=16, null=True)  # noqa: DJ001
     first_seen = models.DateTimeField(default=timezone.now)
     last_seen = models.DateTimeField(default=timezone.now)
 
@@ -53,6 +52,8 @@ class UserIpEvent:
 
 
 def _perform_log(user: User, ip_address: str) -> None:
+    from aura.audit_log.services.log import log_service
+
     try:
         geo = geo_by_addr(ip_address)
     except Exception:  # noqa: BLE001
