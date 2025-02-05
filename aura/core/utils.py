@@ -5,7 +5,7 @@ import typing
 import zlib
 from pathlib import Path
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.utils.module_loading import import_string
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable
@@ -43,7 +43,10 @@ def default_create_token(token_model, user, serializer):
 
 
 def jwt_encode(user):
-    refresh = TokenObtainPairSerializer.get_token(user)
+    serializer = import_string(
+        "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+    )
+    refresh = serializer.get_token(user)
     return refresh.access_token, refresh
 
 
