@@ -276,10 +276,14 @@ DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=Fals
 # more details on how to customize your logging configuration.
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
+    "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
+        },
+        "simple": {"format": "%(levelname)s %(funcName)s %(lineno)d %(message)s"},
+        "json": {
+            "()": "json_log_formatter.JSONFormatter",
         },
     },
     "handlers": {
@@ -288,8 +292,25 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "formatter": "verbose",
+            "filename": BASE_DIR / "logs/debug.log",
+        },
+        "json_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+        },
     },
-    "root": {"level": "INFO", "handlers": ["console"]},
+    "root": {"level": "INFO", "handlers": ["console", "json_console"]},
+    "loggers": {
+        "aura": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+            "propagate": False,
+        },
+    },
 }
 
 
