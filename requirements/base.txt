@@ -2,12 +2,14 @@ python-slugify==8.0.4  # https://github.com/un33k/python-slugify
 Pillow==10.4.0  # https://github.com/python-pillow/Pillow
 argon2-cffi==23.1.0  # https://github.com/hynek/argon2_cffi
 redis==5.0.7  # https://github.com/redis/redis-py
-hiredis==2.3.2  # https://github.com/redis/hiredis-py
 celery==5.4.0  # pyup: < 6.0  # https://github.com/celery/celery
-django-celery-beat==2.7.0  # https://github.com/celery/django-celery-beat
 uvicorn[standard]==0.30.6  # https://github.com/encode/uvicorn
 uvicorn-worker==0.2.0  # https://github.com/Kludex/uvicorn-worker
 channels_redis==4.2.0 # https://github.com/django/channels_redis
+django-celery-beat==2.7.0  # https://github.com/celery/django-celery-beat
+flower==2.0.1 # https://github.com/mher/flower
+hiredis==3.1.0  # https://github.com/redis/hiredis-py
+
 # Django
 # ------------------------------------------------------------------------------
 django==5.1.1  # pyup: < 5.0  # https://www.djangoproject.com/
@@ -34,12 +36,12 @@ drf-nested-routers==0.94.1
 drf-spectacular==0.27.2  # https://github.com/tfranzel/drf-spectacular
 # sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
 
-# RAG application
-llama-index==0.12.15 # https://llamaindex.ai
-llama-index-readers-database==0.3.0
-llama-index-embeddings-huggingface==0.5.1
-llama-index-vector-stores-postgres==0.4.2
-llama-index-llms-llama-cpp==0.4.0
+# # RAG application
+# llama-index==0.12.15 # https://llamaindex.ai
+# llama-index-readers-database==0.3.0
+# llama-index-embeddings-huggingface==0.5.1
+# llama-index-vector-stores-postgres==0.4.2
+# llama-index-llms-llama-cpp==0.4.0
 
 # Database
 pgvector==0.3.6 # https://github.com/pgvector/pgvector-python
@@ -48,7 +50,7 @@ psycopg2==2.9.10 # https://psycopg.org/
 # Helper libraries
 python-magic==0.4.27 # http://github.com/ahupp/python-magic
 pdfreader==0.1.15 # http://github.com/maxpmaxp/pdfreader
-git+https://github.com/IMperiumX/django-cryptography
+# git+https://github.com/IMperiumX/django-cryptography
 
 # IP lookup
 maxminddb==2.6.3 # https://www.maxmind.com/
