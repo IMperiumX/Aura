@@ -1,0 +1,76 @@
+# General
+# ------------------------------------------------------------------------------
+DJANGO_READ_DOT_ENV_FILE=True
+DJANGO_SETTINGS_MODULE=config.settings.production
+DJANGO_SECRET_KEY=wZb16uF0D0uK7UJbsrITsu0tRyAOAZcHt8yJqA3aPXvNz4sUVJTsG0wf3XJlZHN0
+DJANGO_ADMIN_URL=BgdFiGPSIHNyDyjtLOpq7f2s0Vp4DSvZ/
+DJANGO_ALLOWED_HOSTS=.aura.localhost,localhost
+
+# Security
+# ------------------------------------------------------------------------------
+# TIP: better off using DNS, however, redirect is OK too
+DJANGO_SECURE_SSL_REDIRECT=False
+
+# Email
+# ------------------------------------------------------------------------------
+DJANGO_SERVER_EMAIL=
+
+MAILGUN_API_KEY=
+MAILGUN_DOMAIN=
+
+
+# AWS
+# ------------------------------------------------------------------------------
+DJANGO_AWS_ACCESS_KEY_ID=
+DJANGO_AWS_SECRET_ACCESS_KEY=
+DJANGO_AWS_STORAGE_BUCKET_NAME=demo-aura
+
+# django-allauth
+# ------------------------------------------------------------------------------
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+# Gunicorn
+# ------------------------------------------------------------------------------
+WEB_CONCURRENCY=4
+
+# Sentry
+# ------------------------------------------------------------------------------
+SENTRY_DSN=
+
+
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
+# Celery
+# ------------------------------------------------------------------------------
+
+# Flower
+CELERY_FLOWER_USER=lOHVqDCOgfTzjfMIqOBsPzvnWEPsnnoC
+CELERY_FLOWER_PASSWORD=XoprvJtH3ibIFeLAKj75UZJaJmw6CWUdDmB1mwxCpvsCUw71DC36dVMKOTdn5o6N
+CELERY_BROKER_URL=redis://redis:6379/0
+
+# Auth
+# ------------------------------------------------------------------------------
+# test server: https://www.forumsys.com/2022/05/10/online-ldap-test-server/
+# ldap://ldap.aura.com
+DJANGO_LDAP_SERVER_URI=ldap://ldap.forumsys.com:389
+AUTH_LDAP_BIND_DN=cn=read-only-admin,ou=scientists,ou=scientists,dc=example,dc=com
+DJANGO_LDAP_PASSWORD=password
+
+
+# RAG pipeline
+# ------------------------------------------------------------------------------
+# Model card > https://huggingface.co/spaces/mteb/leaderboard
+EMBEDDING_MODEL_DIMENSIONS=1024
+LLAMA_INDEX_CACHE_DIR=/home/yusuf/.llama_index
+TOKENIZER_NAME=mistralai/Mixtral-8x7B-Instruct-v0.1
+LLAMA_GGUFF_MODEL_PATH=/home/yusuf/Downloads/gguff_model
+EMBED_MODEL_NAME=WhereIsAI/UAE-Large-V1
+USE_GPU=0
+
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=aura
+POSTGRES_USER=VSHRdhUAZGuFUgeRbKxVBOcAJpAYxYxU
+POSTGRES_PASSWORD=6dC9oDWRkdddSxYDMYSiZCUB0ia9n8SNsOMCmLopCZcXpzYon9zS4nEK1oIUyNLD
