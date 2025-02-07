@@ -73,7 +73,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [("aura.localhost", 6379)],
         },
     },
 }
@@ -315,6 +315,8 @@ LOGGING = {
     },
 }
 
+REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
+REDIS_SSL = REDIS_URL.startswith("rediss://")
 
 # Celery
 # ------------------------------------------------------------------------------
