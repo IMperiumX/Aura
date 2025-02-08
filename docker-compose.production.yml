@@ -1,0 +1,108 @@
+volumes:
+  production_postgres_data: {}
+  production_postgres_data_backups: {}
+  production_traefik: {}
+  production_prometheus: {}
+  production_grafana: {}
+  production_redis_data: {}
+
+
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/production/django/Dockerfile
+
+    image: aura_production_django
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - ./.envs/.production/.django
+      - ./.envs/.production/.postgres
+    command: /start
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: aura_production_postgres
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data
+      - production_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.production/.postgres
+
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/production/traefik/Dockerfile
+    image: aura_production_traefik
+    depends_on:
+      - django
+    ports:
+      - '0.0.0.0:80:80'
+      - '0.0.0.0:443:443'
+      - '0.0.0.0:5555:5555'
+      - "8080:8080"
+      - "9090:9090"
+      - "3000:3000"
+
+  prometheus:
+      image: prom/prometheus
+      volumes:
+        - ./prometheus/:/etc/prometheus/
+        - production_prometheus:/prometheus
+      command:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--storage.tsdb.retention.size=256MB'
+      restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    depends_on:
+      - prometheus
+    volumes:
+      - production_grafana:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      # GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: docker.io/redis:6
+
+    volumes:
+      - production_redis_data:/data
+
+
+  celeryworker:
+    <<: *django
+    image: aura_production_celeryworker
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: aura_production_celerybeat
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: aura_production_flower
+    command: /start-flower
+
+  awscli:
+    build:
+      context: .
+      dockerfile: ./compose/production/aws/Dockerfile
+    env_file:
+      - ./.envs/.production/.django
+    volumes:
+      - production_postgres_data_backups:/backups:z

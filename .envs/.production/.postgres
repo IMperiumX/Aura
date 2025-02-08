@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=aura
+POSTGRES_USER=VSHRdhUAZGuFUgeRbKxVBOcAJpAYxYxU
+POSTGRES_PASSWORD=6dC9oDWRkdddSxYDMYSiZCUB0ia9n8SNsOMCmLopCZcXpzYon9zS4nEK1oIUyNLD
