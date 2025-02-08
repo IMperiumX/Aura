@@ -1,39 +1,27 @@
 log:
   level: INFO
 
+# https://doc.traefik.io/traefik/routing/entrypoints/
 entryPoints:
   web:
     # http
     address: ':80'
-    http:
-      # https://doc.traefik.io/traefik/routing/entrypoints/#entrypoint
-      redirections:
-        entryPoint:
-          to: web-secure
-
-  web-secure:
-    # https
-    address: ':443'
 
   flower:
     address: ':5555'
 
-
   traefik:
     address: ':8080'
 
-certificatesResolvers:
-  letsencrypt:
-    # https://doc.traefik.io/traefik/https/acme/#lets-encrypt
-    acme:
-      email: 'yusufadell.dev@gmail.com'
-      storage: /etc/traefik/acme/acme.json
-      # https://doc.traefik.io/traefik/https/acme/#httpchallenge
-      httpChallenge:
-        entryPoint: web
+  prometheus:
+    address: ':9090'
+
+  grafana:
+    address: ':3000'
 
 api:
   dashboard: true
+  insecure: true
 
 tracing:
   addInternals: true
@@ -51,27 +39,34 @@ metrics:
   prometheus:
     entryPoint: traefik
     buckets: [0.1,0.3,1.2,5.0]
+
 http:
   routers:
-    web-secure-router:
+    web-router:
       rule: 'Host(`aura.localhost`) || Host(`www.aura.localhost`)'
-      entryPoints:
-        - web-secure
       middlewares:
         - csrf
       service: django
-      tls:
-        # https://doc.traefik.io/traefik/routing/routers/#certresolver
-        certResolver: letsencrypt
+      entryPoints:
+        - web
 
-    flower-secure-router:
-      rule: 'Host(`aura.localhost`)'
+    flower-router:
+      rule: 'Host(`flower.localhost`)'
       entryPoints:
         - flower
       service: flower
-      tls:
-        # https://doc.traefik.io/traefik/master/routing/routers/#certresolver
-        certResolver: letsencrypt
+
+    prometheus-router:
+      rule: 'Host(`prometheus.localhost`)'
+      entryPoints:
+        - prometheus
+      service: prometheus
+
+    grafana-router:
+      rule: 'Host(`grafana.localhost`)'
+      entryPoints:
+        - grafana
+      service: grafana
 
   middlewares:
     csrf:
@@ -85,11 +80,20 @@ http:
       loadBalancer:
         servers:
           - url: http://django:5000
-
     flower:
       loadBalancer:
         servers:
           - url: http://flower:5555
+
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: http://prometheus:9090
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: http://grafana:3000
 
 providers:
   # https://doc.traefik.io/traefik/master/providers/file/
