@@ -55,7 +55,6 @@ class PatientAssessmentSerializer(HyperlinkedModelSerializer):
             "assessment",
             "result",
             "recommendations",
-            "embedding",
         ]
         extra_kwargs = {
             "url": {
