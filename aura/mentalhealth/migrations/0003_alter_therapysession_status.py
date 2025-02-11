@@ -9,20 +9,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name="therapysession",
-            name="status",
-            field=models.CharField(
-                choices=[
-                    ("pending", "Pending"),
-                    ("accepted", "Accepted"),
-                    ("rejected", "Rejected"),
-                    ("cancelled", "Cancelled"),
-                    ("completed", "Completed"),
-                ],
-                default="pending",
-                max_length=20,
-                verbose_name="Status",
-            ),
-        ),
     ]
