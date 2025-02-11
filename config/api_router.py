@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework.routers import SimpleRouter
 
@@ -12,6 +13,7 @@ from aura.mentalhealth.api.views import DisorderViewSet
 from aura.mentalhealth.api.views import TherapyApproachViewSet
 from aura.mentalhealth.api.views import TherapySessionViewSet
 from aura.users.api.views import PatientViewSet
+from aura.users.api.views import RegisterView
 from aura.users.api.views import UserViewSet
 
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
@@ -74,3 +76,8 @@ router.register(
 )
 app_name = "api"
 urlpatterns = router.urls
+
+
+urlpatterns += [
+    path("registeration/", RegisterView.as_view(), name="rest_register"),
+]
