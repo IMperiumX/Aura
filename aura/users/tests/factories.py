@@ -1,25 +1,22 @@
 from collections.abc import Sequence
 from typing import Any
 
+import factory
 from django.utils import timezone
-from factory import Faker
-from factory import SubFactory
-from factory import post_generation
 from factory.django import DjangoModelFactory
 
 
 class UserFactory(DjangoModelFactory):
     """Factory for User model."""
 
-    email = Faker("email")
-    name = Faker("name")
-    username = Faker("user_name")
-    last_password_change = Faker(
+    email = factory.Faker("email")
+    name = factory.Faker("name")
+    last_password_change = factory.Faker(
         "date_time_this_month",
         tzinfo=timezone.get_current_timezone(),
     )
 
-    @post_generation
+    @factory.post_generation
     def password(
         self,
         create,
@@ -29,7 +26,7 @@ class UserFactory(DjangoModelFactory):
         password = (
             extracted
             if extracted
-            else Faker(
+            else factory.Faker(
                 "password",
                 length=42,
                 special_chars=True,
@@ -60,26 +57,28 @@ class PatientFactory(DjangoModelFactory):
 
         model = "users.Patient"
 
-    avatar_url = Faker("image_url")
-    bio = Faker("text")
-    date_of_birth = Faker("date_of_birth", minimum_age=18)
-    medical_record_number = Faker("ssn")
-    insurance_provider = Faker("company")
-    insurance_policy_number = Faker("ssn")
-    emergency_contact_name = Faker("name")
+    avatar_url = factory.Faker("image_url")
+    bio = factory.Faker("text")
+    date_of_birth = factory.Faker("date_of_birth", minimum_age=18)
+    medical_record_number = factory.Faker("ssn")
+    # medical_record_number = factory.factory.Faker('uuid4')
+    insurance_provider = factory.Faker("company")
+    insurance_policy_number = factory.Faker("ssn")
+    # insurance_policy_number = factory.factory.Faker('random_number', digits=10)
+    emergency_contact_name = factory.Faker("name")
 
     # set to EGY and USA number
-    emergency_contact_phone = Faker("phone_number")
-    allergies = Faker("text")
-    medical_conditions = Faker("text")
-    medical_history = Faker("json")
-    current_medications = Faker("json")
-    health_data = Faker("json")
-    preferences = Faker("json")
-    weight = Faker("random_int", min=50, max=100)
-    height = Faker("random_int", min=150, max=200)
+    emergency_contact_phone = factory.Faker("phone_number")
+    allergies = factory.Faker("text", max_nb_chars=100)
+    medical_conditions = factory.Faker("text")
+    medical_history = factory.Faker("json")
+    current_medications = factory.Faker("json")
+    health_data = factory.Faker("json")
+    preferences = factory.Faker("json")
+    weight = factory.Faker("random_int", min=50, max=150)
+    height = factory.Faker("random_int", min=120, max=200)
 
-    user = SubFactory("aura.users.tests.factories.UserFactory")
+    user = factory.SubFactory("aura.users.tests.factories.UserFactory")
 
 
 class TherapistFactory(DjangoModelFactory):
@@ -90,6 +89,6 @@ class TherapistFactory(DjangoModelFactory):
 
         model = "users.Therapist"
 
-    avatar_url = Faker("image_url")
-    bio = Faker("text")
-    license_number = Faker("ssn")
+    avatar_url = factory.Faker("image_url")
+    bio = factory.Faker("text")
+    license_number = factory.Faker("ssn")
