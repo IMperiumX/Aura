@@ -1,7 +1,12 @@
+import logging
+
+from dj_rest_auth.registration import views as dj_views
 from django.conf import settings as api_settings
+from django.db.utils import IntegrityError
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.mixins import UpdateModelMixin
@@ -18,6 +23,8 @@ from aura.users.api.serializers import UserSerializer
 from aura.users.mixins import LoginMixin
 from aura.users.models import Patient
 from aura.users.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class UserViewSet(
@@ -100,14 +107,32 @@ class UserViewSet(
         return self.get_response()
 
 
+class RegisterView(dj_views.RegisterView):
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except IntegrityError:
+            return Response(
+                {"error": "User already exists"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except ValidationError as e:
+            return Response(
+                {"error": e.detail},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception:
+            logger.exception("An error occurred")
+            return Response(
+                {"error": "An error occurred"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
 class PatientViewSet(ModelViewSet):
     serializer_class = PatientSerializer
     queryset = Patient.objects.all()
     lookup_field = "pk"
-
-    def get_queryset(self, *args, **kwargs):
-        assert isinstance(self.request.user.id, int)
-        return self.queryset.filter(id=self.request.user.id)
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
@@ -118,8 +143,6 @@ class PatientViewSet(ModelViewSet):
         from aura.mentalhealth.models import Disorder
 
         user_data = serializer.validated_data.pop("user", None)
-        user_data["created_by"] = serializer.validated_data.pop("created_by", None)
-        user_data["updated_by"] = serializer.validated_data.pop("updated_by", None)
         serializer.validated_data["user"] = User.objects.create_user(**user_data)
 
         disorders = serializer.validated_data.pop("disorders", None)
@@ -133,6 +156,6 @@ class PatientViewSet(ModelViewSet):
         create_audit_entry(
             request=self.request,
             target_object=patient.id,
-            event=audit_log.get_event_id("PATIENT_CREATED"),
+            event=audit_log.get_event_id("PATIENT_CREATE"),
             data=patient.get_audit_log_data(),
         )

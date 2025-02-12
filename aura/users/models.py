@@ -18,7 +18,6 @@ from taggit.managers import TaggableManager
 from aura.core.utils import sane_repr
 from aura.users.mixins import AuditModel
 
-from .fields import AutoOneToOneField
 from .managers import UserManager
 
 
@@ -110,7 +109,7 @@ class AbstractProfile(LifecycleModelMixin, AuditModel):
         null=True,
     )
 
-    user = AutoOneToOneField(
+    user = models.ForeignKey(
         "users.User",
         on_delete=models.SET_NULL,
         related_name="%(class)s_profile",

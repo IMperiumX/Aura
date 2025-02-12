@@ -21,7 +21,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_cryptography.fields import encrypt
 from model_utils.models import TimeStampedModel
 
 from aura.communication.managers import MessageManager
@@ -90,7 +89,7 @@ class Message(TimeStampedModel):
 
         __empty__ = _("(Unknown)")
 
-    text = encrypt(models.TextField(verbose_name=_("text")))
+    text = models.TextField(verbose_name=_("text"))
     read_at = models.DateTimeField(
         blank=True,
         null=True,

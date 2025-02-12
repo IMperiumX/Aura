@@ -1,22 +1,21 @@
 from unittest.mock import MagicMock
-from unittest.mock import patch
 
-import pytest
 from django.conf import settings
-from llama_index.core import Document
 
-from aura.core.services.recommendation import RecommendationEngine
+# from llama_index.core import Document
 
-
-@pytest.fixture()
-def recommendation_engine():
-    return RecommendationEngine()
+# from aura.core.services.recommendation import RecommendationEngine
 
 
-@pytest.fixture()
-def mock_db_reader():
-    with patch("aura.core.services.DatabaseReader") as mock:
-        yield mock
+# @pytest.fixture()
+# def recommendation_engine():
+#     return RecommendationEngine()
+
+
+# @pytest.fixture()
+# def mock_db_reader():
+#     with patch("aura.core.services.DatabaseReader") as mock:
+#         yield mock
 
 
 def test_fetch_documents_from_storage_initializes_db_reader_correctly(

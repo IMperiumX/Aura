@@ -77,19 +77,6 @@ class UserAdmin(auth_admin.UserAdmin, ImportExportModelAdmin):
             return format_html('<span style="color: purple;">Coach</span>')
         return format_html('<span style="color: red;">No Profile</span>')
 
-    def get_inline_instances(self, request, obj=None):
-        if not obj:
-            return []
-        inline_instances = super().get_inline_instances(request, obj)
-
-        if hasattr(obj, "coach_profile"):
-            inline_instances.append(CoachInline(self.model, self.admin_site))
-        if hasattr(obj, "patient_profile"):
-            inline_instances.append(PatientInline(self.model, self.admin_site))
-        if hasattr(obj, "therapist_profile"):
-            inline_instances.append(TherapistInline(self.model, self.admin_site))
-        return inline_instances
-
     actions = ["make_active", "make_inactive"]
 
     @admin.action(description="Mark selected users as active")
