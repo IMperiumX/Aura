@@ -1,0 +1,26 @@
+apiVersion: 1
+
+groups:
+- name: example-group
+  orgId: 1
+  folder: my-alerts  # Optional: Put alerts in a specific folder
+  interval: 1m       # How often to evaluate the rules in this group
+  rules:
+    - alert: HighErrorRate
+      expr: |
+        sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.1
+      for: 5m       # The condition must be true for this duration
+      labels:
+        severity: critical
+      annotations:
+        summary: "High error rate detected"
+        description: "The error rate is above 10% for the last 5 minutes."
+
+    - alert: ServiceDown
+      expr: up == 0
+      for: 1m
+      labels:
+        severity: page
+      annotations:
+        summary: "Service is down"
+        description: "The 'up' metric is 0, indicating the service is down."
