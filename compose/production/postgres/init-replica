@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+DATA_DIR="/var/lib/postgresql/data"
+
+# Check if the data directory is empty
+if [ "$(ls -A "$DATA_DIR")" ]; then
+    echo "Data directory is not empty.  Assuming replica is already initialized."
+else
+    echo "Data directory is empty.  Initializing replica with pg_basebackup..."
+
+    # Create a temporary directory (good practice)
+    TEMP_DATA_DIR="/var/lib/postgresql/data_temp"
+    mkdir -p "$TEMP_DATA_DIR" || { echo "Failed to create temp dir"; exit 1; }
+
+    # Run pg_basebackup (using environment variables)
+    pg_basebackup \
+      -h "${POSTGRES_PRIMARY_HOST}" \
+      -D "$TEMP_DATA_DIR" \
+      -U "${POSTGRES_USER}" \
+      -v \
+      -P \
+      -w \
+      -X stream \
+      -R || { echo "pg_basebackup failed"; exit 1; }
+
+
+    # Stop PostgreSQL (if it's somehow running)
+    if pg_isready -q -d "user=${POSTGRES_USER} host=/var/run/postgresql"; then
+        pg_ctl stop -D /var/lib/postgresql/data -m fast || { echo "Failed to stop PostgreSQL"; exit 1; }
+    fi
+
+
+    # Remove any existing files in the data directory (should be empty, but be safe)
+    rm -rf "$DATA_DIR"/* || { echo "Failed to remove old data"; exit 1; }
+    rm -rf "$DATA_DIR"/.[!.]* 2>/dev/null || true
+
+    # Move the data from the temporary directory to the correct location
+    mv "$TEMP_DATA_DIR"/* "$DATA_DIR"/ || { echo "Failed to move data (1)"; exit 1; }
+    mv "$TEMP_DATA_DIR"/.[!.]* "$DATA_DIR"/ 2>/dev/null || true
+
+    # Clean up the temporary directory
+    rm -rf "$TEMP_DATA_DIR" || { echo "Failed to remove temp dir"; exit 1; }
+fi
+
+# Start PostgreSQL (in standby mode, configured by pg_basebackup -R)
+exec docker-entrypoint.sh postgres

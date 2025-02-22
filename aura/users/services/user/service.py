@@ -1,7 +1,8 @@
 from abc import abstractmethod
 
-from core.services.base import Service
 from typing_extensions import TypedDict
+
+from aura.core.services.base import Service
 
 
 class UserFilterArgs(TypedDict, total=False):

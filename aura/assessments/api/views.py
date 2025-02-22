@@ -13,7 +13,8 @@ from aura.assessments.api.serializers import PatientAssessmentSerializer
 from aura.assessments.api.serializers import RiskPredictionSerializer
 from aura.assessments.models import PatientAssessment
 from aura.assessments.models import RiskPrediction
-from aura.core.services.recommendation import RecommendationEngine
+
+# from aura.core.services.recommendation import RecommendationEngine
 from aura.users.api.permissions import IsPatient
 from aura.users.api.permissions import IsTherapist
 from aura.users.api.serializers import TherapistSerializer
@@ -61,13 +62,14 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def therapist_recommendations(self, request, pk=None):
-        assessment = self.get_object()
+        # assessment = self.get_object()
         # TODO: Move to assessment as instance method, assessment.get_therapist_recommendations()
-        best_match = RecommendationEngine().find_best_match(assessment)
+        # best_match = RecommendationEngine().find_best_match(assessment)
 
-        serializer = self.get_serializer(best_match)
+        # serializer = self.get_serializer(best_match)
 
-        return Response(serializer.data)
+        # return Response(serializer.data)
+        return Response({})
 
     @action(detail=True, methods=["post"])
     def submit_assessment(self, request, pk=None):
