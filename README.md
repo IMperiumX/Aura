@@ -23,7 +23,7 @@ License: Apache Software License 2.0
 - **Mental Health Support**: Engage with mindfulness exercises, stress management techniques, and mental health resources to promote emotional well-being and reduce anxiety.
 - **User Management** with multiple roles (Patient, Therapist, etc..): Manage user accounts, roles, and permissions for patients, therapists, and administrators.
 - **JWT** and **LDAP** Authentication: Secure user authentication and authorization using JSON Web Tokens and LDAP.
-- **Therapy Session Management**: Schedule, manage, and join virtual therapy sessions with mental health professionals.
+- **Therapy Session Management (Telehealth Consultations)**: Schedule, manage, and join virtual therapy sessions with mental health professionals.
 - **Recommendation Engine** using RAG (Retrieval-Augmented Generation): Generate personalized health and wellness recommendations using RAG.
 - **Admin Interface** for easy management: Manage users, health assessments, therapy sessions, and recommendations using the admin interface.
 
@@ -56,7 +56,7 @@ The `RecommendationEngine` class implements a sophisticated RAG (Retrieval-Augme
 
 The `Assessment` model captures detailed health assessment data, including risk levels, responses, and recommendations. It uses pgvector for efficient similarity searches.
 
-### Real-time Communication
+### Telehealth Consultations
 
 The project uses Django Channels and WebSockets to enable real-time communication features, crucial for the platform's chat and video call functionalities.
 
