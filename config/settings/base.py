@@ -4,6 +4,7 @@
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 import environ
 import ldap
 from django_auth_ldap.config import GroupOfNamesType
@@ -49,14 +50,37 @@ LOCALE_PATHS = [str(BASE_DIR / "locale")]
 # DATABASES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
+# Maximum time in seconds Django can keep the database connections opened.
+# Set the value to 0 to disable connection persistence, database connections
+# will be closed after each request.
+# For Django 4, the default value was changed to 0 as persistent DB connections
+# are not supported.
+DB_CONN_MAX_AGE = env.int("DB_CONN_MAX_AGE", default=0)
 
+DATABASE_CONNECTION_DEFAULT_NAME = "default"
+# TODO: For local envs will be activated in separate PR.
+# This variable should be set to `replica`
+DATABASE_CONNECTION_REPLICA_NAME = "replica"
 DATABASES = {
-    "default": env.db(
-        "DATABASE_URL",
-        default="postgres:///aura",
+    DATABASE_CONNECTION_DEFAULT_NAME: dj_database_url.config(
+        # default="postgres://{POSTGRES_USER}:aura@localhost:5432/aura",
+        conn_max_age=DB_CONN_MAX_AGE,
+    ),
+    DATABASE_CONNECTION_REPLICA_NAME: dj_database_url.config(
+        env="DATABASE_REPLICA_URL",
+        # default="postgres://posrgres:aura@localhost:5432/aura",
+        # TODO: We need to add read only user to aura,
+        # and we need to update docs.
+        # default="postgres://aura_read_only:aura@localhost:5432/aura",
+        conn_max_age=DB_CONN_MAX_AGE,
+        test_options={"MIRROR": DATABASE_CONNECTION_DEFAULT_NAME},
     ),
 }
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
+DATABASES[DATABASE_CONNECTION_DEFAULT_NAME]["ATOMIC_REQUESTS"] = True
+
+DATABASE_ROUTERS = ["aura.core.db_routers.PrimaryReplicaRouter"]
+
+
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -315,11 +339,11 @@ LOGGING = {
             "handlers": ["file"],
             "propagate": False,
         },
-        "django": {
-            "handlers": ["file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
+        # "django": {
+        #     "handlers": ["file"],
+        #     "level": "DEBUG",
+        #     "propagate": True,
+        # },
     },
 }
 
@@ -527,3 +551,6 @@ DATA_RETENTION_PERIOD = 365
 
 # IP Address
 GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "test.mmdb"
+
+# RAG
+GEMINI_API_KEY = env("GEMINI_API_KEY")
