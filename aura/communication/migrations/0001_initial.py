@@ -3,7 +3,6 @@
 import datetime
 import django.db.models.deletion
 import django.utils.timezone
-import django_cryptography.fields
 import model_utils.fields
 from django.db import migrations, models
 
@@ -60,9 +59,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "text",
-                    django_cryptography.fields.encrypt(
                         models.TextField(verbose_name="text")
-                    ),
                 ),
                 (
                     "read_at",
