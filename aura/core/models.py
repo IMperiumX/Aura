@@ -183,3 +183,44 @@ class AuditLogEntry(models.Model):
         if self.actor_key:
             return self.actor_key.key + " (api key)"
         return self.actor_label
+
+
+class PhysicianReferral(models.Model):
+    PRACTICE_SIZE_CHOICES = (
+        ("1", "1"),
+        ("2-10", "2-10"),
+        ("11-50", "11-50"),
+        ("51-100", "51-100"),
+        ("101-500", "101-500"),
+        ("500+", "500+"),
+    )
+    first_name = models.CharField(max_length=255, verbose_name="First Name")
+    last_name = models.CharField(max_length=255, verbose_name="Last Name")
+    work_email = models.EmailField(verbose_name="Work Email")
+    work_phone_number = models.CharField(
+        max_length=20,
+        verbose_name="Work Phone Number",
+    )  # Use CharField, validate later
+    practice_name = models.CharField(max_length=255, verbose_name="Name of Practice")
+    state_of_practice = models.CharField(
+        max_length=2,
+        verbose_name="State of Practice (2-letter code)",
+    )  #  Store 2-letter state codes (e.g., "CA", "NY").
+    medical_group_aco = models.CharField(
+        max_length=255,
+        verbose_name="Medical Group / ACO Affiliation",
+    )
+    practice_size = models.CharField(
+        max_length=10,
+        choices=PRACTICE_SIZE_CHOICES,
+        verbose_name="Practice Size",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Physician Referral"
+        verbose_name_plural = "Physician Referrals"
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.practice_name}"

@@ -3,6 +3,7 @@ import logging
 from dj_rest_auth.registration import views as dj_views
 from django.conf import settings as api_settings
 from django.db.utils import IntegrityError
+from rest_framework import generics
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -14,7 +15,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ViewSetMixin
 
+from aura.core.models import PhysicianReferral
 from aura.core.utils import jwt_encode
 from aura.users.api.serializers import LoginSerializer
 from aura.users.api.serializers import PatientSerializer
@@ -23,6 +26,8 @@ from aura.users.api.serializers import UserSerializer
 from aura.users.mixins import LoginMixin
 from aura.users.models import Patient
 from aura.users.models import User
+
+from .serializers import PhysicianReferralSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -159,3 +164,31 @@ class PatientViewSet(ModelViewSet):
             event=audit_log.get_event_id("PATIENT_CREATE"),
             data=patient.get_audit_log_data(),
         )
+
+
+class PhysicianReferralListCreate(
+    ViewSetMixin,
+    generics.ListCreateAPIView,
+):
+    queryset = PhysicianReferral.objects.all()
+    serializer_class = PhysicianReferralSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
+
+class PhysicianReferralRetrieveUpdateDestroy(
+    ViewSetMixin,
+    generics.RetrieveUpdateDestroyAPIView,
+):
+    queryset = PhysicianReferral.objects.all()
+    serializer_class = PhysicianReferralSerializer
+    lookup_field = "id"

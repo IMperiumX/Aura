@@ -13,6 +13,8 @@ from aura.mentalhealth.api.views import DisorderViewSet
 from aura.mentalhealth.api.views import TherapyApproachViewSet
 from aura.mentalhealth.api.views import TherapySessionViewSet
 from aura.users.api.views import PatientViewSet
+from aura.users.api.views import PhysicianReferralListCreate
+from aura.users.api.views import PhysicianReferralRetrieveUpdateDestroy
 from aura.users.api.views import RegisterView
 from aura.users.api.views import UserViewSet
 
@@ -74,6 +76,14 @@ router.register(
     AttachmentViewSet,
     basename="attachments",
 )
+
+router.register(
+    "referrals",
+    PhysicianReferralListCreate,
+    basename="referrals",
+)
+
+
 app_name = "api"
 urlpatterns = router.urls
 

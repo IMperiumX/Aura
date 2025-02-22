@@ -1,4 +1,7 @@
 """
+Integrates with a video conferencing service (e.g., Twilio Video, Jitsi, Zoom API, Agora)
+or implements WebRTC directly.
+
 - Text Chat: Real-time messaging for sessions and offline communication.
 - Video/Audio Calls: Secure, high-quality video/audio communication.
 - File Sharing: Secure file transfer for sharing documents, worksheets, etc.

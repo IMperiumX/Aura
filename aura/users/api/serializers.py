@@ -2,6 +2,7 @@ import contextlib
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.core.validators import RegexValidator
 from django.urls import exceptions as url_exceptions
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
@@ -16,6 +17,7 @@ from rest_framework.serializers import SerializerMethodField
 from rest_framework.serializers import StringRelatedField
 from rest_framework.serializers import ValidationError
 
+from aura.core.models import PhysicianReferral
 from aura.core.models import Review
 from aura.mentalhealth.api.serializers import DisorderSerializer
 from aura.users.models import Patient
@@ -305,3 +307,62 @@ class JWTSerializerWithExpiration(JWTSerializer):
 
     access_expiration = DateTimeField()
     refresh_expiration = DateTimeField()
+
+
+class PhysicianReferralSerializer(ModelSerializer):
+    class Meta:
+        model = PhysicianReferral
+        fields = (
+            "id",  # good practice to include the ID
+            "first_name",
+            "last_name",
+            "work_email",
+            "work_phone_number",
+            "practice_name",
+            "state_of_practice",
+            "medical_group_aco",
+            "practice_size",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "created_at",
+            "updated_at",
+        )  # important to make these fields read only
+
+    def validate_work_phone_number(self, value):
+        """
+        Custom validation for the phone number.
+        """
+        phone_regex = RegexValidator(
+            regex=r"^\+?1?\d{9,15}$",
+            message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.",
+        )
+        phone_regex(value)  # This will raise a ValidationError if it fails
+        return value
+
+    def validate_state_of_practice(self, value):
+        """
+        Validate the state code (basic example).
+        """
+        # In a real application, you'd likely use a library or a comprehensive list.
+        valid_states = [
+            "WI",
+            "WY",
+            "DC",
+        ]
+        if value.upper() not in valid_states:
+            msg = "Invalid state code."
+            raise ValidationError(msg)
+        return value.upper()  # Store in uppercase for consistency
+
+    def validate(self, data):
+        """
+        Object-level validation (optional).  You can perform cross-field validation here.
+        For instance, you might want to check if the email domain is allowed for the
+        given medical group.  This is just a placeholder example.
+        """
+        # Example:  (This is highly simplified and would need a database lookup in reality)
+        # if "example.com" not in data['work_email'] and data['medical_group_aco'] == "Example Medical Group":
+        #     raise serializers.ValidationError("Email domain not allowed for this medical group.")
+        return data

@@ -246,7 +246,6 @@ class Coach(AbstractProfile):
         verbose_name_plural = "Coaches"
 
 
-# physician
 class Physician(AbstractProfile):
     """A model to represent a physician"""
 
