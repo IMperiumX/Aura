@@ -1,6 +1,6 @@
 """
 ## TODOs
-- Implementing more sophisticated recommendation algorithms based on
+- Implementing more sophisticated recommendation algorithms
   moving beyond simple keyword matching or even basic similarity search to a system that can
   intelligently match patients and therapists based on a variety of factors.
     - [x] Custom Querysets: gives a fine-grained control over how you fetch data from the database.
