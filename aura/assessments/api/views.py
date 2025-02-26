@@ -13,8 +13,7 @@ from aura.assessments.api.serializers import PatientAssessmentSerializer
 from aura.assessments.api.serializers import RiskPredictionSerializer
 from aura.assessments.models import PatientAssessment
 from aura.assessments.models import RiskPrediction
-
-# from aura.core.services.recommendation import RecommendationEngine
+from aura.core.tasks import setup_rag_pipeline_task
 from aura.users.api.permissions import IsPatient
 from aura.users.api.permissions import IsTherapist
 from aura.users.api.serializers import TherapistSerializer
@@ -62,14 +61,22 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def therapist_recommendations(self, request, pk=None):
-        # assessment = self.get_object()
-        # TODO: Move to assessment as instance method, assessment.get_therapist_recommendations()
-        # best_match = RecommendationEngine().find_best_match(assessment)
+        # TODO: get py object from a celery task
+        # start here: https://www.reddit.com/r/django/comments/1wx587/how_do_i_return_the_result_of_a_celery_task_to/
+        task = setup_rag_pipeline_task.delay()
+        from celery.result import AsyncResult
 
-        # serializer = self.get_serializer(best_match)
-
-        # return Response(serializer.data)
-        return Response({})
+        if task.status == "SUCCESS":
+            result = AsyncResult(task.id).get()
+            query_engine = result
+            response = query_engine.query("Best Therapist for me?")
+            return Response(response)
+            # or store the result in (PatientAssesment) and return the assessment object
+            assessment = ...
+            assessment.recommendations = response
+            serializer = self.get_serializer(self.get_object())
+            return Response(serializer.data)
+        return Response("Working on it!", status=status.HTTP_202_ACCEPTED)
 
     @action(detail=True, methods=["post"])
     def submit_assessment(self, request, pk=None):
