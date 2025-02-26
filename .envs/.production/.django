@@ -65,6 +65,6 @@ DJANGO_LDAP_PASSWORD=password
 EMBEDDING_MODEL_DIMENSIONS=1024
 LLAMA_INDEX_CACHE_DIR=/home/yusuf/.llama_index
 TOKENIZER_NAME=mistralai/Mixtral-8x7B-Instruct-v0.1
-LLAMA_GGUFF_MODEL_PATH=/home/yusuf/Downloads/gguff_model
+LLAMA_GGUFF_MODEL_URL=https://huggingface.co/bartowski/SmolLM2-135M-Instruct-GGUF/resolve/main/Smol>
 EMBED_MODEL_NAME=WhereIsAI/UAE-Large-V1
 USE_GPU=0

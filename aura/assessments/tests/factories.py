@@ -1,4 +1,5 @@
 import factory
+from django.conf import settings
 from factory.django import DjangoModelFactory
 
 from aura.assessments.models import Assessment
@@ -59,7 +60,7 @@ class PatientAssessmentFactory(DjangoModelFactory):
     embedding = factory.List(
         [
             factory.Faker("pyfloat", left_digits=1, right_digits=10, positive=True)
-            for _ in range(1024)
+            for _ in range(settings.EMBEDDING_MODEL_DIMENSIONS)
         ],
     )
 

@@ -56,7 +56,7 @@ LOCALE_PATHS = [str(BASE_DIR / "locale")]
 # For Django 4, the default value was changed to 0 as persistent DB connections
 # are not supported.
 DB_CONN_MAX_AGE = env.int("DB_CONN_MAX_AGE", default=0)
-
+DATABASE_URL = env("DATABASE_URL")
 DATABASE_CONNECTION_DEFAULT_NAME = "default"
 # TODO: For local envs will be activated in separate PR.
 # This variable should be set to `replica`
@@ -347,7 +347,7 @@ LOGGING = {
     },
 }
 
-REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
+REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
 REDIS_SSL = REDIS_URL.startswith("rediss://")
 
 # Celery
@@ -356,7 +356,7 @@ if USE_TZ:
     # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-timezone
     CELERY_TIMEZONE = TIME_ZONE
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-broker_url
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-result_backend
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#result-extended
@@ -447,9 +447,8 @@ SPECTACULAR_SETTINGS = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-# Personalized assessments to match a Therapist
-EMBEDDING_MODEL_DIMENSIONS = env.int("EMBEDDING_MODEL_DIMENSIONS")
 
+# Taggit
 TAGGIT_CASE_INSENSITIVE = True
 
 
@@ -522,13 +521,18 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
+# RAG
+#------------------------------------------------------------------------------
+
+# Embedding Model Configuration
+EMBEDDING_MODEL_DIMENSIONS = env.int("EMBEDDING_MODEL_DIMENSIONS")
+EMBED_MODEL_NAME = env("EMBED_MODEL_NAME")
+GEMINI_API_KEY = env("GEMINI_API_KEY")
+EMBEDDINGS_LOADED = False
 
 # LLama Index Configuration
 LLAMA_INDEX_CACHE_DIR = env("LLAMA_INDEX_CACHE_DIR")
-TOKENIZER_NAME = env("TOKENIZER_NAME")
-LLAMA_GGUFF_MODEL_PATH = env("LLAMA_GGUFF_MODEL_PATH")
-EMBED_MODEL_NAME = env("EMBED_MODEL_NAME")
-
+LLAMA_GGUFF_MODEL_URL = env("LLAMA_GGUFF_MODEL_URL")
 USE_GPU = env.int("USE_GPU")
 
 # Sentry Settings
@@ -551,6 +555,3 @@ DATA_RETENTION_PERIOD = 365
 
 # IP Address
 GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "test.mmdb"
-
-# RAG
-GEMINI_API_KEY = env("GEMINI_API_KEY")
