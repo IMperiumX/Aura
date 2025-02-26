@@ -13,3 +13,4 @@ def setup_rag_pipeline_task():
     rag_system.setup_query_engine()
 
     django_settings.EMBEDDINGS_LOADED = True
+    return rag_system

@@ -28,7 +28,6 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.llama_cpp import LlamaCPP
 from llama_index.readers.database import DatabaseReader
 from llama_index.vector_stores.postgres import PGVectorStore
-from rest_framework.response import Response
 
 from aura.assessments.models import PatientAssessment
 from aura.core.utils import _get_db_connection_params
