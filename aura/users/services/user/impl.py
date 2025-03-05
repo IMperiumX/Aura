@@ -23,7 +23,9 @@ class DatabaseBackedUserService(UserService):
         def base_query(self, select_related: bool = True) -> QuerySet[User]:
             if not select_related:
                 return User.objects.all()
-            return User.objects.select_related()  # XXX: Add select_related fields
+            return User.objects.select_related("auth_toke").prefetch_related(
+                "socialaccount_set",
+            )  # XXX: Add select_related fields
 
         def apply_filters(
             self,
