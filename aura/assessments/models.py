@@ -113,6 +113,8 @@ class PatientAssessment(TimeStampedModel, LifecycleModel):
                 ef_construction=64,
                 opclasses=["vector_cosine_ops"],
             ),
+            models.Index(fields=["created"]),
+            models.Index(fields=["modified"]),
         ]
 
     def __str__(self):
