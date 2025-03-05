@@ -21,11 +21,9 @@ from aura.users.models import Patient
 
 
 class AssessmentViewSet(viewsets.ModelViewSet):
-    queryset = PatientAssessment.objects.all()
     serializer_class = PatientAssessmentSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-
     filterset_fields = [
         "created",
         "modified",
@@ -42,7 +40,11 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self):
-        return self.queryset.filter(patient=self.request.user.patient_profile)
+        return (
+            PatientAssessment.objects.select_related("patient", "assessment")
+            .only("url", "patient", "assessment", "result", "recommendations")
+            .filter(patient=self.request.user.patient_profile)
+        )
 
     def perform_create(self, serializer):
         patient = Patient.objects.get(user=self.request.user)
