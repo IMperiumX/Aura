@@ -57,12 +57,37 @@ class RAGSystem:
 
     TABLE_NAME = "assessment_embeddings"
 
+    @property
+    def embed_model(self) -> HuggingFaceEmbedding:
+        """Get the embedding model."""
+        return self._embed_model
+
+    @property
+    def llm(self) -> LlamaCPP:
+        """Get the LlamaCPP model."""
+        return self._llm
+
+    @property
+    def vector_store(self) -> BasePydanticVectorStore:
+        """Get the vector store."""
+        return self._vector_store
+
+    @property
+    def index(self) -> VectorStoreIndex:
+        """Get the vector store index."""
+        return self._index
+
+    @property
+    def query_engine(self):
+        """Get the query engine."""
+        return self._query_engine
+
     @classmethod
     def _create_pg_vector_store(cls) -> PGVectorStore:
         """Creates and configures the PGVectorStore."""
         return PGVectorStore.from_params(
             **_get_db_connection_params(),
-            table_name=cls.TABLE_NAME,  # XXX: data_{table_name}
+            table_name=cls.TABLE_NAME,  # XXX: data_{table_name} => "data_assessment_embeddings"
             embed_dim=django_settings.EMBEDDING_MODEL_DIMENSIONS,
             hnsw_kwargs={  # Consider moving HNSW params to env vars or settings
                 "hnsw_m": 16,
@@ -144,28 +169,3 @@ class RAGSystem:
         # Using DatabaseReader with a raw SQL query.
         reader = DatabaseReader(**_get_db_connection_params())
         return reader.load_data(query=query)
-
-    @property
-    def embed_model(self) -> HuggingFaceEmbedding:
-        """Get the embedding model."""
-        return self._embed_model
-
-    @property
-    def llm(self) -> LlamaCPP:
-        """Get the LlamaCPP model."""
-        return self._llm
-
-    @property
-    def vector_store(self) -> BasePydanticVectorStore:
-        """Get the vector store."""
-        return self._vector_store
-
-    @property
-    def index(self) -> VectorStoreIndex:
-        """Get the vector store index."""
-        return self._index
-
-    @property
-    def query_engine(self):
-        """Get the query engine."""
-        return self._query_engine
