@@ -2,6 +2,26 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Django Debugger: daphne",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "daphne",
+            "args": [
+            "config.asgi:application",
+            "--port",
+            "8000",
+            "--bind",
+            "0.0.0.0"
+            ],
+            "console": "externalTerminal",
+            "justMyCode": false,
+            "env": {
+            "DJANGO_SETTINGS_MODULE": "config.settings.local",
+            // "VIRTUAL_ENV": "${workspaceFolder}/venv",
+            // "PATH": "${workspaceFolder}/venv/bin:${env:PATH}"
+            }
+        },
+        {
             "name": "Python Debugger: Uvicorn",
             "type": "debugpy",
             "request": "launch",
