@@ -142,6 +142,7 @@ LOCAL_APPS = [
     "aura.mentalhealth",
     "aura.assessments",
     "aura.communication",
+    # "aura.analytics",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -192,6 +193,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "csp.middleware.CSPMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -332,7 +334,7 @@ LOGGING = {
             "formatter": "json",
         },
     },
-    "root": {"level": "INFO", "handlers": ["console", "json_console"]},
+    "root": {"level": "INFO", "handlers": ["console"]},
     "loggers": {
         "aura": {
             "level": "DEBUG",
@@ -555,3 +557,15 @@ DATA_RETENTION_PERIOD = 365
 
 # IP Address
 GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "test.mmdb"
+
+# Content Security Polilcy, Docs: https://github.com/mozilla/django-csp
+CSP_SCRIPT_SRC = ("'self'",)
+CSP_IMG_SRC = ("'self'",)
+CSP_FONT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'",)
+CSP_DEFAULT_SRC = ("'none'",)
+CSP_CONNECT_SRC = (
+    "'self'",
+    "ws://localhost:8000",
+    "wss://yourdomain.com",
+)  # Add your WebSocket URLs

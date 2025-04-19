@@ -3,6 +3,7 @@ from django.core.files import File
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from aura.communication import THREAD_MIN_PARTICIPANTS
 from aura.communication.models import Attachment
 from aura.communication.models import Folder
 from aura.communication.models import Message
@@ -46,6 +47,25 @@ class ThreadSerializer(DynamicFieldsModelSerializer):
             "last_message",
             "unread_count",
         ]
+
+    def create(self, validated_data):
+        participant_ids = validated_data.pop("participant_ids")
+        request_user = self.context["request"].user
+
+        # Add the request user to participants if not already included
+        if request_user.id not in participant_ids:
+            participant_ids.append(request_user.id)
+
+        participants = User.objects.filter(id__in=participant_ids).distinct()
+
+        if len(participants) < THREAD_MIN_PARTICIPANTS:
+            msg = f"A thread must have at least {THREAD_MIN_PARTICIPANTS} participants"
+            raise serializers.ValidationError(msg)
+
+        thread = Thread.objects.create(**validated_data)
+        thread.participants.set(participants)
+
+        return thread
 
     @extend_schema_field(serializers.DictField)
     def get_last_message(self, obj):

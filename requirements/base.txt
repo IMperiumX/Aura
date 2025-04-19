@@ -59,3 +59,6 @@ maxminddb==2.6.3 # https://www.maxmind.com/
 json-log-formatter==1.1 # https://github.com/marselester/json-log-formatter
 python-rapidjson==1.20 # https://github.com/python-rapidjson/python-rapidjson
 simplejson==3.19.3 # https://github.com/simplejson/simplejson
+
+# Django CSP
+django-csp==3.8 # http://github.com/mozilla/django-csp

@@ -29,6 +29,7 @@ from model_utils.models import TimeStampedModel
 from aura.communication.managers import MessageManager
 from aura.communication.managers import ThreadManager
 from aura.mentalhealth.models import TherapySession
+from aura.users.models import User
 
 from . import MAX_LENGTH
 from . import MAX_LENGTH_SMALL
@@ -78,6 +79,28 @@ class Thread(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("communication:thread-detail", kwargs={"pk": self.pk})
 
+    def add_participant(self, user):
+        if not self.participants.filter(id=user.id).exists():
+            self.participants.add(user)
+            self.send_system_message(f"{user.username} was added to the conversation")
+
+    def remove_participant(self, user):
+        if self.participants.filter(id=user.id).exists():
+            self.participants.remove(user)
+            self.send_system_message(f"{user.username} left the conversation")
+
+    def send_system_message(self, text):
+        system_user = User.objects.get_system_user()
+        message = Message.objects.create(
+            thread=self,
+            sender=system_user,
+            text=text,
+            message_type=Message.MessageTypes.SYSTEM,
+        )
+        self.last_message = message
+        self.save()
+        return message
+
 
 # TODO: Add a ReadReceipt model to track when messages are read by each participant.
 class Message(TimeStampedModel):
@@ -109,7 +132,6 @@ class Message(TimeStampedModel):
         verbose_name=_("data retention period"),
     )
 
-    # relateions
     thread = models.ForeignKey(
         "communication.Thread",
         on_delete=models.CASCADE,
@@ -128,6 +150,10 @@ class Message(TimeStampedModel):
     class Meta:
         verbose_name = _("message")
         verbose_name_plural = _("messages")
+        indexes = [
+            models.Index(fields=["thread", "created"]),
+            models.Index(fields=["read_at"]),
+        ]
 
     def __str__(self):
         return f"Message {self.id}"
@@ -144,6 +170,17 @@ class Message(TimeStampedModel):
 
     def is_unread(self):
         return self.read_at is None
+
+    @property
+    def preview(self):
+        return self.text[:100] + "..." if len(self.text) > 100 else self.text
+
+    def mark_read_by(self, user):
+        if not self.read_by.filter(id=user.id).exists():
+            self.read_by.add(user)
+            if self.read_by.count() == self.thread.participants.count() - 1:
+                self.read_at = timezone.now()
+                self.save()
 
 
 class TherapySessionThread(Thread):
@@ -193,6 +230,10 @@ class Attachment(TimeStampedModel):
         related_name="next_version",
         blank=True,
         null=True,
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
     )
 
     @property

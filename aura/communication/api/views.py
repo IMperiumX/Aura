@@ -71,6 +71,45 @@ class ThreadViewSet(viewsets.ModelViewSet):
         )
         return Response(stats)
 
+    @action(detail=True, methods=["post"])
+    def upload_attachment(self, request, pk=None):
+        thread = self.get_object()
+        if not thread.participants.filter(id=request.user.id).exists():
+            return Response(
+                {"error": "Not a participant in this thread"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        file = request.FILES.get("file")
+        if not file:
+            return Response(
+                {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        attachment = Attachment.objects.create(
+            file=file,
+            name=file.name,
+            size=file.size,
+            content_type=file.content_type,
+            uploaded_by=request.user,
+        )
+
+        message = Message.objects.create(
+            thread=thread,
+            sender=request.user,
+            text=f"Shared file: {file.name}",
+            message_type=Message.MessageTypes.FILE,
+        )
+        message.attachments.add(attachment)
+
+        thread.last_message = message
+        thread.save()
+
+        return Response(
+            MessageSerializer(message, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
 
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
@@ -102,6 +141,16 @@ class MessageViewSet(viewsets.ModelViewSet):
             {"error": "thread_id is required"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    @action(detail=False, methods=["get"])
+    def unread(self, request):
+        queryset = (
+            self.get_queryset()
+            .filter(read_at__isnull=True)
+            .exclude(sender=request.user)
+        )
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FolderViewSet(viewsets.ModelViewSet):
