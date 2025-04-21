@@ -9,7 +9,7 @@ from typing import Final
 from typing import Generic
 from typing import TypeVar
 
-from aura.utils import metrics
+# from aura.utils import metrics
 from aura.utils import warnings
 from aura.utils.imports import import_string
 
@@ -101,10 +101,10 @@ class LazyServiceWrapper(Generic[T]):
         # If we want to wrap in metrics, we need to make sure it's some callable,
         # and within our list of exposed attributes. Then we can safely wrap
         # in our metrics decorator.
-        if self._metrics_path and callable(attr) and name in self._base.__all__:
-            return metrics.wraps(
-                self._metrics_path, instance=name, tags={"backend": self._backend}
-            )(attr)
+        # if self._metrics_path and callable(attr) and name in self._base.__all__:
+        #     return metrics.wraps(
+        #         self._metrics_path, instance=name, tags={"backend": self._backend}
+        #     )(attr)
 
         return attr
 
