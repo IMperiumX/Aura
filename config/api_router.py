@@ -3,7 +3,8 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework.routers import SimpleRouter
 
-from aura.assessments.api.views import AssessmentViewSet
+from aura.assessments.api.views import PatientAssessmentViewSet
+from aura.assessments.api.views import QuestionViewSet
 from aura.assessments.api.views import RiskPredictionViewSet
 from aura.communication.api.views import AttachmentViewSet
 from aura.communication.api.views import MessageViewSet
@@ -31,14 +32,19 @@ router.register(
     basename="patients",
 )
 router.register(
-    "assessments",
-    AssessmentViewSet,
-    basename="assessments",
+    "patient-assessments",
+    PatientAssessmentViewSet,
+    basename="patient-assessments",
 )
 router.register(
     "predictions",
     RiskPredictionViewSet,
     basename="predictions",
+)
+router.register(
+    "questions",
+    QuestionViewSet,
+    basename="questions",
 )
 router.register(
     "sessions",

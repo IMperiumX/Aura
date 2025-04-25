@@ -3,6 +3,7 @@ from rest_framework.serializers import ModelSerializer
 
 from aura.assessments.models import Assessment
 from aura.assessments.models import PatientAssessment
+from aura.assessments.models import Question
 from aura.assessments.models import RiskPrediction
 from aura.users.api.serializers import PatientSerializer
 
@@ -42,7 +43,7 @@ class AssessmentSerializer(ModelSerializer[Assessment]):
         read_only_fields = ["created", "modified"]
 
 
-class PatientAssessmentSerializer(HyperlinkedModelSerializer):
+class PatientAssessmentSerializer(HyperlinkedModelSerializer[PatientAssessment]):
     patient = PatientSerializer(read_only=True)
     assessment = AssessmentSerializer(read_only=True)
 
@@ -64,7 +65,13 @@ class PatientAssessmentSerializer(HyperlinkedModelSerializer):
         }
 
 
-class AssessmentCreateSerializer(ModelSerializer):
+class AssessmentCreateSerializer(ModelSerializer[Assessment]):
     class Meta:
         model = Assessment
         fields = ["assessment_type"]
+
+
+class QuestionSerializer(ModelSerializer[Question]):
+    class Meta:
+        model = Question
+        fields = "__all__"

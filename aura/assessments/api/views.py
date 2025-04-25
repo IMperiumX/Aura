@@ -7,11 +7,15 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from aura.assessments.api.filters import PatientAssessmentFilterSet
+from aura.assessments.api.filters import QuestionFilterSet
+from aura.assessments.api.filters import RiskPredictionFilterSet
 from aura.assessments.api.serializers import Assessment
 from aura.assessments.api.serializers import AssessmentCreateSerializer
 from aura.assessments.api.serializers import PatientAssessmentSerializer
 from aura.assessments.api.serializers import RiskPredictionSerializer
 from aura.assessments.models import PatientAssessment
+from aura.assessments.models import Question
 from aura.assessments.models import RiskPrediction
 from aura.core.tasks import setup_rag_pipeline_task
 from aura.users.api.permissions import IsPatient
@@ -19,11 +23,15 @@ from aura.users.api.permissions import IsTherapist
 from aura.users.api.serializers import TherapistSerializer
 from aura.users.models import Patient
 
+from .serializers import QuestionSerializer
 
-class AssessmentViewSet(viewsets.ModelViewSet):
+
+class PatientAssessmentViewSet(viewsets.ModelViewSet):
+    queryset = PatientAssessment.objects.none()
     serializer_class = PatientAssessmentSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
+    filterset_class = PatientAssessmentFilterSet
     filterset_fields = [
         "created",
         "modified",
@@ -42,8 +50,8 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return (
             PatientAssessment.objects.select_related("patient", "assessment")
-            .only("url", "patient", "assessment", "result", "recommendations")
-            .filter(patient=self.request.user.patient_profile)
+            .only("patient", "assessment", "result", "recommendations")
+            .filter(patient=self.request.user.patient_profile.get())
         )
 
     def perform_create(self, serializer):
@@ -62,7 +70,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         methods=["post"],
         permission_classes=[IsAuthenticated],
     )
-    def therapist_recommendations(self, request, pk=None):
+    def therapist_recommendations(self, request, pk: int | None = None):
         # TODO: get py object from a celery task
         # start here: https://www.reddit.com/r/django/comments/1wx587/how_do_i_return_the_result_of_a_celery_task_to/
         task = setup_rag_pipeline_task.delay()
@@ -123,6 +131,7 @@ class RiskPredictionViewSet(viewsets.ModelViewSet):
     serializer_class = RiskPredictionSerializer
     permission_classes = [IsAuthenticated, IsPatient | IsTherapist]
     filter_backends = [DjangoFilterBackend]
+    filterset_class = RiskPredictionFilterSet
     filterset_fields = [
         "created",
         "modified",
@@ -145,3 +154,10 @@ class RiskPredictionViewSet(viewsets.ModelViewSet):
         return queryset.filter(
             patient=self.request.user.patient_profile,
         ).select_related("assessment")
+
+
+class QuestionViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = QuestionFilterSet
