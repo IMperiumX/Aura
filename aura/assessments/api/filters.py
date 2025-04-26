@@ -4,11 +4,14 @@ from django_filters import rest_framework as drf_filters
 from aura.assessments.models import Assessment
 from aura.assessments.models import PatientAssessment
 from aura.assessments.models import RiskPrediction
+from aura.core.filters import FullTextSearchFilter
 
 
 class PatientAssessmentFilterSet(drf_filters.FilterSet):
-    yusuf = drf_filters.CharFilter()
-
+    search = FullTextSearchFilter(
+        field_name="result",
+        search_fields=["result", "recommendations"],
+    )
     class Meta:
         model = PatientAssessment
         exclude = ["embedding"]

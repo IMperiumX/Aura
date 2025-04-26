@@ -1,6 +1,9 @@
 # ruff: noqa: ERA001
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -64,6 +67,20 @@ class PatientAssessmentViewSet(viewsets.ModelViewSet):
         if self.action == "recommend_therapist":
             return TherapistSerializer(*args, **kwargs)
         return super().get_serializer(*args, **kwargs)
+
+    @extend_schema(
+        responses={200: PatientAssessmentSerializer(many=True)},
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Full Text search assessments",
+            ),
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     @action(
         detail=True,
