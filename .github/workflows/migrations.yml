@@ -97,7 +97,7 @@ jobs:
           pip install -r requirements/local.txt
 
       - name: Generate SQL for migration
-        uses: getsentry/action-migrations@4d8ed0388dfc0774302bbfd5204e518f9ac4f066
+        uses: getsentry/action-migrations@70a60ec7e8dcbc286c10a92251fa2f518d1c2947
         env:
           SENTRY_LOG_LEVEL: ERROR
           PGPASSWORD: password
