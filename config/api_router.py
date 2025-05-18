@@ -15,7 +15,6 @@ from aura.mentalhealth.api.views import TherapyApproachViewSet
 from aura.mentalhealth.api.views import TherapySessionViewSet
 from aura.users.api.views import PatientViewSet
 from aura.users.api.views import PhysicianReferralListCreate
-from aura.users.api.views import PhysicianReferralRetrieveUpdateDestroy
 from aura.users.api.views import RegisterView
 from aura.users.api.views import UserViewSet
 

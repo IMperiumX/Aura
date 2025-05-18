@@ -142,6 +142,7 @@ LOCAL_APPS = [
     "aura.mentalhealth",
     "aura.assessments",
     "aura.communication",
+    "aura.networking"
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -522,7 +523,7 @@ SIMPLE_JWT = {
 }
 
 # RAG
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Embedding Model Configuration
 EMBEDDING_MODEL_DIMENSIONS = env.int("EMBEDDING_MODEL_DIMENSIONS")
@@ -555,3 +556,19 @@ DATA_RETENTION_PERIOD = 365
 
 # IP Address
 GEOIP_PATH_MMDB: str | None = BASE_DIR / "geoip" / "test.mmdb"
+
+# Django Import Export # https://django-import-export.readthedocs.io/en/latest/
+# ------------------------------------------------------------------------------
+from import_export.formats.base_formats import CSV  # noqa: E402
+from import_export.formats.base_formats import XLSX  # noqa: E402
+
+# from import_export.formats.base_formats import YAML
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True  # Can be overridden on a Resource class by setting the `use_transactions` class attribute.
+IMPORT_EXPORT_IMPORT_PERMISSION_CODE = ["therapist_import_patient"]
+IMPORT_EXPORT_CHUNK_SIZE = 100  # Can be overridden on a Resource class by setting the `chunk_size` class attribute.
+# IMPORT_EXPORT_FORMATS = [XLSX, CSV, YAML]
+IMPORT_FORMATS = [CSV, XLSX]
+EXPORT_FORMATS = [CSV]
+
+IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES = True  # https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-ignore-blank-lines
