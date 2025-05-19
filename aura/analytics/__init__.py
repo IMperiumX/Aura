@@ -1,4 +1,5 @@
-# from aura import options # temporarly override configs
+from django.conf import settings
+
 from aura.utils.services import LazyServiceWrapper
 
 from .attribute import Attribute
@@ -22,12 +23,13 @@ _ANALYTICS_ALIASES = {
     "pubsub": "aura.analytics.pubsub.PubSubAnalytics",
 }
 
-# TODO(developer)
-# project = "your-project-id"
-# topic = "your-topic-id"
+
 options = {
     "analytics.backend": "pubsub",
-    "analytics.options": {"project": "aura", "topic": "aura"},
+    "analytics.options": {
+        "project": settings.GCP_PROJECT_ID,
+        "topic": settings.GCP_TOPIC_ID,
+    },
 }
 
 

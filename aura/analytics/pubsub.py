@@ -41,7 +41,9 @@ class PubSubAnalytics(Analytics):
 
     def record_event(self, event: Event) -> None:
         if self.publisher is not None:
-            self.publisher.publish(
+            future = self.publisher.publish(
                 self.topic,
                 data=dumps(event.serialize()).encode("utf-8"),
             )
+            msg = f"Published message ID: {future.result()}"
+            logger.info(msg)
