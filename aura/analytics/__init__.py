@@ -1,4 +1,4 @@
-from aura import options
+# from aura import options # temporarly override configs
 from aura.utils.services import LazyServiceWrapper
 
 from .attribute import Attribute
@@ -20,6 +20,14 @@ __all__ = (
 _ANALYTICS_ALIASES = {
     "noop": "aura.analytics.Analytics",
     "pubsub": "aura.analytics.pubsub.PubSubAnalytics",
+}
+
+# TODO(developer)
+# project = "your-project-id"
+# topic = "your-topic-id"
+options = {
+    "analytics.backend": "pubsub",
+    "analytics.options": {"project": "aura", "topic": "aura"},
 }
 
 
