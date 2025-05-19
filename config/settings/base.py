@@ -142,7 +142,7 @@ LOCAL_APPS = [
     "aura.mentalhealth",
     "aura.assessments",
     "aura.communication",
-    "aura.networking"
+    "aura.networking",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -572,3 +572,10 @@ IMPORT_FORMATS = [CSV, XLSX]
 EXPORT_FORMATS = [CSV]
 
 IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES = True  # https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-ignore-blank-lines
+
+# GCP
+# ------------------------------------------------------------------------------
+GOOGLE_APPLICATION_CREDENTIALS = env(
+    "GOOGLE_APPLICATION_CREDENTIALS",
+    default="__test_gcp_project__",
+)
