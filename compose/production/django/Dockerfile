@@ -19,7 +19,8 @@ RUN  apt-get update && apt-get install --no-install-recommends -y \
   libsasl2-dev \
   python-dev-is-python3 \
   libldap2-dev \
-  libssl-dev
+  libssl-dev \
+  libx11-dev
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # magic dependencies

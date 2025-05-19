@@ -1,4 +1,4 @@
--r requirements/locall.txt
+-r requirements/local.txt
 
 django-import-export==4.3.5 # https://github.com/django-import-export/django-import-export
 pylibmagic==0.5.0
