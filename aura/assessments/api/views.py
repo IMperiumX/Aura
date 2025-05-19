@@ -60,6 +60,15 @@ class PatientAssessmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         patient = Patient.objects.get(user=self.request.user)
         serializer.save(patient=patient, status=Assessment.IN_PROGRESS)
+        from aura import analytics
+
+        analytics.record(
+            "patient.assessment.submit",
+            assessment_id="1",
+            assessment_name="test",
+            assessment_type="test",
+            patient_id="10",
+        )
 
     def get_serializer(self, *args, **kwargs):
         if self.action == "create":
