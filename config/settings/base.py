@@ -142,7 +142,7 @@ LOCAL_APPS = [
     "aura.mentalhealth",
     "aura.assessments",
     "aura.communication",
-    "aura.networking"
+    "aura.networking",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
