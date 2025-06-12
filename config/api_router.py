@@ -18,6 +18,17 @@ from aura.users.api.views import PhysicianReferralListCreate
 from aura.users.api.views import RegisterView
 from aura.users.api.views import UserViewSet
 
+# Patient Flow Board imports
+from aura.patientflow.views import (
+    ClinicViewSet,
+    StatusViewSet,
+    AppointmentViewSet,
+    PatientFlowEventViewSet,
+    NotificationViewSet,
+    FlowBoardViewSet,
+    AnalyticsViewSet,
+)
+
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 
 router.register(
@@ -86,6 +97,43 @@ router.register(
     "referrals",
     PhysicianReferralListCreate,
     basename="referrals",
+)
+
+# Patient Flow Board endpoints
+router.register(
+    "patientflow/clinics",
+    ClinicViewSet,
+    basename="patientflow-clinics",
+)
+router.register(
+    "patientflow/statuses",
+    StatusViewSet,
+    basename="patientflow-statuses",
+)
+router.register(
+    "patientflow/appointments",
+    AppointmentViewSet,
+    basename="patientflow-appointments",
+)
+router.register(
+    "patientflow/flow-events",
+    PatientFlowEventViewSet,
+    basename="patientflow-flow-events",
+)
+router.register(
+    "patientflow/notifications",
+    NotificationViewSet,
+    basename="patientflow-notifications",
+)
+router.register(
+    "patientflow/flow-board",
+    FlowBoardViewSet,
+    basename="patientflow-flow-board",
+)
+router.register(
+    "patientflow/analytics",
+    AnalyticsViewSet,
+    basename="patientflow-analytics",
 )
 
 
