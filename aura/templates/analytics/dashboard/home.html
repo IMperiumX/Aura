@@ -1,0 +1,559 @@
+{% extends "analytics/dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - Home{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Analytics Dashboard</h1>
+        <p class="text-muted mb-0">Real-time insights into your application</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline btn-sm" data-bs-toggle="modal" data-bs-target="#addWidgetModal">
+            <i class="fas fa-plus"></i>
+            Add Widget
+        </button>
+        <a href="{% url 'analytics:dashboard:widgets' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-th-large"></i>
+            Manage Widgets
+        </a>
+    </div>
+</div>
+
+<!-- Real-time Metrics Row -->
+<div class="metrics-row">
+    <div class="metric-card">
+        <span class="metric-value" data-metric="total_events">0</span>
+        <div class="metric-label">Total Events Today</div>
+        <div class="metric-change positive">
+            <i class="fas fa-arrow-up"></i>
+            12% from yesterday
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <span class="metric-value" data-metric="unique_users">0</span>
+        <div class="metric-label">Active Users</div>
+        <div class="metric-change positive">
+            <i class="fas fa-arrow-up"></i>
+            8% from last hour
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <span class="metric-value" data-metric="events_per_minute">0</span>
+        <div class="metric-label">Events/Minute</div>
+        <div class="metric-change negative">
+            <i class="fas fa-arrow-down"></i>
+            3% from average
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <span class="metric-value">{{ analytics_status.backend_count }}</span>
+        <div class="metric-label">Active Backends</div>
+        <div class="status-indicator {% if analytics_status.production_ready %}healthy{% else %}warning{% endif %}">
+            <div class="status-dot"></div>
+            {% if analytics_status.production_ready %}Healthy{% else %}Warning{% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Widgets Grid -->
+<div class="widgets-grid">
+    <!-- System Health Widget -->
+    <div class="widget" data-widget-id="system-health">
+        <div class="widget-header">
+            <div>
+                <h3 class="widget-title">System Health</h3>
+                <p class="widget-subtitle">Backend status and performance</p>
+            </div>
+            <div class="widget-actions">
+                <button class="widget-action" data-action="refresh" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="widget-action" data-action="fullscreen" title="Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+        <div class="widget-body">
+            <div id="system-health-content">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-medium">Environment</span>
+                    <span class="badge bg-primary">{{ analytics_status.environment|title }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-medium">Production Ready</span>
+                    <span class="badge {% if analytics_status.production_ready %}bg-success{% else %}bg-warning{% endif %}">
+                        {% if analytics_status.production_ready %}Yes{% else %}No{% endif %}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-medium">Backend Count</span>
+                    <span class="fw-bold">{{ analytics_status.backend_count }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-medium">Last Updated</span>
+                    <span class="text-muted small" data-timestamp>{{ "now"|date:"H:i:s" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Timeline Widget -->
+    <div class="widget" data-widget-id="event-timeline">
+        <div class="widget-header">
+            <div>
+                <h3 class="widget-title">Event Timeline</h3>
+                <p class="widget-subtitle">Events over the last 24 hours</p>
+            </div>
+            <div class="widget-actions">
+                <button class="widget-action" data-action="refresh" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="widget-action" data-action="configure" title="Configure">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+        <div class="widget-body">
+            <div class="chart-container">
+                <canvas id="timeline-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Event Feed -->
+    <div class="widget" data-widget-id="event-feed">
+        <div class="widget-header">
+            <div>
+                <h3 class="widget-title">Live Event Feed</h3>
+                <p class="widget-subtitle">Recent events in real-time</p>
+            </div>
+            <div class="widget-actions">
+                <button class="widget-action" data-action="refresh" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="widget-action" data-action="configure" title="Configure">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+        <div class="widget-body p-0">
+            <div id="event-feed-content" style="max-height: 300px; overflow-y: auto;">
+                <div class="feed-item">
+                    <div class="feed-icon success">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="feed-content">
+                        <div class="feed-title">User Registration</div>
+                        <div class="feed-description">New user account created successfully</div>
+                        <div class="feed-time">2 minutes ago</div>
+                    </div>
+                </div>
+
+                <div class="feed-item">
+                    <div class="feed-icon info">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="feed-content">
+                        <div class="feed-title">Appointment Scheduled</div>
+                        <div class="feed-description">Patient appointment scheduled for therapy session</div>
+                        <div class="feed-time">5 minutes ago</div>
+                    </div>
+                </div>
+
+                <div class="feed-item">
+                    <div class="feed-icon warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="feed-content">
+                        <div class="feed-title">Authentication Failed</div>
+                        <div class="feed-description">Multiple failed login attempts detected</div>
+                        <div class="feed-time">8 minutes ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Events Widget -->
+    <div class="widget" data-widget-id="top-events">
+        <div class="widget-header">
+            <div>
+                <h3 class="widget-title">Top Events</h3>
+                <p class="widget-subtitle">Most frequent event types</p>
+            </div>
+            <div class="widget-actions">
+                <button class="widget-action" data-action="refresh" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+        <div class="widget-body">
+            <div class="chart-container">
+                <canvas id="top-events-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Custom Widgets -->
+{% if widgets %}
+<div class="mt-4">
+    <h4 class="mb-3">Custom Widgets</h4>
+    <div class="widgets-grid">
+        {% for widget in widgets %}
+        <div class="widget" data-widget-id="{{ widget.id }}">
+            <div class="widget-header">
+                <div>
+                    <h3 class="widget-title">{{ widget.name }}</h3>
+                    {% if widget.description %}
+                    <p class="widget-subtitle">{{ widget.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="widget-actions">
+                    <button class="widget-action" data-action="refresh" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="widget-action" data-action="configure" title="Configure">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="widget-body">
+                <div class="loading">Loading widget data...</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Alerts Section -->
+{% if recent_alerts %}
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Recent Alerts</h4>
+        <a href="{% url 'analytics:dashboard:alerts' %}" class="btn btn-outline btn-sm">
+            View All Alerts
+        </a>
+    </div>
+
+    <div class="widget">
+        <div class="widget-body p-0">
+            {% for alert in recent_alerts %}
+            <div class="feed-item">
+                <div class="feed-icon {% if alert.severity == 'critical' %}error{% elif alert.severity == 'warning' %}warning{% else %}info{% endif %}">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="feed-content">
+                    <div class="feed-title">{{ alert.rule.name }}</div>
+                    <div class="feed-description">{{ alert.rule.description|truncatewords:10 }}</div>
+                    <div class="feed-time">{{ alert.created_at|timesince }} ago</div>
+                </div>
+                <div class="ms-auto">
+                    <span class="badge bg-{% if alert.severity == 'critical' %}danger{% elif alert.severity == 'warning' %}warning{% else %}info{% endif %}">
+                        {{ alert.severity|title }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add Widget Modal -->
+<div class="modal fade" id="addWidgetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Widget</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-widget-form">
+                    <div class="mb-3">
+                        <label for="widget-name" class="form-label">Widget Name</label>
+                        <input type="text" class="form-control" id="widget-name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="widget-type" class="form-label">Widget Type</label>
+                        <select class="form-select" id="widget-type" required>
+                            <option value="">Select widget type...</option>
+                            <option value="event_count">Event Count</option>
+                            <option value="event_timeline">Event Timeline</option>
+                            <option value="user_activity">User Activity</option>
+                            <option value="system_health">System Health</option>
+                            <option value="real_time_feed">Real-time Feed</option>
+                            <option value="top_events">Top Events</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="widget-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="widget-description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createWidget()">Create Widget</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts
+    initializeTimelineChart();
+    initializeTopEventsChart();
+
+    // Load custom widget data
+    loadCustomWidgets();
+
+    // Set up real-time updates
+    setInterval(updateEventFeed, 10000); // Update every 10 seconds
+});
+
+function initializeTimelineChart() {
+    const ctx = document.getElementById('timeline-chart').getContext('2d');
+
+    // Generate sample data for the last 24 hours
+    const now = new Date();
+    const labels = [];
+    const data = [];
+
+    for (let i = 23; i >= 0; i--) {
+        const time = new Date(now.getTime() - (i * 60 * 60 * 1000));
+        labels.push(time.getHours() + ':00');
+        data.push(Math.floor(Math.random() * 50) + 10);
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Events per Hour',
+                data: data,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function initializeTopEventsChart() {
+    const ctx = document.getElementById('top-events-chart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['User Login', 'Page View', 'Appointment Created', 'Message Sent', 'File Upload'],
+            datasets: [{
+                data: [35, 25, 20, 15, 5],
+                backgroundColor: [
+                    '#2563eb',
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#8b5cf6'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function loadCustomWidgets() {
+    {% for widget in widgets %}
+    try {
+        const response = await fetch(`/analytics/api/widgets/{{ widget.id }}/data/`);
+        const data = await response.json();
+        updateWidgetContent('{{ widget.id }}', data);
+    } catch (error) {
+        console.error('Failed to load widget {{ widget.id }}:', error);
+        showWidgetError('{{ widget.id }}');
+    }
+    {% endfor %}
+}
+
+function updateWidgetContent(widgetId, data) {
+    const widget = document.querySelector(`[data-widget-id="${widgetId}"]`);
+    if (!widget) return;
+
+    const body = widget.querySelector('.widget-body');
+
+    // Remove loading state
+    const loading = body.querySelector('.loading');
+    if (loading) loading.remove();
+
+    // Add content based on widget type and data
+    let content = '<div class="text-center text-muted">No data available</div>';
+
+    if (data.total_count !== undefined) {
+        content = `
+            <div class="text-center">
+                <div class="metric-value">${data.total_count}</div>
+                <div class="metric-label">Total Events</div>
+            </div>
+        `;
+    } else if (data.events) {
+        content = '<div class="feed-content">';
+        data.events.slice(0, 5).forEach(event => {
+            content += `
+                <div class="feed-item">
+                    <div class="feed-icon info">
+                        <i class="fas fa-circle"></i>
+                    </div>
+                    <div class="feed-content">
+                        <div class="feed-title">${event.type}</div>
+                        <div class="feed-time">User: ${event.user_id || 'Anonymous'}</div>
+                    </div>
+                </div>
+            `;
+        });
+        content += '</div>';
+    }
+
+    body.innerHTML = content;
+}
+
+function showWidgetError(widgetId) {
+    const widget = document.querySelector(`[data-widget-id="${widgetId}"]`);
+    if (!widget) return;
+
+    const body = widget.querySelector('.widget-body');
+    body.innerHTML = '<div class="text-center text-danger"><i class="fas fa-exclamation-triangle"></i> Failed to load data</div>';
+}
+
+async function updateEventFeed() {
+    try {
+        const response = await fetch('/analytics/api/widgets/1/data/');
+        const data = await response.json();
+
+        if (data.events) {
+            const feedContent = document.getElementById('event-feed-content');
+            let html = '';
+
+            data.events.slice(0, 10).forEach(event => {
+                const iconClass = getEventIcon(event.type);
+                const timeAgo = getTimeAgo(event.timestamp);
+
+                html += `
+                    <div class="feed-item">
+                        <div class="feed-icon ${iconClass.class}">
+                            <i class="${iconClass.icon}"></i>
+                        </div>
+                        <div class="feed-content">
+                            <div class="feed-title">${event.type}</div>
+                            <div class="feed-description">User: ${event.user_id || 'Anonymous'}</div>
+                            <div class="feed-time">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            feedContent.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Failed to update event feed:', error);
+    }
+}
+
+function getEventIcon(eventType) {
+    const icons = {
+        'user.login': { icon: 'fas fa-sign-in-alt', class: 'info' },
+        'user.created': { icon: 'fas fa-user-plus', class: 'success' },
+        'appointment.created': { icon: 'fas fa-calendar-plus', class: 'info' },
+        'message.sent': { icon: 'fas fa-envelope', class: 'info' },
+        'auth.failed': { icon: 'fas fa-exclamation-triangle', class: 'warning' },
+        'default': { icon: 'fas fa-circle', class: 'info' }
+    };
+
+    return icons[eventType] || icons.default;
+}
+
+function getTimeAgo(timestamp) {
+    if (!timestamp) return 'Unknown';
+
+    const now = new Date();
+    const eventTime = new Date(timestamp);
+    const diffMs = now - eventTime;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hours ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} days ago`;
+}
+
+async function createWidget() {
+    const form = document.getElementById('add-widget-form');
+    const formData = new FormData();
+
+    formData.append('name', document.getElementById('widget-name').value);
+    formData.append('widget_type', document.getElementById('widget-type').value);
+    formData.append('description', document.getElementById('widget-description').value);
+    formData.append('dashboard_id', 'default');
+
+    try {
+        const response = await fetch('/analytics/api/widgets/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        if (response.ok) {
+            location.reload(); // Refresh page to show new widget
+        } else {
+            alert('Failed to create widget');
+        }
+    } catch (error) {
+        console.error('Error creating widget:', error);
+        alert('Failed to create widget');
+    }
+}
+</script>
+{% endblock %}
