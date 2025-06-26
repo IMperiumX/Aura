@@ -288,3 +288,6 @@ git-sim*/*
 
 # readings
 *.pdf
+
+# google cloud account credentials
+*credentials.json
