@@ -295,3 +295,41 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # django-silk
 INSTALLED_APPS += ["silk"]
 MIDDLEWARE += ["silk.middleware.SilkyMiddleware"]
+
+# Analytics Production Configuration
+# ------------------------------------------------------------------------------
+# Override for production with Redis + Multi-backend setup
+ANALYTICS_CONFIG = {
+    'primary': 'multi',
+    'backends': [
+        {
+            'name': 'redis',
+            'class': 'aura.analytics.backends.redis_backend.RedisAnalytics',
+            'options': {
+                'redis_url': REDIS_URL,
+                'stream_name': 'analytics:events',
+                'batch_size': 500,
+                'enable_metrics': True,
+                'metrics_retention_seconds': 7200,  # 2 hours
+            }
+        },
+        {
+            'name': 'database',
+            'class': 'aura.analytics.backends.database.DatabaseAnalytics',
+            'options': {
+                'enable_batching': True,
+                'batch_size': 200,
+                'max_retries': 5
+            }
+        }
+    ],
+    'health_check_interval': 60,  # 1 minute in production
+    'enable_health_monitoring': True,
+    'fail_silently': True,
+    'parallel_execution': True,
+    'max_parallel_workers': 4,
+}
+
+# Production Analytics Monitoring
+CELERY_ENABLE_ANALYTICS = True
+ANALYTICS_MONITORING_ENABLED = True
