@@ -144,6 +144,7 @@ LOCAL_APPS = [
     "aura.communication",
     "aura.networking",
     "aura.patientflow",
+    "aura.analytics",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -452,6 +453,33 @@ SPECTACULAR_SETTINGS = {
 
 # Taggit
 TAGGIT_CASE_INSENSITIVE = True
+
+# Analytics Configuration
+# ------------------------------------------------------------------------------
+ANALYTICS_CONFIG = {
+    'primary': 'database',  # For development - simple and reliable
+    'backends': [
+        {
+            'name': 'database',
+            'class': 'aura.analytics.backends.database.DatabaseAnalytics',
+            'options': {
+                'enable_batching': True,
+                'batch_size': 100,
+                'max_retries': 3
+            }
+        }
+    ],
+    'health_check_interval': 300,  # 5 minutes
+    'enable_health_monitoring': True,
+    'fail_silently': True,  # Never break application flow
+}
+
+# Analytics Alert Configuration
+ANALYTICS_ALERT_EMAILS = [email for name, email in ADMINS]
+ANALYTICS_ALERT_SMS = []  # Add phone numbers for SMS alerts
+
+# Analytics Data Retention (days)
+ANALYTICS_DATA_RETENTION_DAYS = 365
 
 
 # LDAP Configuration
