@@ -24,6 +24,9 @@ urlpatterns = [
     path(
         "communication/", include("aura.communication.urls", namespace="communication")
     ),
+    # Analytics
+    path("analytics/", include("aura.analytics.urls")),
+    path("analytics/", include("aura.analytics.dashboard.urls")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
