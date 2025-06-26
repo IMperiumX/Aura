@@ -3,14 +3,18 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from typing import Optional
+import json
+import logging
 
 from .models import (
     UserProfile, Appointment, PatientFlowEvent,
-    Notification, Status
+    Notification, Status, Patient
 )
 from .tasks import send_notification_email, send_notification_sms
+from aura import analytics
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=User)
@@ -27,6 +31,51 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
 
 
+@receiver(post_save, sender=Patient)
+def track_patient_creation(sender, instance, created, **kwargs):
+    """Track patient creation events."""
+    if created:
+        try:
+            # Get the user who created this patient (if available in context)
+            created_by_user_id = getattr(instance, '_created_by_user_id', None)
+
+            analytics.record(
+                "patient.created",
+                instance=instance,
+                patient_id=instance.id,
+                clinic_id=instance.clinic.id if instance.clinic else None,
+                first_name=instance.first_name,
+                last_name=instance.last_name,
+                email=getattr(instance, 'email', '') or '',
+                created_by_user_id=created_by_user_id,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record patient creation event: {e}")
+
+
+@receiver(post_save, sender=Appointment)
+def track_appointment_creation(sender, instance, created, **kwargs):
+    """Track appointment creation events."""
+    if created:
+        try:
+            # Get the user who created this appointment (if available in context)
+            created_by_user_id = getattr(instance, '_created_by_user_id', None)
+
+            analytics.record(
+                "appointment.created",
+                instance=instance,
+                appointment_id=instance.id,
+                patient_id=instance.patient.id,
+                clinic_id=instance.clinic.id,
+                provider_id=instance.provider.id if instance.provider else None,
+                scheduled_time=instance.scheduled_time.isoformat(),
+                created_by_user_id=created_by_user_id,
+                external_id=instance.external_id,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record appointment creation event: {e}")
+
+
 @receiver(pre_save, sender=Appointment)
 def track_appointment_status_change(sender, instance, **kwargs):
     """Track status changes and create PatientFlowEvent."""
@@ -37,8 +86,24 @@ def track_appointment_status_change(sender, instance, **kwargs):
                 # Status changed, create flow event in post_save
                 instance._status_changed = True
                 instance._old_status = old_instance.status
+                instance._status_change_time = timezone.now()
+
+                # Calculate duration in previous status
+                if old_instance.status:
+                    # Find the most recent flow event for the old status
+                    latest_flow_event = PatientFlowEvent.objects.filter(
+                        appointment=instance,
+                        status=old_instance.status
+                    ).order_by('-timestamp').first()
+
+                    if latest_flow_event:
+                        duration = instance._status_change_time - latest_flow_event.timestamp
+                        instance._duration_in_status = int(duration.total_seconds() / 60)  # Minutes
+
         except Appointment.DoesNotExist:
             pass
+        except Exception as e:
+            logger.warning(f"Failed to track appointment status change: {e}")
 
 
 @receiver(post_save, sender=Appointment)
@@ -55,12 +120,31 @@ def create_flow_event_on_status_change(sender, instance, created, **kwargs):
 
     elif hasattr(instance, '_status_changed') and instance._status_changed:
         # Status changed on existing appointment
+        changed_by_user_id = getattr(instance, '_changed_by_user_id', None)
+
         flow_event = PatientFlowEvent.objects.create(
             appointment=instance,
             status=instance.status,
+            updated_by_id=changed_by_user_id,
             notes=f"Status changed from {instance._old_status.name if instance._old_status else 'None'} to {instance.status.name}"
         )
         generate_notifications_for_flow_event(flow_event)
+
+        # Record analytics event for status change
+        try:
+            analytics.record(
+                "appointment.status_changed",
+                instance=instance,
+                appointment_id=instance.id,
+                patient_id=instance.patient.id,
+                clinic_id=instance.clinic.id,
+                old_status=instance._old_status.name if instance._old_status else None,
+                new_status=instance.status.name,
+                changed_by_user_id=changed_by_user_id,
+                duration_in_status_minutes=getattr(instance, '_duration_in_status', None),
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record appointment status change event: {e}")
 
 
 def generate_notifications_for_flow_event(flow_event: PatientFlowEvent):
@@ -120,6 +204,34 @@ def generate_notifications_for_flow_event(flow_event: PatientFlowEvent):
 
         if notification.via_sms:
             send_notification_sms.delay(notification.id)
+
+        # Record notification analytics event
+        try:
+            if notification.via_email:
+                analytics.record(
+                    "notification.sent",
+                    notification_id=notification.id,
+                    recipient_id=recipient.id,
+                    notification_type='appointment_status_change',
+                    delivery_method='email',
+                    related_object_type='appointment',
+                    related_object_id=appointment.id,
+                    success=True,  # Assume success since we're sending async
+                )
+
+            if notification.via_sms:
+                analytics.record(
+                    "notification.sent",
+                    notification_id=notification.id,
+                    recipient_id=recipient.id,
+                    notification_type='appointment_status_change',
+                    delivery_method='sms',
+                    related_object_type='appointment',
+                    related_object_id=appointment.id,
+                    success=True,  # Assume success since we're sending async
+                )
+        except Exception as e:
+            logger.warning(f"Failed to record notification event: {e}")
 
 
 def generate_notification_message(flow_event: PatientFlowEvent, recipient: User) -> str:

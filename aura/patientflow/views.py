@@ -12,6 +12,8 @@ from asgiref.sync import async_to_sync
 from typing import Dict, Any, List
 import logging
 
+from aura.analytics import AnalyticsRecordingMixin
+
 from .models import (
     Clinic, Status, Patient, Appointment,
     PatientFlowEvent, Notification, UserProfile
@@ -34,8 +36,10 @@ from .filters import (
 logger = logging.getLogger(__name__)
 channel_layer = get_channel_layer()
 
+logger = logging.getLogger(__name__)
 
-class ClinicViewSet(viewsets.ModelViewSet):
+
+class ClinicViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     """ViewSet for Clinic model with staff management."""
     queryset = Clinic.objects.all()
     serializer_class = ClinicSerializer
@@ -156,7 +160,7 @@ class StatusViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class PatientViewSet(viewsets.ModelViewSet):
+class PatientViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     """ViewSet for Patient model."""
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
@@ -176,6 +180,13 @@ class PatientViewSet(viewsets.ModelViewSet):
 
         return Patient.objects.none()
 
+    def perform_create(self, serializer):
+        """Create patient with analytics tracking."""
+        # Set user context for the signal
+        patient = serializer.save()
+        patient._created_by_user_id = self.request.user.id
+        patient.save()  # This will trigger the analytics event via signal
+
     @action(detail=True, methods=['get'])
     def appointments(self, request, pk=None):
         """Get all appointments for a patient."""
@@ -185,7 +196,7 @@ class PatientViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class AppointmentViewSet(viewsets.ModelViewSet):
+class AppointmentViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     """ViewSet for Appointment model with status management."""
     queryset = Appointment.objects.all()
     permission_classes = [ClinicAppointmentPermission]
@@ -224,6 +235,45 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return AppointmentDetailSerializer
         return AppointmentListSerializer
 
+    def perform_create(self, serializer):
+        """Create appointment with analytics tracking."""
+        appointment = serializer.save()
+        # Set user context for the signal
+        appointment._created_by_user_id = self.request.user.id
+        appointment.save()  # This will trigger the analytics event via signal
+
+    def perform_update(self, serializer):
+        """Update appointment with analytics tracking."""
+        appointment = serializer.save()
+        # Set user context for status change tracking
+        appointment._changed_by_user_id = self.request.user.id
+        appointment.save()
+
+    def perform_destroy(self, instance):
+        """Delete appointment with analytics tracking."""
+        try:
+            # Calculate notice hours if appointment hasn't started
+            notice_hours = None
+            if instance.scheduled_time > timezone.now():
+                notice_delta = instance.scheduled_time - timezone.now()
+                notice_hours = int(notice_delta.total_seconds() / 3600)
+
+            self.record_analytics_event(
+                "appointment.cancelled",
+                instance=instance,
+                request=self.request,
+                appointment_id=instance.id,
+                patient_id=instance.patient.id,
+                clinic_id=instance.clinic.id,
+                reason="cancelled_by_user",
+                cancelled_by_user_id=self.request.user.id,
+                notice_hours=notice_hours,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record appointment cancellation event: {e}")
+
+        super().perform_destroy(instance)
+
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):
         """Update appointment status and create flow event."""
@@ -243,6 +293,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             # Update appointment status
             old_status = appointment.status
             appointment.status = new_status
+            appointment._changed_by_user_id = request.user.id  # Set context for signal
             appointment.save()
 
             # Create flow event
