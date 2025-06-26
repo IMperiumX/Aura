@@ -9,6 +9,7 @@ class UsersConfig(AppConfig):
     verbose_name = _("Users")
 
     def ready(self):
-        with contextlib.suppress(ImportError):
-            import aura.core.schema
+        try:
             import aura.users.signals  # noqa: F401
+        except ImportError:
+            pass
