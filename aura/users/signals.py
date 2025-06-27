@@ -1,12 +1,19 @@
 """
 User-related signals for analytics event recording.
 """
+
 import logging
+
 from django.contrib.auth import get_user_model
-from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
+from django.contrib.auth.signals import (
+    user_logged_in,
+    user_logged_out,
+    user_login_failed,
+)
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+
 from aura import analytics
 
 logger = logging.getLogger(__name__)
@@ -35,11 +42,11 @@ def track_user_login(sender, request, user, **kwargs):
     """Track successful user login events."""
     try:
         # Get client IP
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
-            ip_address = x_forwarded_for.split(',')[0].strip()
+            ip_address = x_forwarded_for.split(",")[0].strip()
         else:
-            ip_address = request.META.get('REMOTE_ADDR', '')
+            ip_address = request.META.get("REMOTE_ADDR", "")
 
         analytics.record(
             "user.login",
@@ -47,8 +54,8 @@ def track_user_login(sender, request, user, **kwargs):
             user_id=user.id,
             username=user.username,
             ip_address=ip_address,
-            user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
-            login_method='password',  # Default to password, can be extended
+            user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
+            login_method="password",  # Default to password, can be extended
             success=True,
         )
     except Exception as e:
@@ -61,7 +68,7 @@ def track_user_logout(sender, request, user, **kwargs):
     try:
         if user and user.is_authenticated:
             # Calculate session duration if possible
-            session_start = request.session.get('_auth_user_login_time')
+            session_start = request.session.get("_auth_user_login_time")
             session_duration = None
             if session_start:
                 try:
@@ -76,7 +83,7 @@ def track_user_logout(sender, request, user, **kwargs):
                 instance=user,
                 user_id=user.id,
                 session_duration_minutes=session_duration,
-                logout_type='manual',
+                logout_type="manual",
             )
     except Exception as e:
         logger.warning(f"Failed to record user logout event: {e}")
@@ -87,20 +94,20 @@ def track_login_failure(sender, credentials, request, **kwargs):
     """Track failed login attempts."""
     try:
         # Get client IP
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
-            ip_address = x_forwarded_for.split(',')[0].strip()
+            ip_address = x_forwarded_for.split(",")[0].strip()
         else:
-            ip_address = request.META.get('REMOTE_ADDR', '')
+            ip_address = request.META.get("REMOTE_ADDR", "")
 
-        username = credentials.get('username', '') if credentials else ''
+        username = credentials.get("username", "") if credentials else ""
 
         analytics.record(
             "auth.failed",
             username=username,
             ip_address=ip_address,
-            failure_reason='invalid_credentials',
-            user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+            failure_reason="invalid_credentials",
+            user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
         )
     except Exception as e:
         logger.warning(f"Failed to record login failure event: {e}")
@@ -115,7 +122,14 @@ def track_user_profile_changes(sender, instance, **kwargs):
             changed_fields = []
 
             # Check for changes in key fields
-            fields_to_check = ['username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff']
+            fields_to_check = [
+                "username",
+                "email",
+                "first_name",
+                "last_name",
+                "is_active",
+                "is_staff",
+            ]
             for field in fields_to_check:
                 old_value = getattr(old_instance, field)
                 new_value = getattr(instance, field)
@@ -135,16 +149,16 @@ def track_user_profile_changes(sender, instance, **kwargs):
 @receiver(post_save, sender=User)
 def record_user_profile_update(sender, instance, created, **kwargs):
     """Record user profile update event after save."""
-    if not created and hasattr(instance, '_profile_changed_fields'):
+    if not created and hasattr(instance, "_profile_changed_fields"):
         try:
             import json
 
             # Get role and clinic info if available
             role = None
             clinic_id = None
-            if hasattr(instance, 'profile'):
-                role = getattr(instance.profile, 'role', None)
-                clinic = getattr(instance.profile, 'clinic', None)
+            if hasattr(instance, "profile"):
+                role = getattr(instance.profile, "role", None)
+                clinic = getattr(instance.profile, "clinic", None)
                 clinic_id = clinic.id if clinic else None
 
             analytics.record(
@@ -157,7 +171,10 @@ def record_user_profile_update(sender, instance, created, **kwargs):
             )
 
             # Clean up temporary attribute
-            delattr(instance, '_profile_changed_fields')
+            delattr(instance, "_profile_changed_fields")
+
+        except Exception as e:
+            logger.warning(f"Failed to record user profile update event: {e}")
 
         except Exception as e:
             logger.warning(f"Failed to record user profile update event: {e}")
