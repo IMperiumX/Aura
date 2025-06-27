@@ -157,7 +157,11 @@ class RequestContextFilter(logging.Filter):
         record.host = request.META.get("HTTP_HOST", "")
 
         # Request size (for potential DoS detection)
-        record.content_length = int(request.META.get("CONTENT_LENGTH", 0))
+        content_length_str = request.META.get("CONTENT_LENGTH", "0")
+        try:
+            record.content_length = int(content_length_str) if content_length_str else 0
+        except (ValueError, TypeError):
+            record.content_length = 0
 
         # Authentication method
         record.auth_method = self._detect_auth_method(request)
