@@ -326,7 +326,7 @@ LOGGING = {
     },
     "formatters": {
         "json": {
-            "()": "python_json_logger.jsonlogger.JsonFormatter",
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "format": (
                 "%(asctime)s %(name)s %(levelname)s %(correlation_id)s "
                 "%(user_id)s %(client_ip)s %(method)s %(path)s "

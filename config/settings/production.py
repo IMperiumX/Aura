@@ -189,7 +189,7 @@ LOGGING = {
             "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
         },
         "json": {
-            "()": "python_json_logger.jsonlogger.JsonFormatter",
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
         },
     },
     "handlers": {
