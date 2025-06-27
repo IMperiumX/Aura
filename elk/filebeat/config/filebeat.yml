@@ -1,0 +1,245 @@
+# Filebeat Configuration for Aura Logging System
+# Lightweight log shipper for centralized logging
+
+# Global settings
+name: "aura-filebeat"
+tags: ["aura", "django", "production"]
+
+# File inputs for Django application logs
+filebeat.inputs:
+  # Main application logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/aura/django.log
+      - /var/log/aura/django-*.log
+    fields:
+      service: aura
+      log_type: django
+      environment: production
+    fields_under_root: true
+    multiline.pattern: '^\d{4}-\d{2}-\d{2}'
+    multiline.negate: true
+    multiline.match: after
+    multiline.max_lines: 1000
+    multiline.timeout: 5s
+    scan_frequency: 1s
+    harvester_buffer_size: 16384
+    max_bytes: 10485760
+    json.keys_under_root: true
+    json.add_error_key: true
+    json.message_key: message
+
+  # Security logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/aura/security.log
+      - /var/log/aura/security-*.log
+    fields:
+      service: aura
+      log_type: security
+      environment: production
+      security_event: true
+    fields_under_root: true
+    multiline.pattern: '^\d{4}-\d{2}-\d{2}'
+    multiline.negate: true
+    multiline.match: after
+    scan_frequency: 1s
+    json.keys_under_root: true
+    json.add_error_key: true
+
+  # Performance logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/aura/performance.log
+      - /var/log/aura/performance-*.log
+    fields:
+      service: aura
+      log_type: performance
+      environment: production
+    fields_under_root: true
+    multiline.pattern: '^\d{4}-\d{2}-\d{2}'
+    multiline.negate: true
+    multiline.match: after
+    scan_frequency: 1s
+    json.keys_under_root: true
+    json.add_error_key: true
+
+  # Error logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/aura/error.log
+      - /var/log/aura/error-*.log
+    fields:
+      service: aura
+      log_type: error
+      environment: production
+      alert_priority: high
+    fields_under_root: true
+    multiline.pattern: '^Traceback'
+    multiline.negate: true
+    multiline.match: after
+    multiline.max_lines: 500
+    scan_frequency: 1s
+    json.keys_under_root: true
+    json.add_error_key: true
+
+  # Celery worker logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/aura/celery.log
+      - /var/log/aura/celery-*.log
+    fields:
+      service: aura
+      log_type: celery
+      environment: production
+    fields_under_root: true
+    multiline.pattern: '^\[\d{4}-\d{2}-\d{2}'
+    multiline.negate: true
+    multiline.match: after
+    scan_frequency: 1s
+    json.keys_under_root: true
+    json.add_error_key: true
+
+# Docker container logs
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+      hints.default_config:
+        type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*.log
+      templates:
+        - condition:
+            contains:
+              docker.container.name: "aura"
+          config:
+            type: container
+            paths:
+              - /var/lib/docker/containers/${data.docker.container.id}/*.log
+            fields:
+              service: aura
+              log_source: docker
+            fields_under_root: true
+            json.keys_under_root: true
+            json.add_error_key: true
+
+# Processors for log enrichment
+processors:
+  # Add hostname
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+
+  # Add Docker metadata
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+
+  # Add timestamp
+  - timestamp:
+      field: "@timestamp"
+      layouts:
+        - '2006-01-02T15:04:05.000Z'
+        - '2006-01-02 15:04:05,000'
+
+  # Drop empty lines
+  - drop_event:
+      when:
+        regexp:
+          message: '^\s*$'
+
+  # Add correlation ID if missing
+  - script:
+      lang: javascript
+      source: >
+        function process(event) {
+          if (!event.Get("correlation_id")) {
+            event.Put("correlation_id", "filebeat-" + Math.random().toString(36).substr(2, 9));
+          }
+        }
+
+  # Rename fields for consistency
+  - rename:
+      fields:
+        - from: "log.file.path"
+          to: "log_file_path"
+        - from: "host.name"
+          to: "hostname"
+
+  # Add environment metadata
+  - add_fields:
+      target: ''
+      fields:
+        beat_name: filebeat
+        shipper: filebeat
+        log_shipper: filebeat
+
+# Output configuration - Send to Logstash
+output.logstash:
+  hosts: ["logstash:5044"]
+  compression_level: 3
+  bulk_max_size: 2048
+  worker: 2
+  loadbalance: true
+  ttl: 30s
+  pipelining: 2
+
+  # SSL/TLS configuration (disabled for development)
+  ssl.enabled: false
+
+  # Retry configuration
+  max_retries: 3
+  backoff.init: 1s
+  backoff.max: 60s
+
+# Alternative direct Elasticsearch output (commented out)
+# output.elasticsearch:
+#   hosts: ["elasticsearch:9200"]
+#   username: "elastic"
+#   password: "aura_elastic_password_2024"
+#   index: "aura-logs-%{+yyyy.MM.dd}"
+#   template.name: "aura-logs"
+#   template.pattern: "aura-logs-*"
+#   template.settings:
+#     index.number_of_shards: 1
+#     index.number_of_replicas: 0
+
+# Logging configuration
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat.log
+  keepfiles: 7
+  permissions: 0644
+  rotateeverybytes: 100MB
+
+# Monitoring
+monitoring.enabled: true
+monitoring.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  username: "elastic"
+  password: "aura_elastic_password_2024"
+
+# Performance settings
+queue.mem:
+  events: 4096
+  flush.min_events: 512
+  flush.timeout: 1s
+
+# HTTP endpoint for health checks
+http.enabled: true
+http.host: "0.0.0.0"
+http.port: 5066
+
+# Path configuration
+path.data: /usr/share/filebeat/data
+path.logs: /var/log/filebeat
+
+# Registry cleanup
+filebeat.registry.cleanup_interval: 30s
+filebeat.registry.flush: 5s
