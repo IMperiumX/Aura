@@ -434,9 +434,9 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "aura API",
-    "DESCRIPTION": "Documentation of API endpoints of aura",
-    "VERSION": "1.0.0",
+    "TITLE": "AURA API",
+    "DESCRIPTION": "Documentation of API endpoints of AURA",
+    "VERSION": "2.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SCHEMA_PATH_PREFIX": "/api/",
     "SWAGGER_UI_CONFIG": {
@@ -446,6 +446,9 @@ SPECTACULAR_SETTINGS = {
         "filter": True,
         "defaultModelsExpandDepth": 2,
     },
+    "SERVE_INCLUDE_SCHEMA": True,
+    "SERVE_PUBLIC": True,
+    "SERVE_URLCONF": "config.urls",
 }
 
 # Your stuff...
