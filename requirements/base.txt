@@ -40,6 +40,7 @@ drf-spectacular==0.27.2  # https://github.com/tfranzel/drf-spectacular
 python-json-logger==2.0.7  # https://github.com/madzak/python-json-logger
 sentry-sdk==2.17.0  # https://sentry.io/for/django/
 psutil==5.9.8  # https://github.com/giampaolo/psutil
+elasticsearch==8.11.0  # https://elasticsearch-py.readthedocs.io/
 
 # sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
 
