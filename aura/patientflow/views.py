@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -19,10 +19,11 @@ from .models import (
     PatientFlowEvent, Notification, UserProfile
 )
 from .serializers import (
-    ClinicSerializer, StatusSerializer, PatientSerializer,
+    ClinicSerializer, StatusSerializer, PatientFlowPatientSerializer,
     AppointmentListSerializer, AppointmentDetailSerializer, AppointmentCreateUpdateSerializer,
     PatientFlowEventSerializer, NotificationSerializer, UserProfileSerializer,
-    FlowBoardSerializer
+    FlowBoardSerializer, FlowBoardSummarySerializer, DailyReportSerializer,
+    WeeklyTrendsSerializer, AnalyticsResponseSerializer
 )
 from .permissions import (
     ClinicPermission, ClinicStatusPermission, ClinicPatientPermission,
@@ -163,7 +164,7 @@ class StatusViewSet(viewsets.ModelViewSet):
 class PatientViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     """ViewSet for Patient model."""
     queryset = Patient.objects.all()
-    serializer_class = PatientSerializer
+    serializer_class = PatientFlowPatientSerializer
     permission_classes = [ClinicPatientPermission]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['first_name', 'last_name']
@@ -493,6 +494,13 @@ class NotificationViewSet(viewsets.ModelViewSet):
 class FlowBoardViewSet(viewsets.GenericViewSet):
     """Special viewset for the patient flow board."""
     permission_classes = [PatientFlowStaffPermission]
+    serializer_class = FlowBoardSerializer
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
+        if self.action == 'summary':
+            return FlowBoardSummarySerializer
+        return FlowBoardSerializer
 
     @action(detail=False, methods=['get'])
     def current(self, request):
@@ -575,6 +583,15 @@ class FlowBoardViewSet(viewsets.GenericViewSet):
 class AnalyticsViewSet(viewsets.GenericViewSet):
     """ViewSet for analytics and reporting."""
     permission_classes = [PatientFlowStaffPermission]
+    serializer_class = AnalyticsResponseSerializer
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
+        if self.action == 'daily_report':
+            return DailyReportSerializer
+        elif self.action == 'weekly_trends':
+            return WeeklyTrendsSerializer
+        return AnalyticsResponseSerializer
 
     @action(detail=False, methods=['get'])
     def daily_report(self, request):

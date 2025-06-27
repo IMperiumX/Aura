@@ -308,3 +308,22 @@ class AnalyticsQuerySerializer(serializers.Serializer):
                 raise serializers.ValidationError("Date range cannot exceed 90 days")
 
         return data
+
+
+class SystemStatusSerializer(serializers.Serializer):
+    """Serializer for system status and health information."""
+
+    timestamp = serializers.DateTimeField()
+    environment = serializers.CharField()
+    production_ready = serializers.BooleanField()
+    backend_status = serializers.DictField()
+    active_alerts = serializers.IntegerField()
+    widget_count = serializers.IntegerField()
+    system_health = serializers.DictField()
+
+    class Meta:
+        fields = [
+            'timestamp', 'environment', 'production_ready',
+            'backend_status', 'active_alerts', 'widget_count',
+            'system_health'
+        ]

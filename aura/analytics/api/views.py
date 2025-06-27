@@ -34,7 +34,8 @@ from aura.analytics.api.serializers import (
     MetricsSnapshotSerializer,
     DashboardConfigSerializer,
     LiveMetricsSerializer,
-    AnalyticsQuerySerializer
+    AnalyticsQuerySerializer,
+    SystemStatusSerializer
 )
 from aura.analytics import (
     get_live_metrics,
@@ -392,6 +393,7 @@ class LiveMetricsAPIView(APIView):
     """API view for live metrics data."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = LiveMetricsSerializer
 
     @method_decorator(cache_page(30))  # Cache for 30 seconds
     def get(self, request):
@@ -456,6 +458,7 @@ class AnalyticsQueryAPIView(APIView):
     """API view for flexible analytics queries."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AnalyticsQuerySerializer
 
     def post(self, request):
         """Execute analytics query with filters."""
@@ -543,6 +546,7 @@ class SystemStatusAPIView(APIView):
     """API view for system status and health information."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SystemStatusSerializer
 
     def get(self, request):
         """Get comprehensive system status."""
@@ -561,7 +565,7 @@ class SystemStatusAPIView(APIView):
                 created_by=request.user
             ).count()
 
-            return Response({
+            response_data = {
                 'timestamp': timezone.now(),
                 'environment': config.environment,
                 'production_ready': config.is_production_ready(),
@@ -573,7 +577,10 @@ class SystemStatusAPIView(APIView):
                     'uptime': 'N/A',  # Would need to track this
                     'last_event': timezone.now()  # Would get from backend
                 }
-            })
+            }
+
+            serializer = SystemStatusSerializer(response_data)
+            return Response(serializer.data)
 
         except Exception as e:
             return Response(

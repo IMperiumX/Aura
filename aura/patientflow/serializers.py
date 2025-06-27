@@ -11,8 +11,8 @@ from .models import (
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):
-    """Serializer for User model with limited fields for privacy."""
+class PatientFlowUserSerializer(serializers.ModelSerializer):
+    """Serializer for User model with limited fields for privacy in patientflow context."""
     full_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -26,7 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for UserProfile model."""
-    user = UserSerializer(read_only=True)
+    user = PatientFlowUserSerializer(read_only=True)
     clinic_name = serializers.CharField(source='clinic.name', read_only=True)
 
     class Meta:
@@ -84,8 +84,8 @@ class StatusSerializer(serializers.ModelSerializer):
         return value
 
 
-class PatientSerializer(serializers.ModelSerializer):
-    """Serializer for Patient model."""
+class PatientFlowPatientSerializer(serializers.ModelSerializer):
+    """Serializer for Patient model in patientflow context."""
     full_name = serializers.SerializerMethodField()
     clinic_name = serializers.CharField(source='clinic.name', read_only=True)
     appointment_count = serializers.SerializerMethodField()
@@ -178,9 +178,9 @@ class AppointmentListSerializer(serializers.ModelSerializer):
 
 class AppointmentDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for Appointment model."""
-    patient = PatientSerializer(read_only=True)
+    patient = PatientFlowPatientSerializer(read_only=True)
     clinic = ClinicSerializer(read_only=True)
-    provider = UserSerializer(read_only=True)
+    provider = PatientFlowUserSerializer(read_only=True)
     status = StatusSerializer(read_only=True)
     flow_events = PatientFlowEventSerializer(many=True, read_only=True)
     time_in_system_minutes = serializers.SerializerMethodField()
@@ -365,3 +365,39 @@ class FlowBoardSerializer(serializers.Serializer):
             'average_time_minutes': round(avg_time_minutes, 2),
             'last_updated': timezone.now()
         }
+
+
+class FlowBoardSummarySerializer(serializers.Serializer):
+    """Serializer for flow board summary data."""
+    total_appointments = serializers.IntegerField()
+    active_appointments = serializers.IntegerField()
+    average_wait_time_minutes = serializers.FloatField()
+    status_breakdown = serializers.DictField()
+    last_updated = serializers.DateTimeField()
+
+
+class DailyReportSerializer(serializers.Serializer):
+    """Serializer for daily analytics report."""
+    date = serializers.DateField()
+    clinic = serializers.CharField()
+    total_appointments = serializers.IntegerField()
+    completed_appointments = serializers.IntegerField()
+    completion_rate = serializers.FloatField()
+    average_time_minutes = serializers.FloatField()
+    status_distribution = serializers.ListField()
+    appointment_details = serializers.ListField()
+
+
+class WeeklyTrendsSerializer(serializers.Serializer):
+    """Serializer for weekly trends analytics."""
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+    daily_data = serializers.ListField()
+
+
+class AnalyticsResponseSerializer(serializers.Serializer):
+    """Generic serializer for mixed analytics response types."""
+
+    class Meta:
+        # This will be used as a fallback for endpoints with varying response structures
+        pass
