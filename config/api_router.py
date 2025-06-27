@@ -28,10 +28,7 @@ from aura.patientflow.views import (
     FlowBoardViewSet,
     AnalyticsViewSet,
 )
-from aura.analytics.api.views import DashboardWidgetViewSet
-from aura.analytics.api.views import AlertRuleViewSet
-from aura.analytics.api.views import AlertInstanceViewSet
-from aura.analytics.api.views import DashboardConfigViewSet
+
 
 
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
@@ -139,28 +136,6 @@ router.register(
     "patientflow/analytics",
     AnalyticsViewSet,
     basename="patientflow-analytics",
-)
-
-# Analytics endpoints
-router.register(
-    "analytics/widgets",
-    DashboardWidgetViewSet,
-    basename="analytics-widgets",
-)
-router.register(
-    "analytics/alert-rules",
-    AlertRuleViewSet,
-    basename="analytics-alert-rules",
-)
-router.register(
-    "analytics/alert-instances",
-    AlertInstanceViewSet,
-    basename="analytics-alert-instances",
-)
-router.register(
-    "analytics/dashboard-configs",
-    DashboardConfigViewSet,
-    basename="analytics-dashboard-configs",
 )
 
 
