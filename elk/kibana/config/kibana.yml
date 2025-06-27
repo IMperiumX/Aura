@@ -1,0 +1,103 @@
+# Kibana Configuration for Aura Logging System
+# Web interface for log visualization and analysis
+
+# Server configuration
+server.name: "aura-kibana"
+server.host: "0.0.0.0"
+server.port: 5601
+
+# Base path configuration
+server.basePath: ""
+server.rewriteBasePath: false
+
+# Elasticsearch configuration
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.username: "elastic"
+elasticsearch.password: "aura_elastic_password_2024"
+
+# Security settings
+elasticsearch.ssl.verificationMode: none
+xpack.security.enabled: true
+
+# Kibana system user
+kibana.system.password: "aura_kibana_password_2024"
+
+# Index patterns
+kibana.index: ".kibana"
+kibana.defaultAppId: "discover"
+
+# Default index pattern for Aura logs
+kibana.defaultIndex: "aura-logs-*"
+
+# Logging configuration
+logging.appenders:
+  file:
+    type: file
+    fileName: /var/log/kibana/kibana.log
+    layout:
+      type: json
+  console:
+    type: console
+    layout:
+      type: pattern
+      pattern: "[%date][%level][%logger] %message"
+
+logging.loggers:
+  - name: root
+    appenders: [file, console]
+    level: info
+  - name: elasticsearch
+    level: warn
+  - name: elasticsearch.query
+    level: warn
+
+# Performance settings
+elasticsearch.requestTimeout: 30000
+elasticsearch.pingTimeout: 3000
+elasticsearch.shardTimeout: 30000
+
+# Memory settings
+node.options: --max-old-space-size=2048
+
+# Monitoring
+monitoring.enabled: true
+monitoring.kibana.collection.enabled: true
+monitoring.kibana.collection.interval: 10000
+
+# Advanced settings for Aura logging
+map.includeElasticMapsService: true
+xpack.maps.enabled: true
+xpack.graph.enabled: false
+xpack.ml.enabled: false
+xpack.watcher.enabled: false
+
+# Dashboard and visualization settings
+xpack.canvas.enabled: true
+xpack.infra.enabled: true
+xpack.apm.enabled: false
+
+# Saved objects encryption
+xpack.encryptedSavedObjects.encryptionKey: "aura_kibana_encryption_key_2024_32chars"
+
+# Reporting (if needed)
+xpack.reporting.enabled: false
+
+# Dev tools
+console.enabled: true
+
+# Telemetry
+telemetry.enabled: false
+telemetry.optIn: false
+
+# Session timeout
+xpack.security.session.idleTimeout: "8h"
+xpack.security.session.lifespan: "24h"
+
+# CORS settings (for development)
+server.cors.enabled: false
+
+# Custom branding
+xpack.branding.applicationTitle: "Aura Logging Dashboard"
+
+# Data views
+data.search.aggs.shardDelay.enabled: true
