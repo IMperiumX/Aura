@@ -1,11 +1,11 @@
 # ruff: noqa: E501
 import logging
 
-# import sentry_sdk
-# from sentry_sdk.integrations.celery import CeleryIntegration
-# from sentry_sdk.integrations.django import DjangoIntegration
-# from sentry_sdk.integrations.logging import LoggingIntegration
-# from sentry_sdk.integrations.redis import RedisIntegration
+import sentry_sdk
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
 
 from .base import *  # noqa: F403
 from .base import DATABASES
@@ -189,7 +189,7 @@ LOGGING = {
             "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
         },
         "json": {
-            "()": "json_log_formatter.JSONFormatter",
+            "()": "python_json_logger.jsonlogger.JsonFormatter",
         },
     },
     "handlers": {
@@ -231,27 +231,33 @@ LOGGING = {
     },
 }
 
+# In production, all loggers will use the 'json' handler.
+for logger in LOGGING["loggers"]:
+    LOGGING["loggers"][logger]["handlers"] = ["json"]
+
 # Sentry
 # ------------------------------------------------------------------------------
 SENTRY_DSN = env("SENTRY_DSN")
 SENTRY_LOG_LEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
 
-# sentry_logging = LoggingIntegration(
-#     level=SENTRY_LOG_LEVEL,  # Capture info and above as breadcrumbs
-#     event_level=logging.ERROR,  # Send errors as events
-# )
-# integrations = [
-#     sentry_logging,
-#     DjangoIntegration(),
-#     CeleryIntegration(),
-#     RedisIntegration(),
-# ]
-# sentry_sdk.init(
-#     dsn=SENTRY_DSN,
-#     integrations=integrations,
-#     environment=env("SENTRY_ENVIRONMENT", default="production"),
-#     traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
-# )
+sentry_logging = LoggingIntegration(
+    level=SENTRY_LOG_LEVEL,  # Capture info and above as breadcrumbs
+    event_level=logging.ERROR,  # Send errors as events
+)
+integrations = [
+    sentry_logging,
+    DjangoIntegration(),
+    CeleryIntegration(),
+    RedisIntegration(),
+]
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    integrations=integrations,
+    environment=env("SENTRY_ENVIRONMENT", default="production"),
+    traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
+    send_default_pii=True,
+    release=env("SENTRY_RELEASE", default="aura@latest")
+)
 
 # django-rest-framework
 # -------------------------------------------------------------------------------

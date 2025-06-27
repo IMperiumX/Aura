@@ -15,3 +15,6 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
+
+# Load custom logging configuration
+import config.celery_logging  # noqa F401 isort:skip

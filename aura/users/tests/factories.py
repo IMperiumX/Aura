@@ -89,6 +89,7 @@ class TherapistFactory(DjangoModelFactory):
 
         model = "users.Therapist"
 
+    user = factory.SubFactory("aura.users.tests.factories.UserFactory")
     avatar_url = factory.Faker("image_url")
     bio = factory.Faker("text")
     license_number = factory.Faker("ssn")

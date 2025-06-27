@@ -192,8 +192,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
+    "aura.core.request_middleware.RequestMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -309,44 +311,57 @@ DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=Fals
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
+    "filters": {
+        "request_id": {
+            "()": "aura.core.logging_filters.RequestIDFilter",
         },
-        "simple": {"format": "%(levelname)s %(funcName)s %(lineno)d %(message)s"},
+    },
+    "formatters": {
         "json": {
-            "()": "json_log_formatter.JSONFormatter",
+            "()": "python_json_logger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(request_id)s %(message)s %(pathname)s %(lineno)d",
+        },
+        "console": {
+            "format": "[%(asctime)s] [%(levelname)s] [%(name)s:%(lineno)d] %(message)s",
         },
     },
     "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-        "file": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
-            "formatter": "verbose",
-            "filename": BASE_DIR / "logs/debug.log",
-        },
-        "json_console": {
+        "json": {
             "class": "logging.StreamHandler",
             "formatter": "json",
+            "filters": ["request_id"],
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+            "filters": ["request_id"],
         },
     },
-    "root": {"level": "INFO", "handlers": ["console", "json_console"]},
     "loggers": {
-        "aura": {
-            "level": "DEBUG",
-            "handlers": ["file"],
+        "root": {
+            "level": "INFO",
+            "handlers": ["console"],
+        },
+        "django": {
+            "level": "INFO",
+            "handlers": ["console"],
             "propagate": False,
         },
-        # "django": {
-        #     "handlers": ["file"],
-        #     "level": "DEBUG",
-        #     "propagate": True,
-        # },
+        "celery": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "gunicorn": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "aura": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": False,
+        },
     },
 }
 
