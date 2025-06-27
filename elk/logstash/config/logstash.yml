@@ -1,0 +1,46 @@
+# Logstash Configuration for Aura Logging System
+# Optimized for high-throughput log processing
+
+# Node configuration
+node.name: "aura-logstash-node"
+
+# Data paths
+path.data: /usr/share/logstash/data
+path.config: /usr/share/logstash/pipeline
+path.logs: /usr/share/logstash/logs
+
+# Pipeline configuration
+pipeline.workers: 4
+pipeline.batch.size: 1000
+pipeline.batch.delay: 50
+
+# Queue configuration for reliability
+queue.type: persisted
+queue.max_events: 50000
+queue.max_bytes: 1gb
+queue.checkpoint.writes: 1024
+
+# HTTP API for monitoring
+http.host: "0.0.0.0"
+http.port: 9600
+
+# Logging configuration
+log.level: info
+log.format: json
+
+# Monitoring
+monitoring.enabled: true
+monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]
+monitoring.elasticsearch.username: "elastic"
+monitoring.elasticsearch.password: "aura_elastic_password_2024"
+
+# Performance settings
+config.reload.automatic: true
+config.reload.interval: 3s
+
+# Dead letter queue
+dead_letter_queue.enable: true
+dead_letter_queue.max_bytes: 1gb
+
+# Memory settings
+pipeline.ecs_compatibility: v8
