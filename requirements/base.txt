@@ -59,7 +59,7 @@ python-rapidjson==1.20 # https://github.com/python-rapidjson/python-rapidjson
 simplejson==3.19.3 # https://github.com/simplejson/simplejson
 
 # Requests
-requests==2.31.0
+requests==2.32.4
 
 # Whitenoise
 whitenoise==6.6.0
