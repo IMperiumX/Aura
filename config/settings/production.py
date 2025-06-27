@@ -231,9 +231,39 @@ LOGGING = {
     },
 }
 
-# In production, all loggers will use the 'json' handler.
-for logger in LOGGING["loggers"]:
-    LOGGING["loggers"][logger]["handlers"] = ["json"]
+# Production logging enhancements
+LOGGING["handlers"]["failover"] = {
+    "class": "aura.core.logging_handlers.FailoverHandler",
+    "handlers": [
+        LOGGING["handlers"]["json"],
+        LOGGING["handlers"]["async_file"],
+    ],
+    "filters": ["request_context", "security"],
+}
+
+LOGGING["handlers"]["critical_alerts"] = {
+    "class": "logging.handlers.SMTPHandler",
+    "mailhost": "localhost",
+    "fromaddr": "alerts@aura.localhost",
+    "toaddrs": [email for name, email in ADMINS],
+    "subject": "[AURA CRITICAL] Production Error Alert",
+    "level": "CRITICAL",
+    "filters": ["request_context"],
+}
+
+# Enhanced production loggers
+LOGGING["loggers"]["root"]["handlers"] = ["failover", "metrics"]
+LOGGING["loggers"]["django"]["handlers"] = ["failover"]
+LOGGING["loggers"]["celery"]["handlers"] = ["failover"]
+LOGGING["loggers"]["gunicorn"]["handlers"] = ["failover"]
+LOGGING["loggers"]["aura"]["handlers"] = ["failover", "metrics", "critical_alerts"]
+
+# Critical error monitoring
+LOGGING["loggers"]["aura.critical"] = {
+    "level": "CRITICAL",
+    "handlers": ["critical_alerts", "security", "failover"],
+    "propagate": False,
+}
 
 # Sentry
 # ------------------------------------------------------------------------------

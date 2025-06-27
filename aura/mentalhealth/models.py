@@ -78,12 +78,6 @@ class TherapySession(TimeStampedModel):
         ordering = ["scheduled_at"]
         verbose_name = _("Therapy Session")
         verbose_name_plural = _("Therapy Sessions")
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(ended_at__gt=models.F("started_at")),
-                name="check_ended_after_started",
-            ),
-        ]
 
     def __str__(self):
         return f"{self.therapist} - {self.patient} - {self.scheduled_at}"
@@ -91,6 +85,7 @@ class TherapySession(TimeStampedModel):
     def clean(self):
         if self.ended_at and self.started_at and self.ended_at <= self.started_at:
             raise ValidationError(_("Ended at must be after started at."))
+        super().clean()
 
     def save(self, *args, **kwargs):
         self.full_clean()

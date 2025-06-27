@@ -193,6 +193,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
     "aura.core.request_middleware.RequestMiddleware",
+    "aura.core.performance_middleware.PerformanceMonitoringMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -206,6 +207,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "aura.core.performance_middleware.DatabaseQueryTrackingMiddleware",
 ]
 
 # STATIC
@@ -312,54 +314,118 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "filters": {
-        "request_id": {
-            "()": "aura.core.logging_filters.RequestIDFilter",
+        "request_context": {
+            "()": "aura.core.logging_filters.RequestContextFilter",
+        },
+        "sampling": {
+            "()": "aura.core.logging_filters.SamplingFilter",
+        },
+        "security": {
+            "()": "aura.core.logging_filters.SecurityFilter",
         },
     },
     "formatters": {
         "json": {
             "()": "python_json_logger.jsonlogger.JsonFormatter",
-            "format": "%(asctime)s %(name)s %(levelname)s %(request_id)s %(message)s %(pathname)s %(lineno)d",
+            "format": (
+                "%(asctime)s %(name)s %(levelname)s %(correlation_id)s "
+                "%(user_id)s %(client_ip)s %(method)s %(path)s "
+                "%(request_duration)s %(db_queries)s %(memory_percent)s "
+                "%(security_event)s %(environment)s %(service_name)s "
+                "%(message)s %(pathname)s %(lineno)d"
+            ),
         },
         "console": {
-            "format": "[%(asctime)s] [%(levelname)s] [%(name)s:%(lineno)d] %(message)s",
+            "format": (
+                "[%(asctime)s] [%(levelname)s] [%(name)s:%(lineno)d] "
+                "[%(correlation_id)s] [%(user_id)s@%(client_ip)s] "
+                "%(message)s"
+            ),
+        },
+        "security": {
+            "format": (
+                "[SECURITY] %(asctime)s %(levelname)s %(correlation_id)s "
+                "%(user_id)s %(client_ip)s %(threat_type)s %(message)s"
+            ),
         },
     },
     "handlers": {
         "json": {
             "class": "logging.StreamHandler",
             "formatter": "json",
-            "filters": ["request_id"],
+            "filters": ["request_context", "security"],
         },
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "console",
-            "filters": ["request_id"],
+            "filters": ["request_context", "sampling"],
+        },
+        "security": {
+            "class": "aura.core.logging_handlers.StructuredFileHandler",
+            "filename": BASE_DIR / "logs" / "security.log",
+            "formatter": "security",
+            "filters": ["request_context", "security"],
+            "maxBytes": 100 * 1024 * 1024,  # 100MB
+            "backupCount": 10,
+            "level": "WARNING",
+        },
+        "metrics": {
+            "class": "aura.core.logging_handlers.MetricsHandler",
+            "level": "INFO",
+            "filters": ["request_context"],
+        },
+        "async_file": {
+            "class": "aura.core.logging_handlers.AsyncBufferedHandler",
+            "target_handler": {
+                "class": "aura.core.logging_handlers.StructuredFileHandler",
+                "filename": BASE_DIR / "logs" / "application.log",
+                "formatter": "json",
+                "maxBytes": 500 * 1024 * 1024,  # 500MB
+                "backupCount": 20,
+            },
+            "buffer_size": 1000,
+            "flush_interval": 5.0,
+            "filters": ["request_context", "security"],
         },
     },
     "loggers": {
         "root": {
             "level": "INFO",
-            "handlers": ["console"],
+            "handlers": ["console", "metrics"],
         },
         "django": {
             "level": "INFO",
-            "handlers": ["console"],
+            "handlers": ["console", "async_file"],
+            "propagate": False,
+        },
+        "django.security": {
+            "level": "WARNING",
+            "handlers": ["security", "console"],
             "propagate": False,
         },
         "celery": {
             "level": "INFO",
-            "handlers": ["console"],
+            "handlers": ["console", "async_file"],
             "propagate": False,
         },
         "gunicorn": {
             "level": "INFO",
-            "handlers": ["console"],
+            "handlers": ["console", "async_file"],
             "propagate": False,
         },
         "aura": {
             "level": "DEBUG",
-            "handlers": ["console"],
+            "handlers": ["console", "async_file", "metrics"],
+            "propagate": False,
+        },
+        "aura.security": {
+            "level": "INFO",
+            "handlers": ["security", "console"],
+            "propagate": False,
+        },
+        "aura.performance": {
+            "level": "INFO",
+            "handlers": ["metrics", "async_file"],
             "propagate": False,
         },
     },
@@ -465,6 +531,18 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PUBLIC": True,
     "SERVE_URLCONF": "config.urls",
 }
+
+# Performance Monitoring Configuration
+# ------------------------------------------------------------------------------
+SLOW_REQUEST_THRESHOLD = env.float("SLOW_REQUEST_THRESHOLD", default=2.0)  # 2 seconds
+DB_QUERY_THRESHOLD = env.int("DB_QUERY_THRESHOLD", default=20)  # 20 queries
+PERFORMANCE_MONITORING_ENABLED = env.bool("PERFORMANCE_MONITORING_ENABLED", default=True)
+
+# Logging Environment Configuration
+# ------------------------------------------------------------------------------
+ENVIRONMENT = env("ENVIRONMENT", default="development")
+SERVICE_NAME = env("SERVICE_NAME", default="aura")
+VERSION = env("VERSION", default="1.0.0")
 
 # Your stuff...
 # ------------------------------------------------------------------------------

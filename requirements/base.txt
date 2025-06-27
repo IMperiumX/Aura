@@ -34,6 +34,13 @@ drf-nested-routers==0.94.1
 
 # DRF-spectacular for api documentation
 drf-spectacular==0.27.2  # https://github.com/tfranzel/drf-spectacular
+
+# Logging & Monitoring
+# ------------------------------------------------------------------------------
+python-json-logger==2.0.7  # https://github.com/madzak/python-json-logger
+sentry-sdk==1.45.0  # https://sentry.io/for/django/
+psutil==5.9.8  # https://github.com/giampaolo/psutil
+
 # sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
 
 # # RAG application
@@ -46,16 +53,16 @@ drf-spectacular==0.27.2  # https://github.com/tfranzel/drf-spectacular
 # Database
 pgvector==0.3.6 # https://github.com/pgvector/pgvector-python
 psycopg2==2.9.10 # https://psycopg.org/
-
-# Helper libraries
-python-magic==0.4.27 # http://github.com/ahupp/python-magic
-pdfreader==0.1.15 # http://github.com/maxpmaxp/pdfreader
-# git+https://github.com/IMperiumX/django-cryptography
-
-# IP lookup
-maxminddb==2.6.3 # https://www.maxmind.com/
-
-# JSON parsing
-json-log-formatter==1.1 # https://github.com/marselester/json-log-formatter
+psycopg2-binary==2.9.9
+python-dateutil==2.8.2
 python-rapidjson==1.20 # https://github.com/python-rapidjson/python-rapidjson
 simplejson==3.19.3 # https://github.com/simplejson/simplejson
+
+# Requests
+requests==2.31.0
+
+# Whitenoise
+whitenoise==6.6.0
+
+# Workalendar
+workalendar==17.0.0
