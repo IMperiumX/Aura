@@ -13,8 +13,6 @@ from django.utils import timezone
 
 from aura.core.request_middleware import get_request
 
-User = get_user_model()
-
 
 class RequestContextFilter(logging.Filter):
     """

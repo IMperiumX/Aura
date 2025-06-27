@@ -10,13 +10,12 @@ from aura.core.logging_filters import RequestContextFilter, SamplingFilter, Secu
 from aura.core.logging_handlers import AsyncBufferedHandler, MetricsHandler
 from aura.core.performance_middleware import PerformanceMonitoringMiddleware
 
-User = get_user_model()
-
 
 class LoggingFiltersTestCase(TestCase):
     """Test cases for advanced logging filters."""
 
     def setUp(self):
+        User = get_user_model()
         self.factory = RequestFactory()
         self.user = User.objects.create_user(
             email='test@example.com',
@@ -329,6 +328,7 @@ class LoggingIntegrationTestCase(TestCase):
     """Integration tests for the complete logging system."""
 
     def setUp(self):
+        User = get_user_model()
         self.factory = RequestFactory()
         self.user = User.objects.create_user(
             email='integration@example.com',
