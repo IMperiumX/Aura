@@ -7,6 +7,7 @@ import threading
 import time
 from collections import defaultdict, deque
 from typing import Any, Dict, List, Optional
+from datetime import datetime
 
 import redis
 from django.conf import settings
@@ -630,3 +631,342 @@ class StructuredFileHandler(logging.handlers.RotatingFileHandler):
         except Exception:
             # Compression failure shouldn't break logging
             pass
+
+
+class ElasticsearchHandler(logging.Handler):
+    """
+    Advanced Elasticsearch logging handler for direct log shipping.
+
+    Provides an alternative to file-based logging + Filebeat by sending
+    logs directly to Elasticsearch with buffering, retries, and failover.
+    """
+
+    def __init__(self,
+                 hosts=None,
+                 index_pattern="aura-logs-%Y.%m.%d",
+                 username=None,
+                 password=None,
+                 buffer_size=100,
+                 flush_interval=5.0,
+                 max_retries=3,
+                 timeout=10,
+                 use_ssl=False,
+                 verify_certs=False,
+                 ca_certs=None,
+                 client_cert=None,
+                 client_key=None,
+                 level=logging.NOTSET):
+        """
+        Initialize Elasticsearch handler.
+
+        Args:
+            hosts: List of Elasticsearch hosts
+            index_pattern: Index pattern with strftime formatting
+            username: Elasticsearch username
+            password: Elasticsearch password
+            buffer_size: Number of logs to buffer before bulk insert
+            flush_interval: Maximum time to wait before flushing buffer
+            max_retries: Maximum number of retry attempts
+            timeout: Request timeout in seconds
+            use_ssl: Whether to use SSL/TLS
+            verify_certs: Whether to verify SSL certificates
+            ca_certs: Path to CA certificates
+            client_cert: Path to client certificate
+            client_key: Path to client key
+            level: Logging level
+        """
+        super().__init__(level)
+
+        # Configuration
+        self.hosts = hosts or ["http://localhost:9200"]
+        self.index_pattern = index_pattern
+        self.username = username
+        self.password = password
+        self.buffer_size = buffer_size
+        self.flush_interval = flush_interval
+        self.max_retries = max_retries
+        self.timeout = timeout
+        self.use_ssl = use_ssl
+        self.verify_certs = verify_certs
+        self.ca_certs = ca_certs
+        self.client_cert = client_cert
+        self.client_key = client_key
+
+        # Internal state
+        self.buffer = []
+        self.buffer_lock = threading.Lock()
+        self.last_flush = time.time()
+        self.es_client = None
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=5,
+            recovery_timeout=30,
+            expected_exception=Exception
+        )
+
+        # Initialize Elasticsearch client
+        self._init_elasticsearch()
+
+        # Start background flush thread
+        self._start_flush_thread()
+
+    def _init_elasticsearch(self):
+        """Initialize Elasticsearch client with proper configuration."""
+        try:
+            import elasticsearch
+            from elasticsearch.exceptions import ConnectionError, TransportError
+
+            # Build connection configuration
+            es_config = {
+                'hosts': self.hosts,
+                'timeout': self.timeout,
+                'max_retries': self.max_retries,
+                'retry_on_timeout': True,
+                'sniff_on_start': False,
+                'sniff_on_connection_fail': False,
+            }
+
+            # Add authentication if provided
+            if self.username and self.password:
+                es_config['http_auth'] = (self.username, self.password)
+
+            # Add SSL configuration
+            if self.use_ssl:
+                es_config['use_ssl'] = True
+                es_config['verify_certs'] = self.verify_certs
+                if self.ca_certs:
+                    es_config['ca_certs'] = self.ca_certs
+                if self.client_cert and self.client_key:
+                    es_config['client_cert'] = self.client_cert
+                    es_config['client_key'] = self.client_key
+
+            self.es_client = elasticsearch.Elasticsearch(**es_config)
+
+            # Test connection
+            if not self.es_client.ping():
+                raise ConnectionError("Failed to connect to Elasticsearch")
+
+        except ImportError:
+            self.es_client = None
+            print("Warning: elasticsearch package not installed. ElasticsearchHandler disabled.")
+        except Exception as e:
+            self.es_client = None
+            print(f"Warning: Failed to initialize Elasticsearch client: {e}")
+
+    def _start_flush_thread(self):
+        """Start background thread for periodic buffer flushing."""
+        def flush_worker():
+            while True:
+                try:
+                    time.sleep(1)  # Check every second
+                    current_time = time.time()
+
+                    with self.buffer_lock:
+                        if (self.buffer and
+                            (len(self.buffer) >= self.buffer_size or
+                             current_time - self.last_flush >= self.flush_interval)):
+                            self._flush_buffer()
+
+                except Exception as e:
+                    # Log flush errors but don't crash the thread
+                    print(f"ElasticsearchHandler flush error: {e}")
+
+        flush_thread = threading.Thread(target=flush_worker, daemon=True)
+        flush_thread.start()
+
+    def emit(self, record):
+        """
+        Emit a log record to Elasticsearch buffer.
+
+        Args:
+            record: LogRecord instance
+        """
+        if not self.es_client:
+            return
+
+        try:
+            # Format the record
+            log_entry = self._format_record(record)
+
+            # Add to buffer
+            with self.buffer_lock:
+                self.buffer.append(log_entry)
+
+                # Flush if buffer is full
+                if len(self.buffer) >= self.buffer_size:
+                    self._flush_buffer()
+
+        except Exception as e:
+            self.handleError(record)
+
+    def _format_record(self, record):
+        """
+        Format a log record for Elasticsearch.
+
+        Args:
+            record: LogRecord instance
+
+        Returns:
+            dict: Formatted log entry
+        """
+        # Get the current index name
+        index_name = datetime.now().strftime(self.index_pattern)
+
+        # Base log entry
+        log_entry = {
+            '_index': index_name,
+            '_source': {
+                '@timestamp': datetime.fromtimestamp(record.created).isoformat(),
+                'asctime': self.format(record),
+                'levelname': record.levelname,
+                'name': record.name,
+                'message': record.getMessage(),
+                'pathname': record.pathname,
+                'filename': record.filename,
+                'module': record.module,
+                'funcName': record.funcName,
+                'lineno': record.lineno,
+                'process': record.process,
+                'processName': record.processName,
+                'thread': record.thread,
+                'threadName': record.threadName,
+                'service': 'aura',
+                'log_source': 'django_direct',
+                'environment': getattr(record, 'environment', 'production'),
+            }
+        }
+
+        # Add extra fields from record
+        extra_fields = [
+            'correlation_id', 'user_id', 'user_type', 'client_ip', 'user_agent',
+            'method', 'path', 'status_code', 'request_duration', 'db_queries',
+            'db_time', 'cache_hits', 'cache_misses', 'memory_rss', 'memory_percent',
+            'cpu_percent', 'load_avg_1', 'load_avg_5', 'load_avg_15',
+            'security_event', 'threat_type', 'performance_alert'
+        ]
+
+        for field in extra_fields:
+            if hasattr(record, field):
+                log_entry['_source'][field] = getattr(record, field)
+
+        # Add exception information if present
+        if record.exc_info:
+            log_entry['_source']['exception'] = {
+                'class': record.exc_info[0].__name__,
+                'message': str(record.exc_info[1]),
+                'stack_trace': self.format(record)
+            }
+
+        return log_entry
+
+    def _flush_buffer(self):
+        """
+        Flush buffered log entries to Elasticsearch.
+        Internal method - should be called with buffer_lock held.
+        """
+        if not self.buffer or not self.es_client:
+            return
+
+        try:
+            # Use circuit breaker to prevent cascading failures
+            with self.circuit_breaker:
+                # Prepare bulk request
+                bulk_body = []
+                for entry in self.buffer:
+                    bulk_body.append({
+                        'index': {
+                            '_index': entry['_index']
+                        }
+                    })
+                    bulk_body.append(entry['_source'])
+
+                # Send to Elasticsearch
+                response = self.es_client.bulk(
+                    body=bulk_body,
+                    timeout=f"{self.timeout}s"
+                )
+
+                # Check for errors
+                if response.get('errors'):
+                    failed_items = [
+                        item for item in response['items']
+                        if 'error' in item.get('index', {})
+                    ]
+                    if failed_items:
+                        print(f"ElasticsearchHandler: {len(failed_items)} items failed to index")
+
+                # Clear buffer on success
+                self.buffer.clear()
+                self.last_flush = time.time()
+
+        except Exception as e:
+            # Log the error but don't crash
+            print(f"ElasticsearchHandler bulk insert failed: {e}")
+
+            # Clear buffer to prevent memory buildup
+            if len(self.buffer) > self.buffer_size * 10:
+                print("ElasticsearchHandler: Clearing oversized buffer to prevent memory issues")
+                self.buffer.clear()
+
+    def flush(self):
+        """Force flush of buffered log entries."""
+        with self.buffer_lock:
+            self._flush_buffer()
+
+    def close(self):
+        """Close the handler and flush remaining entries."""
+        self.flush()
+        super().close()
+
+
+class CircuitBreaker:
+    """
+    Circuit breaker pattern implementation for Elasticsearch handler.
+
+    Prevents cascading failures by temporarily disabling operations
+    when failure rate exceeds threshold.
+    """
+
+    def __init__(self, failure_threshold=5, recovery_timeout=30, expected_exception=Exception):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.expected_exception = expected_exception
+
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = 'CLOSED'  # CLOSED, OPEN, HALF_OPEN
+        self.lock = threading.Lock()
+
+    def __enter__(self):
+        with self.lock:
+            if self.state == 'OPEN':
+                if self._should_attempt_reset():
+                    self.state = 'HALF_OPEN'
+                else:
+                    raise self.expected_exception("Circuit breaker is OPEN")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        with self.lock:
+            if exc_type and issubclass(exc_type, self.expected_exception):
+                self._record_failure()
+            else:
+                self._record_success()
+        return False
+
+    def _should_attempt_reset(self):
+        """Check if enough time has passed to attempt reset."""
+        return (self.last_failure_time and
+                time.time() - self.last_failure_time >= self.recovery_timeout)
+
+    def _record_failure(self):
+        """Record a failure and potentially open the circuit."""
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+
+        if self.failure_count >= self.failure_threshold:
+            self.state = 'OPEN'
+
+    def _record_success(self):
+        """Record a success and potentially close the circuit."""
+        self.failure_count = 0
+        self.state = 'CLOSED'
