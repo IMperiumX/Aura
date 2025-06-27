@@ -7,8 +7,7 @@ from pathlib import Path
 import dj_database_url
 import environ
 import ldap
-from django_auth_ldap.config import GroupOfNamesType
-from django_auth_ldap.config import LDAPSearch
+from django_auth_ldap.config import GroupOfNamesType, LDAPSearch
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # aura/
@@ -536,7 +535,9 @@ SPECTACULAR_SETTINGS = {
 # ------------------------------------------------------------------------------
 SLOW_REQUEST_THRESHOLD = env.float("SLOW_REQUEST_THRESHOLD", default=2.0)  # 2 seconds
 DB_QUERY_THRESHOLD = env.int("DB_QUERY_THRESHOLD", default=20)  # 20 queries
-PERFORMANCE_MONITORING_ENABLED = env.bool("PERFORMANCE_MONITORING_ENABLED", default=True)
+PERFORMANCE_MONITORING_ENABLED = env.bool(
+    "PERFORMANCE_MONITORING_ENABLED", default=True
+)
 
 # Logging Environment Configuration
 # ------------------------------------------------------------------------------
@@ -553,21 +554,17 @@ TAGGIT_CASE_INSENSITIVE = True
 # Analytics Configuration
 # ------------------------------------------------------------------------------
 ANALYTICS_CONFIG = {
-    'primary': 'database',  # For development - simple and reliable
-    'backends': [
+    "primary": "database",  # For development - simple and reliable
+    "backends": [
         {
-            'name': 'database',
-            'class': 'aura.analytics.backends.database.DatabaseAnalytics',
-            'options': {
-                'enable_batching': True,
-                'batch_size': 100,
-                'max_retries': 3
-            }
+            "name": "database",
+            "class": "aura.analytics.backends.database.DatabaseAnalytics",
+            "options": {"enable_batching": True, "batch_size": 100, "max_retries": 3},
         }
     ],
-    'health_check_interval': 300,  # 5 minutes
-    'enable_health_monitoring': True,
-    'fail_silently': True,  # Never break application flow
+    "health_check_interval": 300,  # 5 minutes
+    "enable_health_monitoring": True,
+    "fail_silently": True,  # Never break application flow
 }
 
 # Analytics Alert Configuration

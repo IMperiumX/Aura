@@ -1,22 +1,26 @@
+import logging
+
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.utils import timezone
-import logging
 
 from aura.analytics import AnalyticsRecordingMixin
 from aura.mentalhealth.api.filters import TherapySessionFilter
-from aura.mentalhealth.api.serializers import ChatbotInteractionSerializer
-from aura.mentalhealth.api.serializers import DisorderSerializer
-from aura.mentalhealth.api.serializers import TherapyApproachSerializer
-from aura.mentalhealth.api.serializers import TherapySessionSerializer
-from aura.mentalhealth.models import ChatbotInteraction
-from aura.mentalhealth.models import Disorder
-from aura.mentalhealth.models import TherapyApproach
-from aura.mentalhealth.models import TherapySession
+from aura.mentalhealth.api.serializers import (
+    ChatbotInteractionSerializer,
+    DisorderSerializer,
+    TherapyApproachSerializer,
+    TherapySessionSerializer,
+)
+from aura.mentalhealth.models import (
+    ChatbotInteraction,
+    Disorder,
+    TherapyApproach,
+    TherapySession,
+)
 from aura.users.api.permissions import ReadOnly
 
 logger = logging.getLogger(__name__)
@@ -50,7 +54,9 @@ class TherapySessionViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
                 session_type=session.session_type,
                 target_audience=session.target_audience,
                 scheduled_at=session.scheduled_at.isoformat(),
-                recurrence_pattern=str(session.recurrences) if session.recurrences else None,
+                recurrence_pattern=(
+                    str(session.recurrences) if session.recurrences else None
+                ),
             )
         except Exception as e:
             logger.warning(f"Failed to record therapy session creation event: {e}")
@@ -85,12 +91,14 @@ class TherapySessionViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
                         session_id=session.id,
                         therapist_id=session.therapist.id,
                         patient_id=session.patient.id,
-                        cancelled_by='therapist',  # Assuming therapist is making the change
+                        cancelled_by="therapist",  # Assuming therapist is making the change
                         notice_hours=notice_hours,
-                        reason=getattr(session, 'cancellation_reason', None),
+                        reason=getattr(session, "cancellation_reason", None),
                     )
             except Exception as e:
-                logger.warning(f"Failed to record therapy session status change event: {e}")
+                logger.warning(
+                    f"Failed to record therapy session status change event: {e}"
+                )
 
     @action(detail=True, methods=["post"])
     def start_session(self, request, pk=None):
@@ -169,7 +177,7 @@ class TherapySessionViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     def cancel_session(self, request, pk=None):
         """Cancel a therapy session with analytics tracking."""
         session = self.get_object()
-        reason = request.data.get('reason', '')
+        reason = request.data.get("reason", "")
 
         session.status = TherapySession.SessionStatus.CANCELLED
         session.save()
@@ -182,9 +190,9 @@ class TherapySessionViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
                 notice_hours = int(notice_delta.total_seconds() / 3600)
 
             # Determine who cancelled (therapist vs patient)
-            cancelled_by = 'therapist'  # Default assumption
-            if hasattr(request.user, 'patient_profile'):
-                cancelled_by = 'patient'
+            cancelled_by = "therapist"  # Default assumption
+            if hasattr(request.user, "patient_profile"):
+                cancelled_by = "patient"
 
             self.record_analytics_event(
                 "therapy_session.cancelled",
@@ -218,10 +226,14 @@ class ChatbotInteractionViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
                 instance=interaction,
                 request=self.request,
                 interaction_id=interaction.id,
-                patient_id=interaction.patient.id if hasattr(interaction, 'patient') else None,
-                message_count=getattr(interaction, 'message_count', 1),
-                session_duration_seconds=getattr(interaction, 'session_duration_seconds', None),
-                satisfaction_score=getattr(interaction, 'satisfaction_score', None),
+                patient_id=(
+                    interaction.patient.id if hasattr(interaction, "patient") else None
+                ),
+                message_count=getattr(interaction, "message_count", 1),
+                session_duration_seconds=getattr(
+                    interaction, "session_duration_seconds", None
+                ),
+                satisfaction_score=getattr(interaction, "satisfaction_score", None),
             )
         except Exception as e:
             logger.warning(f"Failed to record chatbot interaction event: {e}")
