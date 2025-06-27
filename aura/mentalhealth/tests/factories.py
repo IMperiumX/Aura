@@ -3,11 +3,12 @@ import datetime
 import factory
 from django.utils import timezone
 from factory.django import DjangoModelFactory
+from faker import Faker
 
 from aura.mentalhealth import models
-from aura.users.tests.factories import PatientFactory
-from aura.users.tests.factories import TherapistFactory
-from aura.users.tests.factories import UserFactory
+from aura.users.tests.factories import PatientFactory, TherapistFactory, UserFactory
+
+fake = Faker()
 
 
 class TherapyApproachFactory(DjangoModelFactory):
@@ -29,8 +30,8 @@ class DisorderFactory(DjangoModelFactory):
     signs_and_symptoms = factory.Faker("text")
     description = factory.Faker("text")
     treatment = factory.Faker("text")
-    symptoms = factory.LazyFunction(lambda: [factory.Faker("word").generate() for _ in range(5)])
-    causes = factory.LazyFunction(lambda: [factory.Faker("word").generate() for _ in range(5)])
+    symptoms = factory.LazyFunction(lambda: [fake.word() for _ in range(5)])
+    causes = factory.LazyFunction(lambda: [fake.word() for _ in range(5)])
     prevention = factory.Faker("text")
 
     class Meta:
@@ -41,11 +42,17 @@ class DisorderFactory(DjangoModelFactory):
 class TherapySessionFactory(DjangoModelFactory):
     """Factory for TherapySession model."""
 
-    session_type = factory.Faker("random_element", elements=models.TherapySession.SessionType.values)
-    status = factory.Faker("random_element", elements=models.TherapySession.SessionStatus.values)
+    session_type = factory.Faker(
+        "random_element", elements=models.TherapySession.SessionType.values
+    )
+    status = factory.Faker(
+        "random_element", elements=models.TherapySession.SessionStatus.values
+    )
     summary = factory.Faker("text")
     notes = factory.Faker("text")
-    scheduled_at = factory.Faker("date_time_this_year", tzinfo=timezone.get_current_timezone())
+    scheduled_at = factory.Faker(
+        "date_time_this_year", tzinfo=timezone.get_current_timezone()
+    )
     target_audience = factory.Faker(
         "random_element",
         elements=models.TherapySession.TargetAudienceType.values,
@@ -64,7 +71,10 @@ class TherapySessionFactory(DjangoModelFactory):
 
     @factory.lazy_attribute
     def ended_at(self):
-        if self.status == models.TherapySession.SessionStatus.COMPLETED and self.started_at:
+        if (
+            self.status == models.TherapySession.SessionStatus.COMPLETED
+            and self.started_at
+        ):
             return self.started_at + datetime.timedelta(hours=1)
         return None
 
@@ -78,8 +88,12 @@ class ChatbotInteractionFactory(DjangoModelFactory):
     message = factory.Faker("text")
     response = factory.Faker("text")
     conversation_log = factory.LazyFunction(list)
-    interaction_date = factory.Faker("date_time_this_year", tzinfo=timezone.get_current_timezone())
+    interaction_date = factory.Faker(
+        "date_time_this_year", tzinfo=timezone.get_current_timezone()
+    )
     user = factory.SubFactory(UserFactory)
 
     class Meta:
         model = models.ChatbotInteraction
+        django_get_or_create = ["message"]
+        django_get_or_create = ["message"]
