@@ -47,7 +47,6 @@ from aura.analytics.mixins import AnalyticsRecordingMixin
 from aura.audit_log.utils import create_audit_entry
 from aura.core.cache_instrumentation import get_instrumented_cache
 from aura.core.models import PhysicianReferral
-from aura.core.performance_middleware import get_request_metrics
 from aura.core.utils import jwt_encode
 from aura.users.api.serializers import (
     LoginSerializer,
@@ -1033,7 +1032,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
     serializer_class = PatientSerializer
     queryset = Patient.objects.select_related("user").prefetch_related(
-        "disorders", "appointments"
+        "disorders", "therapy_sessions"
     )
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
@@ -1331,18 +1330,18 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
             # Calculate fresh summary
             summary = {
-                "total_appointments": (
-                    patient.appointments.count()
-                    if hasattr(patient, "appointments")
+                "total_sessions": (
+                    patient.therapy_sessions.count()
+                    if hasattr(patient, "therapy_sessions")
                     else 0
                 ),
                 "completed_sessions": (
-                    patient.appointments.filter(status="completed").count()
-                    if hasattr(patient, "appointments")
+                    patient.therapy_sessions.filter(status="completed").count()
+                    if hasattr(patient, "therapy_sessions")
                     else 0
                 ),
-                "last_appointment": None,
-                "next_appointment": None,
+                "last_session": None,
+                "next_session": None,
                 "treatment_duration_days": 0,
                 "disorder_count": patient.disorders.count(),
                 "primary_disorder": (
@@ -1872,7 +1871,7 @@ class EnhancedPatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
     serializer_class = PatientSerializer
     queryset = Patient.objects.select_related("user").prefetch_related(
-        "disorders", "appointments"
+        "disorders", "therapy_sessions"
     )
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
@@ -1992,7 +1991,7 @@ class EnhancedTherapistViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
     serializer_class = TherapistSerializer
     queryset = Therapist.objects.select_related("user").prefetch_related(
-        "specializations", "patients"
+        "specialties", "therapy_sessions"
     )
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
@@ -2079,13 +2078,13 @@ class EnhancedTherapistViewSet(ComprehensiveViewSetMixin, ModelViewSet):
         """Get therapist data snapshot for change tracking."""
         try:
             return {
-                "specializations": (
-                    list(therapist.specializations.values_list("id", flat=True))
-                    if hasattr(therapist, "specializations")
+                "specialties": (
+                    list(therapist.specialties.values_list("id", flat=True))
+                    if hasattr(therapist, "specialties")
                     else []
                 ),
                 "license_number": getattr(therapist, "license_number", None),
-                "years_experience": getattr(therapist, "years_experience", None),
+                "years_of_experience": getattr(therapist, "years_of_experience", None),
             }
         except Exception:
             return {}
@@ -2097,18 +2096,18 @@ class EnhancedTherapistViewSet(ComprehensiveViewSetMixin, ModelViewSet):
         changes = {}
 
         try:
-            # Compare specializations
-            old_specs = set(old_data.get("specializations", []))
-            new_specs = set(new_data.get("specializations", []))
+            # Compare specialties
+            old_specs = set(old_data.get("specialties", []))
+            new_specs = set(new_data.get("specialties", []))
 
             if old_specs != new_specs:
-                changes["specializations"] = {
+                changes["specialties"] = {
                     "added": list(new_specs - old_specs),
                     "removed": list(old_specs - new_specs),
                 }
 
             # Compare other fields
-            for field in ["license_number", "years_experience"]:
+            for field in ["license_number", "years_of_experience"]:
                 if old_data.get(field) != new_data.get(field):
                     changes[field] = {
                         "old": old_data.get(field),
