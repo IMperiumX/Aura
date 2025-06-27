@@ -1,0 +1,71 @@
+# Elasticsearch Configuration for Aura Logging System
+# Optimized for production logging workloads
+
+cluster.name: "aura-logging-cluster"
+node.name: "aura-es-node"
+
+# Network configuration
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# Discovery configuration (single node for development, cluster for production)
+discovery.type: single-node
+
+# Memory and performance settings
+bootstrap.memory_lock: true
+indices.memory.index_buffer_size: 20%
+indices.memory.min_index_buffer_size: 96mb
+
+# Index management and performance
+action.auto_create_index: true
+action.destructive_requires_name: true
+
+# Logging performance optimizations
+index.refresh_interval: 5s
+index.number_of_shards: 1
+index.number_of_replicas: 0
+
+# Index lifecycle management
+indices.lifecycle.poll_interval: 1m
+
+# Security settings (basic auth enabled)
+xpack.security.enabled: true
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+
+# License settings
+xpack.license.self_generated.type: basic
+
+# Monitoring
+xpack.monitoring.collection.enabled: true
+
+# Index template for Aura logs
+index.codec: best_compression
+
+# Thread pool settings for logging workloads
+thread_pool:
+  write:
+    size: 4
+    queue_size: 1000
+  search:
+    size: 6
+    queue_size: 1000
+  index:
+    size: 4
+    queue_size: 200
+
+# Circuit breaker settings
+indices.breaker.total.limit: 70%
+indices.breaker.fielddata.limit: 40%
+indices.breaker.request.limit: 40%
+
+# Cluster settings for logging
+cluster.routing.allocation.disk.threshold.enabled: true
+cluster.routing.allocation.disk.watermark.low: 85%
+cluster.routing.allocation.disk.watermark.high: 90%
+cluster.routing.allocation.disk.watermark.flood_stage: 95%
+
+# Index settings for log data
+index.mapping.total_fields.limit: 2000
+index.max_result_window: 50000
