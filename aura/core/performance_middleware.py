@@ -8,7 +8,7 @@ from django.db import connection
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
-logger = logging.getLogger('aura.performance')
+logger = logging.getLogger("aura.performance")
 
 
 class PerformanceMonitoringMiddleware(MiddlewareMixin):
@@ -23,8 +23,12 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
 
     def __init__(self, get_response: Callable = None):
         super().__init__(get_response)
-        self.slow_request_threshold = getattr(settings, 'SLOW_REQUEST_THRESHOLD', 2.0)  # 2 seconds
-        self.db_query_threshold = getattr(settings, 'DB_QUERY_THRESHOLD', 20)  # 20 queries
+        self.slow_request_threshold = getattr(
+            settings, "SLOW_REQUEST_THRESHOLD", 2.0
+        )  # 2 seconds
+        self.db_query_threshold = getattr(
+            settings, "DB_QUERY_THRESHOLD", 20
+        )  # 20 queries
 
     def process_request(self, request: HttpRequest) -> None:
         """
@@ -39,22 +43,27 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
         request._db_queries_count = 0
 
         # Initialize cache tracking
+        # Note: These counters are incremented by InstrumentedCacheProxy
+        # when cache operations occur during the request
         request._cache_hits = 0
         request._cache_misses = 0
 
         # Memory tracking
         try:
             import psutil
+
             process = psutil.Process()
             request._initial_memory = process.memory_info().rss
         except ImportError:
             request._initial_memory = 0
 
-    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def process_response(
+        self, request: HttpRequest, response: HttpResponse
+    ) -> HttpResponse:
         """
         Process and log performance metrics for the completed request.
         """
-        if not hasattr(request, '_performance_start_time'):
+        if not hasattr(request, "_performance_start_time"):
             return response
 
         # Calculate timing
@@ -67,6 +76,7 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
         # Memory metrics
         try:
             import psutil
+
             process = psutil.Process()
             final_memory = process.memory_info().rss
             memory_delta = final_memory - request._initial_memory
@@ -75,13 +85,15 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
 
         # Prepare performance data
         performance_data = {
-            'request_duration': total_time,
-            'db_queries': current_db_queries,
-            'cache_hits': getattr(request, '_cache_hits', 0),
-            'cache_misses': getattr(request, '_cache_misses', 0),
-            'memory_delta': memory_delta,
-            'status_code': response.status_code,
-            'content_length': len(response.content) if hasattr(response, 'content') else 0,
+            "request_duration": total_time,
+            "db_queries": current_db_queries,
+            "cache_hits": getattr(request, "_cache_hits", 0),
+            "cache_misses": getattr(request, "_cache_misses", 0),
+            "memory_delta": memory_delta,
+            "status_code": response.status_code,
+            "content_length": (
+                len(response.content) if hasattr(response, "content") else 0
+            ),
         }
 
         # Log performance metrics
@@ -102,11 +114,11 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
         log_level = logging.INFO
 
         # Determine log level based on performance
-        if data['request_duration'] > self.slow_request_threshold:
+        if data["request_duration"] > self.slow_request_threshold:
             log_level = logging.WARNING
-        if data['db_queries'] > self.db_query_threshold:
+        if data["db_queries"] > self.db_query_threshold:
             log_level = logging.WARNING
-        if data['status_code'] >= 400:
+        if data["status_code"] >= 400:
             log_level = logging.ERROR
 
         # Create log message
@@ -118,10 +130,14 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
         )
 
         # Log with performance data attached
-        logger.log(log_level, message, extra={
-            'performance_data': data,
-            'is_performance_log': True,
-        })
+        logger.log(
+            log_level,
+            message,
+            extra={
+                "performance_data": data,
+                "is_performance_log": True,
+            },
+        )
 
     def _check_performance_alerts(self, request: HttpRequest, data: dict) -> None:
         """
@@ -130,21 +146,23 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
         alerts = []
 
         # Slow request detection
-        if data['request_duration'] > self.slow_request_threshold:
+        if data["request_duration"] > self.slow_request_threshold:
             alerts.append(f"Slow request detected: {data['request_duration']:.3f}s")
 
         # High database query count
-        if data['db_queries'] > self.db_query_threshold:
+        if data["db_queries"] > self.db_query_threshold:
             alerts.append(f"High DB query count: {data['db_queries']} queries")
 
         # High memory usage
-        if data['memory_delta'] > 50 * 1024 * 1024:  # 50MB
-            alerts.append(f"High memory usage: {data['memory_delta'] / 1024 / 1024:.1f}MB")
+        if data["memory_delta"] > 50 * 1024 * 1024:  # 50MB
+            alerts.append(
+                f"High memory usage: {data['memory_delta'] / 1024 / 1024:.1f}MB"
+            )
 
         # Cache miss ratio
-        total_cache_ops = data['cache_hits'] + data['cache_misses']
+        total_cache_ops = data["cache_hits"] + data["cache_misses"]
         if total_cache_ops > 0:
-            miss_ratio = data['cache_misses'] / total_cache_ops
+            miss_ratio = data["cache_misses"] / total_cache_ops
             if miss_ratio > 0.8:  # 80% miss ratio
                 alerts.append(f"High cache miss ratio: {miss_ratio:.1%}")
 
@@ -153,9 +171,9 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
             logger.warning(
                 f"Performance Alert: {alert} for {request.method} {request.path}",
                 extra={
-                    'alert_type': 'performance',
-                    'performance_data': data,
-                }
+                    "alert_type": "performance",
+                    "performance_data": data,
+                },
             )
 
     def _store_metrics(self, request: HttpRequest, data: dict) -> None:
@@ -168,11 +186,11 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
 
             # Store individual metrics
             metrics = {
-                f"perf:response_time:{timestamp}": data['request_duration'],
-                f"perf:db_queries:{timestamp}": data['db_queries'],
-                f"perf:cache_hits:{timestamp}": data['cache_hits'],
-                f"perf:cache_misses:{timestamp}": data['cache_misses'],
-                f"perf:memory_delta:{timestamp}": data['memory_delta'],
+                f"perf:response_time:{timestamp}": data["request_duration"],
+                f"perf:db_queries:{timestamp}": data["db_queries"],
+                f"perf:cache_hits:{timestamp}": data["cache_hits"],
+                f"perf:cache_misses:{timestamp}": data["cache_misses"],
+                f"perf:memory_delta:{timestamp}": data["memory_delta"],
             }
 
             # Store with 1-hour TTL
@@ -195,28 +213,31 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
             current_hour = int(time.time() // 3600)
             agg_key = f"perf:aggregated:{current_hour}"
 
-            agg_data = cache.get(agg_key, {
-                'total_requests': 0,
-                'total_time': 0,
-                'total_db_queries': 0,
-                'total_cache_hits': 0,
-                'total_cache_misses': 0,
-                'slow_requests': 0,
-                'error_requests': 0,
-            })
+            agg_data = cache.get(
+                agg_key,
+                {
+                    "total_requests": 0,
+                    "total_time": 0,
+                    "total_db_queries": 0,
+                    "total_cache_hits": 0,
+                    "total_cache_misses": 0,
+                    "slow_requests": 0,
+                    "error_requests": 0,
+                },
+            )
 
             # Update aggregated data
-            agg_data['total_requests'] += 1
-            agg_data['total_time'] += data['request_duration']
-            agg_data['total_db_queries'] += data['db_queries']
-            agg_data['total_cache_hits'] += data['cache_hits']
-            agg_data['total_cache_misses'] += data['cache_misses']
+            agg_data["total_requests"] += 1
+            agg_data["total_time"] += data["request_duration"]
+            agg_data["total_db_queries"] += data["db_queries"]
+            agg_data["total_cache_hits"] += data["cache_hits"]
+            agg_data["total_cache_misses"] += data["cache_misses"]
 
-            if data['request_duration'] > self.slow_request_threshold:
-                agg_data['slow_requests'] += 1
+            if data["request_duration"] > self.slow_request_threshold:
+                agg_data["slow_requests"] += 1
 
-            if data['status_code'] >= 400:
-                agg_data['error_requests'] += 1
+            if data["status_code"] >= 400:
+                agg_data["error_requests"] += 1
 
             # Store updated aggregated data
             cache.set(agg_key, agg_data, timeout=7200)  # 2 hours TTL
@@ -237,7 +258,9 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
         if settings.DEBUG:
             connection.queries_log.clear()
 
-    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def process_response(
+        self, request: HttpRequest, response: HttpResponse
+    ) -> HttpResponse:
         """
         Analyze database queries and provide optimization hints.
         """
@@ -251,13 +274,13 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
         # Analyze queries for optimization opportunities
         analysis = self._analyze_queries(queries)
 
-        if analysis['issues']:
+        if analysis["issues"]:
             logger.warning(
                 f"Database optimization opportunities found for {request.path}",
                 extra={
-                    'query_analysis': analysis,
-                    'optimization_hints': True,
-                }
+                    "query_analysis": analysis,
+                    "optimization_hints": True,
+                },
             )
 
         return response
@@ -267,29 +290,31 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
         Analyze database queries for performance issues and optimization opportunities.
         """
         analysis = {
-            'total_queries': len(queries),
-            'total_time': sum(float(q['time']) for q in queries),
-            'slow_queries': [],
-            'duplicate_queries': [],
-            'n_plus_one_potential': [],
-            'issues': [],
+            "total_queries": len(queries),
+            "total_time": sum(float(q["time"]) for q in queries),
+            "slow_queries": [],
+            "duplicate_queries": [],
+            "n_plus_one_potential": [],
+            "issues": [],
         }
 
         # Track query patterns
         query_patterns = {}
 
         for i, query in enumerate(queries):
-            query_time = float(query['time'])
-            sql = query['sql']
+            query_time = float(query["time"])
+            sql = query["sql"]
 
             # Detect slow queries
             if query_time > 0.1:  # 100ms threshold
-                analysis['slow_queries'].append({
-                    'index': i,
-                    'time': query_time,
-                    'sql': sql[:200] + '...' if len(sql) > 200 else sql,
-                })
-                analysis['issues'].append(f"Slow query detected: {query_time:.3f}s")
+                analysis["slow_queries"].append(
+                    {
+                        "index": i,
+                        "time": query_time,
+                        "sql": sql[:200] + "..." if len(sql) > 200 else sql,
+                    }
+                )
+                analysis["issues"].append(f"Slow query detected: {query_time:.3f}s")
 
             # Detect duplicate queries
             sql_normalized = self._normalize_sql(sql)
@@ -301,19 +326,27 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
         # Find duplicates
         for pattern, indices in query_patterns.items():
             if len(indices) > 1:
-                analysis['duplicate_queries'].append({
-                    'pattern': pattern[:100] + '...' if len(pattern) > 100 else pattern,
-                    'count': len(indices),
-                    'indices': indices,
-                })
-                analysis['issues'].append(f"Duplicate query pattern executed {len(indices)} times")
+                analysis["duplicate_queries"].append(
+                    {
+                        "pattern": (
+                            pattern[:100] + "..." if len(pattern) > 100 else pattern
+                        ),
+                        "count": len(indices),
+                        "indices": indices,
+                    }
+                )
+                analysis["issues"].append(
+                    f"Duplicate query pattern executed {len(indices)} times"
+                )
 
         # Detect potential N+1 queries
         if len(queries) > 10:
-            similar_patterns = [p for p, indices in query_patterns.items() if len(indices) > 5]
+            similar_patterns = [
+                p for p, indices in query_patterns.items() if len(indices) > 5
+            ]
             if similar_patterns:
-                analysis['n_plus_one_potential'] = similar_patterns
-                analysis['issues'].append("Potential N+1 query pattern detected")
+                analysis["n_plus_one_potential"] = similar_patterns
+                analysis["issues"].append("Potential N+1 query pattern detected")
 
         return analysis
 
@@ -324,8 +357,8 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
         import re
 
         # Remove specific values and normalize whitespace
-        normalized = re.sub(r'\b\d+\b', 'N', sql)  # Replace numbers
+        normalized = re.sub(r"\b\d+\b", "N", sql)  # Replace numbers
         normalized = re.sub(r"'[^']*'", "'X'", normalized)  # Replace string literals
-        normalized = re.sub(r'\s+', ' ', normalized)  # Normalize whitespace
+        normalized = re.sub(r"\s+", " ", normalized)  # Normalize whitespace
 
         return normalized.strip().upper()
