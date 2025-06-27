@@ -1,35 +1,41 @@
 from django.conf import settings
 from django.urls import path
-from rest_framework.routers import DefaultRouter
-from rest_framework.routers import SimpleRouter
+from rest_framework.routers import DefaultRouter, SimpleRouter
 
-from aura.assessments.api.views import PatientAssessmentViewSet
-from aura.assessments.api.views import QuestionViewSet
-from aura.assessments.api.views import RiskPredictionViewSet
-from aura.communication.api.views import AttachmentViewSet
-from aura.communication.api.views import MessageViewSet
-from aura.communication.api.views import ThreadViewSet
-from aura.mentalhealth.api.views import ChatbotInteractionViewSet
-from aura.mentalhealth.api.views import DisorderViewSet
-from aura.mentalhealth.api.views import TherapyApproachViewSet
-from aura.mentalhealth.api.views import TherapySessionViewSet
-from aura.users.api.views import PatientViewSet
-from aura.users.api.views import PhysicianReferralListCreate
-from aura.users.api.views import RegisterView
-from aura.users.api.views import UserViewSet
+from aura.assessments.api.views import (
+    PatientAssessmentViewSet,
+    QuestionViewSet,
+    RiskPredictionViewSet,
+)
+from aura.communication.api.views import (
+    AttachmentViewSet,
+    MessageViewSet,
+    ThreadViewSet,
+)
+from aura.mentalhealth.api.views import (
+    ChatbotInteractionViewSet,
+    DisorderViewSet,
+    TherapyApproachViewSet,
+    TherapySessionViewSet,
+)
 
 # Patient Flow Board imports
 from aura.patientflow.views import (
-    ClinicViewSet,
-    StatusViewSet,
-    AppointmentViewSet,
-    PatientFlowEventViewSet,
-    NotificationViewSet,
-    FlowBoardViewSet,
     AnalyticsViewSet,
+    AppointmentViewSet,
+    ClinicViewSet,
+    FlowBoardViewSet,
+    NotificationViewSet,
+    PatientFlowEventViewSet,
+    StatusViewSet,
 )
-
-
+from aura.users.api.views import (
+    PatientViewSet,
+    PhysicianReferralListCreate,
+    RegisterView,
+    TherapistViewSet,
+    UserViewSet,
+)
 
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 
@@ -42,6 +48,11 @@ router.register(
     "patients",
     PatientViewSet,
     basename="patients",
+)
+router.register(
+    "therapists",
+    TherapistViewSet,
+    basename="therapists",
 )
 router.register(
     "patient-assessments",

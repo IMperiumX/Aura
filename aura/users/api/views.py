@@ -3,29 +3,26 @@ import logging
 from dj_rest_auth.registration import views as dj_views
 from django.conf import settings as api_settings
 from django.db.utils import IntegrityError
-from rest_framework import generics
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import ListModelMixin
-from rest_framework.mixins import RetrieveModelMixin
-from rest_framework.mixins import UpdateModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.viewsets import ViewSetMixin
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSetMixin
 
 from aura.core.models import PhysicianReferral
 from aura.core.utils import jwt_encode
-from aura.users.api.serializers import LoginSerializer
-from aura.users.api.serializers import PatientSerializer
-from aura.users.api.serializers import ReviewSerializer
-from aura.users.api.serializers import UserSerializer
+from aura.users.api.serializers import (
+    LoginSerializer,
+    PatientSerializer,
+    ReviewSerializer,
+    TherapistSerializer,
+    UserSerializer,
+)
 from aura.users.mixins import LoginMixin
-from aura.users.models import Patient
-from aura.users.models import User
+from aura.users.models import Patient, Therapist, User
 
 from .serializers import PhysicianReferralSerializer
 
@@ -164,6 +161,21 @@ class PatientViewSet(ModelViewSet):
             event=audit_log.get_event_id("PATIENT_CREATE"),
             data=patient.get_audit_log_data(),
         )
+
+
+class TherapistViewSet(ModelViewSet):
+    serializer_class = TherapistSerializer
+    queryset = Therapist.objects.all()
+    lookup_field = "pk"
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def perform_update(self, serializer):
+        serializer.save()
 
 
 class PhysicianReferralListCreate(
