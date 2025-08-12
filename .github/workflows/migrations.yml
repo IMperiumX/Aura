@@ -23,7 +23,7 @@ jobs:
       modified: ${{ steps.changes.outputs.migrations_modified }}
     steps:
       - name: Checkout Code Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Match migration files
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
         id: changes
@@ -48,7 +48,7 @@ jobs:
           - '5432:5432'
         options: '--health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
       - name: Set up Python
@@ -71,7 +71,7 @@ jobs:
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
           CELERY_BROKER_URL: ${{ env.CELERY_BROKER_URL }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           clean: false
 
