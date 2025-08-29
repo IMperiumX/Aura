@@ -1,10 +1,12 @@
-from .user_created import *  # noqa: F403
-from .user_signup import *  # noqa: F403
-from .webhook_repository_created import *  # noqa: F403
-from .weekly_report import *  # noqa: F403
+# ruff: noqa: F403
+from .api_events import *
+from .communication_events import *
 
 # Import new comprehensive events
-from .patient_events import *  # noqa: F403
-from .therapy_events import *  # noqa: F403
-from .communication_events import *  # noqa: F403
-from .system_events import *  # noqa: F403
+from .patient_events import *
+from .system_events import *
+from .therapy_events import *
+from .user_created import *
+from .user_signup import *
+from .webhook_repository_created import *
+from .weekly_report import *
