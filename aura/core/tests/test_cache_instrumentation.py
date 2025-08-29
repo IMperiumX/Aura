@@ -3,17 +3,17 @@ Tests for cache instrumentation and hit/miss tracking.
 """
 
 import time
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
+from unittest.mock import patch
 
 from django.core.cache import cache
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory
+from django.test import TestCase
 
-from aura.core.cache_instrumentation import (
-    InstrumentedCacheProxy,
-    get_instrumented_cache,
-    patch_django_cache,
-    unpatch_django_cache,
-)
+from aura.core.cache_instrumentation import InstrumentedCacheProxy
+from aura.core.cache_instrumentation import get_instrumented_cache
+from aura.core.cache_instrumentation import patch_django_cache
+from aura.core.cache_instrumentation import unpatch_django_cache
 from aura.core.performance_middleware import PerformanceMonitoringMiddleware
 
 

@@ -5,12 +5,11 @@ User-related signals for analytics event recording.
 import logging
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.signals import (
-    user_logged_in,
-    user_logged_out,
-    user_login_failed,
-)
-from django.db.models.signals import post_save, pre_save
+from django.contrib.auth.signals import user_logged_in
+from django.contrib.auth.signals import user_logged_out
+from django.contrib.auth.signals import user_login_failed
+from django.db.models.signals import post_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -42,7 +41,7 @@ def track_user_login(sender, request, user, **kwargs):
     """Track successful user login events."""
     try:
         # Get client IP
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        x_forwarded_for = request.headers.get("x-forwarded-for")
         if x_forwarded_for:
             ip_address = x_forwarded_for.split(",")[0].strip()
         else:
@@ -54,7 +53,7 @@ def track_user_login(sender, request, user, **kwargs):
             user_id=user.id,
             username=user.username,
             ip_address=ip_address,
-            user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
+            user_agent=request.headers.get("user-agent", "")[:500],
             login_method="password",  # Default to password, can be extended
             success=True,
         )
@@ -94,7 +93,7 @@ def track_login_failure(sender, credentials, request, **kwargs):
     """Track failed login attempts."""
     try:
         # Get client IP
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        x_forwarded_for = request.headers.get("x-forwarded-for")
         if x_forwarded_for:
             ip_address = x_forwarded_for.split(",")[0].strip()
         else:
@@ -107,7 +106,7 @@ def track_login_failure(sender, credentials, request, **kwargs):
             username=username,
             ip_address=ip_address,
             failure_reason="invalid_credentials",
-            user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
+            user_agent=request.headers.get("user-agent", "")[:500],
         )
     except Exception as e:
         logger.warning(f"Failed to record login failure event: {e}")

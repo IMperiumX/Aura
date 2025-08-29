@@ -50,11 +50,10 @@ Features:
 """
 
 import logging
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from django.core.cache import cache
 from django.core.cache.backends.base import BaseCache
-from django.http import HttpRequest
 
 from aura.core.request_middleware import get_request
 
@@ -87,7 +86,7 @@ class InstrumentedCacheProxy:
         except:
             pass  # Don't break cache operations if request tracking fails
 
-    def get(self, key: str, default: Any = None, version: Optional[int] = None) -> Any:
+    def get(self, key: str, default: Any = None, version: int | None = None) -> Any:
         """Get value from cache with hit/miss tracking."""
         value = self.cache_backend.get(key, default, version)
 
@@ -100,7 +99,7 @@ class InstrumentedCacheProxy:
 
         return value
 
-    def get_many(self, keys: List[str], version: Optional[int] = None) -> dict:
+    def get_many(self, keys: list[str], version: int | None = None) -> dict:
         """Get multiple values from cache with hit/miss tracking."""
         result = self.cache_backend.get_many(keys, version)
 
@@ -119,7 +118,7 @@ class InstrumentedCacheProxy:
             pass
 
         logger.debug(
-            f"Cache get_many: {hits} hits, {misses} misses for {len(keys)} keys"
+            f"Cache get_many: {hits} hits, {misses} misses for {len(keys)} keys",
         )
         return result
 
@@ -127,8 +126,8 @@ class InstrumentedCacheProxy:
         self,
         key: str,
         value: Any,
-        timeout: Optional[int] = None,
-        version: Optional[int] = None,
+        timeout: int | None = None,
+        version: int | None = None,
     ) -> bool:
         """Set value in cache."""
         return self.cache_backend.set(key, value, timeout, version)
@@ -137,17 +136,17 @@ class InstrumentedCacheProxy:
         self,
         key: str,
         value: Any,
-        timeout: Optional[int] = None,
-        version: Optional[int] = None,
+        timeout: int | None = None,
+        version: int | None = None,
     ) -> bool:
         """Add value to cache."""
         return self.cache_backend.add(key, value, timeout, version)
 
-    def delete(self, key: str, version: Optional[int] = None) -> bool:
+    def delete(self, key: str, version: int | None = None) -> bool:
         """Delete value from cache."""
         return self.cache_backend.delete(key, version)
 
-    def delete_many(self, keys: List[str], version: Optional[int] = None) -> None:
+    def delete_many(self, keys: list[str], version: int | None = None) -> None:
         """Delete multiple values from cache."""
         return self.cache_backend.delete_many(keys, version)
 
@@ -155,7 +154,7 @@ class InstrumentedCacheProxy:
         """Clear all cache."""
         return self.cache_backend.clear()
 
-    def has_key(self, key: str, version: Optional[int] = None) -> bool:
+    def has_key(self, key: str, version: int | None = None) -> bool:
         """Check if key exists in cache with hit/miss tracking."""
         result = self.cache_backend.has_key(key, version)
 
@@ -168,11 +167,11 @@ class InstrumentedCacheProxy:
 
         return result
 
-    def incr(self, key: str, delta: int = 1, version: Optional[int] = None) -> int:
+    def incr(self, key: str, delta: int = 1, version: int | None = None) -> int:
         """Increment value in cache."""
         return self.cache_backend.incr(key, delta, version)
 
-    def decr(self, key: str, delta: int = 1, version: Optional[int] = None) -> int:
+    def decr(self, key: str, delta: int = 1, version: int | None = None) -> int:
         """Decrement value in cache."""
         return self.cache_backend.decr(key, delta, version)
 
@@ -181,7 +180,7 @@ class InstrumentedCacheProxy:
         # Avoid infinite recursion and common problematic attributes
         if name.startswith("_") or name in ("cache_backend",):
             raise AttributeError(
-                f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                f"'{self.__class__.__name__}' object has no attribute '{name}'",
             )
 
         try:
@@ -189,7 +188,7 @@ class InstrumentedCacheProxy:
             return getattr(cache_backend, name)
         except (AttributeError, RecursionError):
             raise AttributeError(
-                f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                f"'{self.__class__.__name__}' object has no attribute '{name}'",
             )
 
 

@@ -3,6 +3,7 @@ from aura import analytics
 
 class MessageSentEvent(analytics.Event):
     """Event fired when a message is sent."""
+
     type = "message.sent"
 
     attributes = (
@@ -19,6 +20,7 @@ class MessageSentEvent(analytics.Event):
 
 class ThreadCreatedEvent(analytics.Event):
     """Event fired when a new conversation thread is created."""
+
     type = "thread.created"
 
     attributes = (
@@ -32,6 +34,7 @@ class ThreadCreatedEvent(analytics.Event):
 
 class VideoCallStartedEvent(analytics.Event):
     """Event fired when a video call is initiated."""
+
     type = "video_call.started"
 
     attributes = (
@@ -45,6 +48,7 @@ class VideoCallStartedEvent(analytics.Event):
 
 class VideoCallEndedEvent(analytics.Event):
     """Event fired when a video call ends."""
+
     type = "video_call.ended"
 
     attributes = (
@@ -58,6 +62,7 @@ class VideoCallEndedEvent(analytics.Event):
 
 class AttachmentUploadedEvent(analytics.Event):
     """Event fired when a file attachment is uploaded."""
+
     type = "attachment.uploaded"
 
     attributes = (
@@ -72,6 +77,7 @@ class AttachmentUploadedEvent(analytics.Event):
 
 class NotificationSentEvent(analytics.Event):
     """Event fired when a notification is sent to a user."""
+
     type = "notification.sent"
 
     attributes = (

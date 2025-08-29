@@ -1,11 +1,12 @@
 import logging
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
+from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger("aura.performance")
@@ -24,10 +25,14 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
     def __init__(self, get_response: Callable = None):
         super().__init__(get_response)
         self.slow_request_threshold = getattr(
-            settings, "SLOW_REQUEST_THRESHOLD", 2.0
+            settings,
+            "SLOW_REQUEST_THRESHOLD",
+            2.0,
         )  # 2 seconds
         self.db_query_threshold = getattr(
-            settings, "DB_QUERY_THRESHOLD", 20
+            settings,
+            "DB_QUERY_THRESHOLD",
+            20,
         )  # 20 queries
 
     def process_request(self, request: HttpRequest) -> None:
@@ -58,7 +63,9 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
             request._initial_memory = 0
 
     def process_response(
-        self, request: HttpRequest, response: HttpResponse
+        self,
+        request: HttpRequest,
+        response: HttpResponse,
     ) -> HttpResponse:
         """
         Process and log performance metrics for the completed request.
@@ -156,7 +163,7 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
         # High memory usage
         if data["memory_delta"] > 50 * 1024 * 1024:  # 50MB
             alerts.append(
-                f"High memory usage: {data['memory_delta'] / 1024 / 1024:.1f}MB"
+                f"High memory usage: {data['memory_delta'] / 1024 / 1024:.1f}MB",
             )
 
         # Cache miss ratio
@@ -259,7 +266,9 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
             connection.queries_log.clear()
 
     def process_response(
-        self, request: HttpRequest, response: HttpResponse
+        self,
+        request: HttpRequest,
+        response: HttpResponse,
     ) -> HttpResponse:
         """
         Analyze database queries and provide optimization hints.
@@ -312,7 +321,7 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
                         "index": i,
                         "time": query_time,
                         "sql": sql[:200] + "..." if len(sql) > 200 else sql,
-                    }
+                    },
                 )
                 analysis["issues"].append(f"Slow query detected: {query_time:.3f}s")
 
@@ -333,10 +342,10 @@ class DatabaseQueryTrackingMiddleware(MiddlewareMixin):
                         ),
                         "count": len(indices),
                         "indices": indices,
-                    }
+                    },
                 )
                 analysis["issues"].append(
-                    f"Duplicate query pattern executed {len(indices)} times"
+                    f"Duplicate query pattern executed {len(indices)} times",
                 )
 
         # Detect potential N+1 queries

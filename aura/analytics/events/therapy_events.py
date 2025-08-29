@@ -3,6 +3,7 @@ from aura import analytics
 
 class TherapySessionCreatedEvent(analytics.Event):
     """Event fired when a therapy session is scheduled."""
+
     type = "therapy_session.created"
 
     attributes = (
@@ -18,6 +19,7 @@ class TherapySessionCreatedEvent(analytics.Event):
 
 class TherapySessionStartedEvent(analytics.Event):
     """Event fired when a therapy session starts."""
+
     type = "therapy_session.started"
 
     attributes = (
@@ -33,6 +35,7 @@ class TherapySessionStartedEvent(analytics.Event):
 
 class TherapySessionCompletedEvent(analytics.Event):
     """Event fired when a therapy session is completed."""
+
     type = "therapy_session.completed"
 
     attributes = (
@@ -48,6 +51,7 @@ class TherapySessionCompletedEvent(analytics.Event):
 
 class TherapySessionCancelledEvent(analytics.Event):
     """Event fired when a therapy session is cancelled."""
+
     type = "therapy_session.cancelled"
 
     attributes = (
@@ -62,6 +66,7 @@ class TherapySessionCancelledEvent(analytics.Event):
 
 class ChatbotInteractionEvent(analytics.Event):
     """Event fired when patient interacts with chatbot."""
+
     type = "chatbot.interaction"
 
     attributes = (

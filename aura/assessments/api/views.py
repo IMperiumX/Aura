@@ -2,53 +2,52 @@
 import logging
 import time
 from contextlib import contextmanager
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # Celery imports
 from celery import shared_task
 
 # Django imports
-from django.conf import settings as django_settings
 from django.core.cache import cache
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import models, transaction
+from django.db import transaction
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
 
 # DRF imports
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import permissions, status, viewsets
+from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
 # Internal imports
-from aura import analytics, audit_log
+from aura import analytics
+from aura import audit_log
 from aura.analytics.mixins import AnalyticsRecordingMixin
-from aura.assessments.api.filters import (
-    PatientAssessmentFilterSet,
-    QuestionFilterSet,
-    RiskPredictionFilterSet,
-)
-from aura.assessments.api.serializers import (
-    Assessment,
-    AssessmentCreateSerializer,
-    PatientAssessmentSerializer,
-    RiskPredictionSerializer,
-)
-from aura.assessments.models import PatientAssessment, Question, RiskPrediction
+from aura.assessments.api.filters import PatientAssessmentFilterSet
+from aura.assessments.api.filters import QuestionFilterSet
+from aura.assessments.api.filters import RiskPredictionFilterSet
+from aura.assessments.api.serializers import Assessment
+from aura.assessments.api.serializers import AssessmentCreateSerializer
+from aura.assessments.api.serializers import PatientAssessmentSerializer
+from aura.assessments.api.serializers import RiskPredictionSerializer
+from aura.assessments.models import PatientAssessment
+from aura.assessments.models import Question
+from aura.assessments.models import RiskPrediction
 from aura.audit_log.utils import create_audit_entry
 from aura.core.cache_instrumentation import get_instrumented_cache
 from aura.core.tasks import setup_rag_pipeline_task
-from aura.users.api.permissions import IsPatient, IsTherapist
+from aura.users.api.permissions import IsPatient
+from aura.users.api.permissions import IsTherapist
 from aura.users.api.serializers import TherapistSerializer
 from aura.users.models import Patient
 
@@ -89,7 +88,7 @@ def process_assessment_completion(self, assessment_id):
         )
 
         logger.info(
-            f"Processed assessment {assessment_id} with risk score {risk_score}"
+            f"Processed assessment {assessment_id} with risk score {risk_score}",
         )
         return {
             "status": "success",
@@ -136,7 +135,7 @@ def create_risk_prediction_from_assessment(self, assessment_id, risk_score):
 
     except Exception as e:
         logger.error(
-            f"Failed to create risk prediction from assessment {assessment_id}: {e}"
+            f"Failed to create risk prediction from assessment {assessment_id}: {e}",
         )
         raise
 
@@ -155,14 +154,15 @@ def generate_therapist_recommendations(self, assessment_id):
         recommendations = []
         for therapist in suitable_therapists:
             compatibility_score = calculate_therapist_compatibility(
-                assessment, therapist
+                assessment,
+                therapist,
             )
             recommendations.append(
                 {
                     "therapist_id": therapist.id,
                     "compatibility_score": compatibility_score,
                     "reasons": get_recommendation_reasons(assessment, therapist),
-                }
+                },
             )
 
         # Cache recommendations
@@ -186,7 +186,7 @@ def generate_therapist_recommendations(self, assessment_id):
 
     except Exception as e:
         logger.error(
-            f"Failed to generate therapist recommendations for assessment {assessment_id}: {e}"
+            f"Failed to generate therapist recommendations for assessment {assessment_id}: {e}",
         )
         raise
 
@@ -211,7 +211,7 @@ def calculate_assessment_risk_score(assessment) -> float:
         return 0.5  # Default moderate risk
 
 
-def generate_assessment_recommendations(assessment) -> List[str]:
+def generate_assessment_recommendations(assessment) -> list[str]:
     """Generate personalized recommendations based on assessment."""
     try:
         recommendations = [
@@ -231,7 +231,7 @@ def generate_assessment_recommendations(assessment) -> List[str]:
         return ["Consult with a healthcare professional"]
 
 
-def extract_risk_factors_from_assessment(assessment) -> Dict[str, Any]:
+def extract_risk_factors_from_assessment(assessment) -> dict[str, Any]:
     """Extract risk factors from assessment responses."""
     try:
         # Placeholder for risk factor extraction
@@ -245,7 +245,7 @@ def extract_risk_factors_from_assessment(assessment) -> Dict[str, Any]:
         return {}
 
 
-def generate_preventive_measures(risk_factors: Dict) -> str:
+def generate_preventive_measures(risk_factors: dict) -> str:
     """Generate preventive measures based on risk factors."""
     try:
         measures = []
@@ -264,7 +264,7 @@ def generate_preventive_measures(risk_factors: Dict) -> str:
         return "general wellness practices"
 
 
-def determine_primary_health_issue(risk_factors: Dict) -> str:
+def determine_primary_health_issue(risk_factors: dict) -> str:
     """Determine primary health issue from risk factors."""
     try:
         # Placeholder logic
@@ -278,7 +278,7 @@ def determine_primary_health_issue(risk_factors: Dict) -> str:
         return "Mental health assessment follow-up"
 
 
-def analyze_patient_needs(assessment) -> Dict[str, Any]:
+def analyze_patient_needs(assessment) -> dict[str, Any]:
     """Analyze patient needs from assessment."""
     try:
         return {
@@ -291,7 +291,7 @@ def analyze_patient_needs(assessment) -> Dict[str, Any]:
         return {}
 
 
-def find_matching_therapists(patient_needs: Dict) -> List:
+def find_matching_therapists(patient_needs: dict) -> list:
     """Find therapists matching patient needs."""
     try:
         # Placeholder - would query therapist database with filtering
@@ -318,7 +318,7 @@ def calculate_therapist_compatibility(assessment, therapist) -> float:
         return 0.5
 
 
-def get_recommendation_reasons(assessment, therapist) -> List[str]:
+def get_recommendation_reasons(assessment, therapist) -> list[str]:
     """Get reasons for therapist recommendation."""
     try:
         return [
@@ -570,18 +570,18 @@ class ComprehensiveAssessmentMixin(AnalyticsRecordingMixin):
             # Record successful transaction
             duration = (time.time() - start_time) * 1000
             logger.debug(
-                f"Assessment database transaction completed in {duration:.2f}ms"
+                f"Assessment database transaction completed in {duration:.2f}ms",
             )
 
         except Exception as e:
             # Record failed transaction
             duration = (time.time() - start_time) * 1000
             logger.warning(
-                f"Assessment database transaction failed after {duration:.2f}ms: {e}"
+                f"Assessment database transaction failed after {duration:.2f}ms: {e}",
             )
             raise
 
-    def get_cached_data(self, cache_key: str, timeout: Optional[int] = None) -> Any:
+    def get_cached_data(self, cache_key: str, timeout: int | None = None) -> Any:
         """Get data from cache with hit/miss tracking."""
         timeout = timeout or self.cache_timeout
 
@@ -601,7 +601,10 @@ class ComprehensiveAssessmentMixin(AnalyticsRecordingMixin):
             return None
 
     def set_cached_data(
-        self, cache_key: str, data: Any, timeout: Optional[int] = None
+        self,
+        cache_key: str,
+        data: Any,
+        timeout: int | None = None,
     ) -> bool:
         """Set data in cache with error handling."""
         timeout = timeout or self.cache_timeout
@@ -625,7 +628,8 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
     """
 
     queryset = PatientAssessment.objects.select_related(
-        "patient", "assessment"
+        "patient",
+        "assessment",
     ).prefetch_related("assessment__questions")
     serializer_class = PatientAssessmentSerializer
     permission_classes = [IsAuthenticated]
@@ -644,7 +648,8 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
     def get_queryset(self):
         """Enhanced queryset with security and performance optimizations."""
         base_queryset = PatientAssessment.objects.select_related(
-            "patient", "assessment"
+            "patient",
+            "assessment",
         ).only(
             "patient",
             "assessment",
@@ -692,14 +697,16 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
                     "assessment_id": assessment.id,
                     "patient_id": patient.id,
                     "assessment_type": getattr(
-                        assessment.assessment, "assessment_type", None
+                        assessment.assessment,
+                        "assessment_type",
+                        None,
                     ),
                     "question_count": (
                         assessment.assessment.questions.count()
                         if hasattr(assessment.assessment, "questions")
                         else None
                     ),
-                    "user_agent": self.request.META.get("HTTP_USER_AGENT", ""),
+                    "user_agent": self.request.headers.get("user-agent", ""),
                     "ip_address": self.request.META.get("REMOTE_ADDR", ""),
                 },
             )
@@ -717,7 +724,9 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
                     "assessment_id": assessment.id,
                     "patient_id": patient.id,
                     "assessment_type": getattr(
-                        assessment.assessment, "assessment_type", None
+                        assessment.assessment,
+                        "assessment_type",
+                        None,
                     ),
                     "action": "assessment_start",
                 },
@@ -737,9 +746,10 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
 
             # Check if assessment was completed
             if old_status != getattr(
-                Assessment, "COMPLETED", "completed"
+                Assessment,
+                "COMPLETED",
+                "completed",
             ) and new_status == getattr(Assessment, "COMPLETED", "completed"):
-
                 self._handle_assessment_completion(assessment, old_instance)
 
             # Record general update analytics
@@ -755,7 +765,7 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
                     "new_status": new_status,
                     "has_result": bool(getattr(assessment, "result", None)),
                     "has_recommendations": bool(
-                        getattr(assessment, "recommendations", None)
+                        getattr(assessment, "recommendations", None),
                     ),
                 },
             )
@@ -804,7 +814,9 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
                     "assessment_id": assessment.id,
                     "patient_id": assessment.patient.id,
                     "assessment_type": getattr(
-                        assessment.assessment, "assessment_type", None
+                        assessment.assessment,
+                        "assessment_type",
+                        None,
                     ),
                     "risk_level": getattr(assessment.assessment, "risk_level", None),
                     "completion_time_minutes": completion_time_minutes,
@@ -841,7 +853,7 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
 
         except Exception as e:
             logger.warning(
-                f"Failed to handle assessment completion for {assessment.id}: {e}"
+                f"Failed to handle assessment completion for {assessment.id}: {e}",
             )
 
     def get_serializer(self, *args, **kwargs):
@@ -915,7 +927,9 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
                 "assessment_id": assessment.id,
                 "patient_id": assessment.patient.id,
                 "assessment_type": getattr(
-                    assessment.assessment, "assessment_type", None
+                    assessment.assessment,
+                    "assessment_type",
+                    None,
                 ),
                 "status": getattr(assessment, "status", None),
             },
@@ -1006,7 +1020,9 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
 
                 # Cache the result
                 self.set_cached_data(
-                    cache_key, str(response), timeout=86400
+                    cache_key,
+                    str(response),
+                    timeout=86400,
                 )  # 24 hours
 
                 # Trigger background recommendation generation for future
@@ -1043,7 +1059,7 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
             )
 
             logger.error(
-                f"Error generating therapist recommendations for assessment {assessment.id}: {e}"
+                f"Error generating therapist recommendations for assessment {assessment.id}: {e}",
             )
             return Response(
                 {"error": "Failed to generate recommendations"},
@@ -1056,7 +1072,9 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
         assessment = self.get_object()
 
         if getattr(assessment, "status", None) != getattr(
-            Assessment, "IN_PROGRESS", "in_progress"
+            Assessment,
+            "IN_PROGRESS",
+            "in_progress",
         ):
             return Response(
                 {"status": _("Assessment cannot be submitted")},
@@ -1070,7 +1088,9 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
             assessment.result = "Assessment processed successfully"
             if hasattr(assessment, "risk_level"):
                 assessment.risk_level = getattr(
-                    Assessment.RiskLevel, "MODERATE", "moderate"
+                    Assessment.RiskLevel,
+                    "MODERATE",
+                    "moderate",
                 )
             if hasattr(assessment, "recommendations"):
                 assessment.recommendations = "Based on your responses, we recommend..."
@@ -1085,7 +1105,9 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
                     "assessment_id": assessment.id,
                     "patient_id": assessment.patient.id,
                     "assessment_type": getattr(
-                        assessment.assessment, "assessment_type", None
+                        assessment.assessment,
+                        "assessment_type",
+                        None,
                     ),
                     "submission_method": "manual",
                 },
@@ -1155,7 +1177,8 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
 
         except Patient.DoesNotExist:
             return Response(
-                {"error": "Patient profile not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Patient profile not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
     def _invalidate_assessment_caches(self, patient_id):
@@ -1164,7 +1187,7 @@ class PatientAssessmentViewSet(ComprehensiveAssessmentMixin, viewsets.ModelViewS
             cache_keys_to_invalidate = [
                 f"patient_assessments_list:{patient_id}:*",
                 f"my_assessments:{patient_id}",
-                f"therapist_recommendations:*",  # Would need patient-specific lookup
+                "therapist_recommendations:*",  # Would need patient-specific lookup
             ]
 
             # This would normally use a more sophisticated cache invalidation pattern

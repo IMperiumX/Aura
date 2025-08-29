@@ -4,9 +4,10 @@ Stores events in local database for development and as fallback.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
-from django.db import connection, transaction
+from django.db import connection
+from django.db import transaction
 from django.utils import timezone
 
 from aura.analytics.base import Analytics
@@ -107,21 +108,21 @@ class DatabaseAnalytics(Analytics):
                         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                         processed BOOLEAN DEFAULT FALSE
                     )
-                """
+                """,
                 )
 
                 # Create indexes for PostgreSQL
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_event_type ON {self.table_name} (event_type)"
+                    f"CREATE INDEX idx_{self.table_name}_event_type ON {self.table_name} (event_type)",
                 )
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_timestamp ON {self.table_name} (timestamp)"
+                    f"CREATE INDEX idx_{self.table_name}_timestamp ON {self.table_name} (timestamp)",
                 )
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_user_id ON {self.table_name} (user_id)"
+                    f"CREATE INDEX idx_{self.table_name}_user_id ON {self.table_name} (user_id)",
                 )
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_processed ON {self.table_name} (processed)"
+                    f"CREATE INDEX idx_{self.table_name}_processed ON {self.table_name} (processed)",
                 )
 
             elif connection.vendor == "sqlite":
@@ -140,21 +141,21 @@ class DatabaseAnalytics(Analytics):
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                         processed BOOLEAN DEFAULT FALSE
                     )
-                """
+                """,
                 )
 
                 # Create indexes for SQLite
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_event_type ON {self.table_name} (event_type)"
+                    f"CREATE INDEX idx_{self.table_name}_event_type ON {self.table_name} (event_type)",
                 )
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_timestamp ON {self.table_name} (timestamp)"
+                    f"CREATE INDEX idx_{self.table_name}_timestamp ON {self.table_name} (timestamp)",
                 )
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_user_id ON {self.table_name} (user_id)"
+                    f"CREATE INDEX idx_{self.table_name}_user_id ON {self.table_name} (user_id)",
                 )
                 cursor.execute(
-                    f"CREATE INDEX idx_{self.table_name}_processed ON {self.table_name} (processed)"
+                    f"CREATE INDEX idx_{self.table_name}_processed ON {self.table_name} (processed)",
                 )
 
             elif connection.vendor == "mysql":
@@ -177,13 +178,13 @@ class DatabaseAnalytics(Analytics):
                         INDEX idx_user_id (user_id),
                         INDEX idx_processed (processed)
                     )
-                """
+                """,
                 )
             else:
                 raise ValueError(f"Unsupported database vendor: {connection.vendor}")
 
             logger.info(
-                f"Created analytics table: {self.table_name} for {connection.vendor}"
+                f"Created analytics table: {self.table_name} for {connection.vendor}",
             )
 
     def record_event(self, event: Event) -> None:
@@ -227,7 +228,7 @@ class DatabaseAnalytics(Analytics):
                 logger.warning(f"Failed to write event (attempt {attempt + 1}): {e}")
                 if attempt == self.max_retries - 1:
                     logger.error(
-                        f"Failed to write event after {self.max_retries} attempts: {e}"
+                        f"Failed to write event after {self.max_retries} attempts: {e}",
                     )
 
     def _write_events_batch(self, events: list[Event]) -> None:
@@ -251,7 +252,7 @@ class DatabaseAnalytics(Analytics):
                                 None,  # session_id - can be added later
                                 serialized["data"].get("ip_address"),
                                 self._serialize_data_for_db(serialized["data"]),
-                            ]
+                            ],
                         )
 
                     if values:
@@ -288,7 +289,7 @@ class DatabaseAnalytics(Analytics):
                 ],
             )
 
-    def _serialize_data_for_db(self, data: Dict[str, Any]) -> Any:
+    def _serialize_data_for_db(self, data: dict[str, Any]) -> Any:
         """Serialize event data for database storage."""
         if connection.vendor == "postgresql":
             # PostgreSQL can handle dict directly for JSONB fields
@@ -299,7 +300,7 @@ class DatabaseAnalytics(Analytics):
 
             return json.dumps(data, default=str)
 
-    def _serialize_data(self, data: Dict[str, Any]) -> str:
+    def _serialize_data(self, data: dict[str, Any]) -> str:
         """Serialize event data to JSON string (legacy method)."""
         import json
 
@@ -307,12 +308,12 @@ class DatabaseAnalytics(Analytics):
 
     def get_events(
         self,
-        event_type: Optional[str] = None,
-        user_id: Optional[int] = None,
-        start_time: Optional[timezone.datetime] = None,
-        end_time: Optional[timezone.datetime] = None,
+        event_type: str | None = None,
+        user_id: int | None = None,
+        start_time: timezone.datetime | None = None,
+        end_time: timezone.datetime | None = None,
         limit: int = 100,
-    ) -> list[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Retrieve events from database with filtering."""
         conditions = []
         params = []
@@ -368,16 +369,16 @@ class DatabaseAnalytics(Analytics):
                         "user_id": row[3],
                         "ip_address": row[4],
                         "data": parsed_data,
-                    }
+                    },
                 )
 
             return results
 
     def get_event_counts(
         self,
-        start_time: Optional[timezone.datetime] = None,
-        end_time: Optional[timezone.datetime] = None,
-    ) -> Dict[str, int]:
+        start_time: timezone.datetime | None = None,
+        end_time: timezone.datetime | None = None,
+    ) -> dict[str, int]:
         """Get event counts by type for analytics."""
         conditions = []
         params = []
@@ -428,5 +429,5 @@ class DatabaseAnalytics(Analytics):
         try:
             self._flush_batch()
         except Exception:
-            pass  # Don't raise exceptions in destructor
+            # Don't raise exceptions in destructor
             pass  # Don't raise exceptions in destructor

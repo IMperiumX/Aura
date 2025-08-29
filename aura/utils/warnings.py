@@ -16,12 +16,12 @@ class DeprecatedSettingWarning(DeprecationWarning):
 
     def __str__(self):
         chunks = [
-            f"The {self.setting} setting is deprecated. Please use {self.replacement} instead."
+            f"The {self.setting} setting is deprecated. Please use {self.replacement} instead.",
         ]
 
         if self.removed_in_version:
             chunks.append(
-                f"This setting will be removed in Sentry {self.removed_in_version}."
+                f"This setting will be removed in Sentry {self.removed_in_version}.",
             )
 
         # TODO(tkaemming): This will be removed from the message in the future
@@ -90,6 +90,7 @@ class WarningSet(AbstractSet):
 
     def clear(self):
         self.__warnings.clear()
+
 
 # Maintains all unique warnings seen since system startup.
 seen_warnings = WarningSet()

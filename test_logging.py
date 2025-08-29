@@ -2,6 +2,7 @@
 """
 Test script to verify AsyncBufferedHandler and application.log creation
 """
+
 import logging
 import os
 import time
@@ -19,7 +20,7 @@ def test_logging():
     # Get the performance logger
     logger = logging.getLogger("aura.performance")
     print(
-        f"Logger configured with handlers: {[type(h).__name__ for h in logger.handlers]}"
+        f"Logger configured with handlers: {[type(h).__name__ for h in logger.handlers]}",
     )
     print(f"Logger effective level: {logger.getEffectiveLevel()}")
 
@@ -51,7 +52,7 @@ def test_logging():
         print(f"   File size: {size} bytes")
 
         # Show last few lines
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             lines = f.readlines()
             print(f"   Total lines: {len(lines)}")
             if lines:

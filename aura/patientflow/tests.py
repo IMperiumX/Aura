@@ -1,20 +1,24 @@
-import pytest
-from django.test import TestCase
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-from rest_framework.test import APITestCase, APIClient
-from rest_framework import status
-from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from datetime import datetime
+from datetime import timedelta
+from unittest.mock import patch
 
-from .models import (
-    Clinic, Status, Patient, Appointment,
-    PatientFlowEvent, Notification, UserProfile
-)
-from .signals import (
-    generate_notifications_for_flow_event,
-    should_send_email, should_send_sms
-)
+import pytest
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
+
+from .models import Appointment
+from .models import Clinic
+from .models import Notification
+from .models import Patient
+from .models import PatientFlowEvent
+from .models import Status
+from .models import UserProfile
+from .signals import should_send_email
+from .signals import should_send_sms
 
 User = get_user_model()
 
@@ -26,40 +30,40 @@ class PatientFlowModelTests(TestCase):
         """Set up test data."""
         self.clinic = Clinic.objects.create(
             name="Test Clinic",
-            address="123 Test St"
+            address="123 Test St",
         )
 
         self.status = Status.objects.create(
             name="Checked In",
             clinic=self.clinic,
             color="#28a745",
-            order=1
+            order=1,
         )
 
         self.patient = Patient.objects.create(
             first_name="John",
             last_name="Doe",
             dob=datetime(1990, 1, 1).date(),
-            clinic=self.clinic
+            clinic=self.clinic,
         )
 
         self.user = User.objects.create_user(
             username="testuser",
             email="test@example.com",
-            password="testpass123"
+            password="testpass123",
         )
 
         self.user_profile = UserProfile.objects.create(
             user=self.user,
             clinic=self.clinic,
-            role="nurse"
+            role="nurse",
         )
 
         self.appointment = Appointment.objects.create(
             patient=self.patient,
             clinic=self.clinic,
             scheduled_time=timezone.now(),
-            provider=self.user
+            provider=self.user,
         )
 
     def test_clinic_creation(self):
@@ -74,10 +78,10 @@ class PatientFlowModelTests(TestCase):
             name="With Provider",
             clinic=self.clinic,
             color="#17a2b8",
-            order=2
+            order=2,
         )
 
-        statuses = Status.objects.filter(clinic=self.clinic).order_by('order')
+        statuses = Status.objects.filter(clinic=self.clinic).order_by("order")
         self.assertEqual(list(statuses), [self.status, status2])
 
     def test_patient_full_name(self):
@@ -104,11 +108,11 @@ class PatientFlowModelTests(TestCase):
         new_user = User.objects.create_user(
             username="newuser",
             email="new@example.com",
-            password="newpass123"
+            password="newpass123",
         )
 
         # Check if profile was created
-        self.assertTrue(hasattr(new_user, 'profile'))
+        self.assertTrue(hasattr(new_user, "profile"))
         self.assertIsNotNone(new_user.profile)
 
     def test_notification_generation(self):
@@ -117,7 +121,7 @@ class PatientFlowModelTests(TestCase):
         flow_event = PatientFlowEvent.objects.create(
             appointment=self.appointment,
             status=self.status,
-            updated_by=self.user
+            updated_by=self.user,
         )
 
         # Check if notifications were generated
@@ -135,20 +139,20 @@ class PatientFlowAPITests(APITestCase):
         # Create test clinic
         self.clinic = Clinic.objects.create(
             name="API Test Clinic",
-            address="456 API St"
+            address="456 API St",
         )
 
         # Create test user with profile
         self.user = User.objects.create_user(
             username="apiuser",
             email="api@example.com",
-            password="apipass123"
+            password="apipass123",
         )
 
         self.user_profile = UserProfile.objects.create(
             user=self.user,
             clinic=self.clinic,
-            role="front_desk"
+            role="front_desk",
         )
 
         # Create test status
@@ -156,7 +160,7 @@ class PatientFlowAPITests(APITestCase):
             name="Waiting",
             clinic=self.clinic,
             color="#ffc107",
-            order=1
+            order=1,
         )
 
         # Create test patient
@@ -164,7 +168,7 @@ class PatientFlowAPITests(APITestCase):
             first_name="Jane",
             last_name="Smith",
             dob=datetime(1985, 5, 15).date(),
-            clinic=self.clinic
+            clinic=self.clinic,
         )
 
         # Authenticate client
@@ -176,8 +180,8 @@ class PatientFlowAPITests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)
-        self.assertEqual(response.data['results'][0]['name'], "API Test Clinic")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["name"], "API Test Clinic")
 
     def test_status_list_api(self):
         """Test status list API endpoint."""
@@ -185,8 +189,8 @@ class PatientFlowAPITests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)
-        self.assertEqual(response.data['results'][0]['name'], "Waiting")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["name"], "Waiting")
 
     def test_patient_creation_api(self):
         """Test patient creation via API."""
@@ -195,15 +199,15 @@ class PatientFlowAPITests(APITestCase):
             "first_name": "Bob",
             "last_name": "Johnson",
             "dob": "1992-03-20",
-            "clinic": self.clinic.id
+            "clinic": self.clinic.id,
         }
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['first_name'], "Bob")
+        self.assertEqual(response.data["first_name"], "Bob")
 
         # Verify patient was created in database
-        patient = Patient.objects.get(id=response.data['id'])
+        patient = Patient.objects.get(id=response.data["id"])
         self.assertEqual(patient.first_name, "Bob")
         self.assertEqual(patient.clinic, self.clinic)
 
@@ -215,14 +219,14 @@ class PatientFlowAPITests(APITestCase):
             "clinic": self.clinic.id,
             "scheduled_time": timezone.now().isoformat(),
             "provider": self.user.id,
-            "status": self.status.id
+            "status": self.status.id,
         }
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Verify appointment was created
-        appointment = Appointment.objects.get(id=response.data['id'])
+        appointment = Appointment.objects.get(id=response.data["id"])
         self.assertEqual(appointment.patient, self.patient)
         self.assertEqual(appointment.clinic, self.clinic)
 
@@ -234,7 +238,7 @@ class PatientFlowAPITests(APITestCase):
             clinic=self.clinic,
             scheduled_time=timezone.now(),
             provider=self.user,
-            status=self.status
+            status=self.status,
         )
 
         # Create new status
@@ -242,13 +246,13 @@ class PatientFlowAPITests(APITestCase):
             name="In Progress",
             clinic=self.clinic,
             color="#007bff",
-            order=2
+            order=2,
         )
 
         url = f"/patientflow/api/v1/appointments/{appointment.id}/update_status/"
         data = {
             "status_id": new_status.id,
-            "notes": "Moving to next stage"
+            "notes": "Moving to next stage",
         }
 
         response = self.client.post(url, data)
@@ -261,7 +265,7 @@ class PatientFlowAPITests(APITestCase):
         # Verify flow event was created
         flow_event = PatientFlowEvent.objects.filter(
             appointment=appointment,
-            status=new_status
+            status=new_status,
         ).first()
         self.assertIsNotNone(flow_event)
         self.assertEqual(flow_event.notes, "Moving to next stage")
@@ -274,17 +278,17 @@ class PatientFlowAPITests(APITestCase):
             clinic=self.clinic,
             scheduled_time=timezone.now(),
             provider=self.user,
-            status=self.status
+            status=self.status,
         )
 
         url = "/patientflow/api/v1/flow-board/current/"
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('clinic', response.data)
-        self.assertIn('statuses', response.data)
-        self.assertIn('appointments_by_status', response.data)
-        self.assertIn('summary', response.data)
+        self.assertIn("clinic", response.data)
+        self.assertIn("statuses", response.data)
+        self.assertIn("appointments_by_status", response.data)
+        self.assertIn("summary", response.data)
 
     def test_notification_api(self):
         """Test notification API endpoints."""
@@ -294,26 +298,26 @@ class PatientFlowAPITests(APITestCase):
             clinic=self.clinic,
             scheduled_time=timezone.now(),
             provider=self.user,
-            status=self.status
+            status=self.status,
         )
 
         flow_event = PatientFlowEvent.objects.create(
             appointment=appointment,
             status=self.status,
-            updated_by=self.user
+            updated_by=self.user,
         )
 
         notification = Notification.objects.create(
             recipient=self.user,
             event=flow_event,
-            message="Test notification"
+            message="Test notification",
         )
 
         # Test list notifications
         url = "/patientflow/api/v1/notifications/"
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(len(response.data["results"]), 1)
 
         # Test mark as read
         url = f"/patientflow/api/v1/notifications/{notification.id}/mark_read/"
@@ -331,16 +335,16 @@ class PatientFlowAPITests(APITestCase):
             clinic=self.clinic,
             scheduled_time=timezone.now(),
             provider=self.user,
-            status=self.status
+            status=self.status,
         )
 
         url = "/patientflow/api/v1/analytics/daily_report/"
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('total_appointments', response.data)
-        self.assertIn('completed_appointments', response.data)
-        self.assertIn('completion_rate', response.data)
+        self.assertIn("total_appointments", response.data)
+        self.assertIn("completed_appointments", response.data)
+        self.assertIn("completion_rate", response.data)
 
 
 class PatientFlowPermissionTests(APITestCase):
@@ -356,31 +360,43 @@ class PatientFlowPermissionTests(APITestCase):
 
         # Create users with different roles
         self.admin_user = User.objects.create_user(
-            username="admin", email="admin@test.com", password="pass"
+            username="admin",
+            email="admin@test.com",
+            password="pass",
         )
         UserProfile.objects.create(
-            user=self.admin_user, clinic=self.clinic1, role="admin"
+            user=self.admin_user,
+            clinic=self.clinic1,
+            role="admin",
         )
 
         self.nurse_user = User.objects.create_user(
-            username="nurse", email="nurse@test.com", password="pass"
+            username="nurse",
+            email="nurse@test.com",
+            password="pass",
         )
         UserProfile.objects.create(
-            user=self.nurse_user, clinic=self.clinic1, role="nurse"
+            user=self.nurse_user,
+            clinic=self.clinic1,
+            role="nurse",
         )
 
         self.other_clinic_user = User.objects.create_user(
-            username="other", email="other@test.com", password="pass"
+            username="other",
+            email="other@test.com",
+            password="pass",
         )
         UserProfile.objects.create(
-            user=self.other_clinic_user, clinic=self.clinic2, role="nurse"
+            user=self.other_clinic_user,
+            clinic=self.clinic2,
+            role="nurse",
         )
 
         # Create patient in clinic1
         self.patient = Patient.objects.create(
             first_name="Test",
             last_name="Patient",
-            clinic=self.clinic1
+            clinic=self.clinic1,
         )
 
     def test_admin_access(self):
@@ -400,7 +416,7 @@ class PatientFlowPermissionTests(APITestCase):
         url = "/patientflow/api/v1/patients/"
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 0)
+        self.assertEqual(len(response.data["results"]), 0)
 
     def test_unauthenticated_access(self):
         """Test unauthenticated access is denied."""
@@ -416,25 +432,34 @@ class PatientFlowSignalTests(TestCase):
         """Set up test data."""
         self.clinic = Clinic.objects.create(name="Signal Test Clinic")
         self.user = User.objects.create_user(
-            username="signaluser", email="signal@test.com", password="pass"
+            username="signaluser",
+            email="signal@test.com",
+            password="pass",
         )
         UserProfile.objects.create(
-            user=self.user, clinic=self.clinic, role="provider"
+            user=self.user,
+            clinic=self.clinic,
+            role="provider",
         )
 
         self.status = Status.objects.create(
-            name="Emergency", clinic=self.clinic, color="#dc3545", order=1
+            name="Emergency",
+            clinic=self.clinic,
+            color="#dc3545",
+            order=1,
         )
 
         self.patient = Patient.objects.create(
-            first_name="Signal", last_name="Test", clinic=self.clinic
+            first_name="Signal",
+            last_name="Test",
+            clinic=self.clinic,
         )
 
         self.appointment = Appointment.objects.create(
             patient=self.patient,
             clinic=self.clinic,
             scheduled_time=timezone.now(),
-            provider=self.user
+            provider=self.user,
         )
 
     def test_email_notification_rules(self):
@@ -442,7 +467,7 @@ class PatientFlowSignalTests(TestCase):
         flow_event = PatientFlowEvent.objects.create(
             appointment=self.appointment,
             status=self.status,
-            updated_by=self.user
+            updated_by=self.user,
         )
 
         # Emergency status should trigger email
@@ -453,20 +478,20 @@ class PatientFlowSignalTests(TestCase):
         flow_event = PatientFlowEvent.objects.create(
             appointment=self.appointment,
             status=self.status,
-            updated_by=self.user
+            updated_by=self.user,
         )
 
         # Emergency status should trigger SMS
         self.assertTrue(should_send_sms(self.user, flow_event))
 
-    @patch('aura.patientflow.tasks.send_notification_email.delay')
-    @patch('aura.patientflow.tasks.send_notification_sms.delay')
+    @patch("aura.patientflow.tasks.send_notification_email.delay")
+    @patch("aura.patientflow.tasks.send_notification_sms.delay")
     def test_notification_generation(self, mock_sms, mock_email):
         """Test notification generation and task scheduling."""
         flow_event = PatientFlowEvent.objects.create(
             appointment=self.appointment,
             status=self.status,
-            updated_by=self.user
+            updated_by=self.user,
         )
 
         # Should create notifications
@@ -486,21 +511,33 @@ class PatientFlowFilterTests(APITestCase):
 
         self.clinic = Clinic.objects.create(name="Filter Test Clinic")
         self.user = User.objects.create_user(
-            username="filteruser", email="filter@test.com", password="pass"
+            username="filteruser",
+            email="filter@test.com",
+            password="pass",
         )
         UserProfile.objects.create(
-            user=self.user, clinic=self.clinic, role="nurse"
+            user=self.user,
+            clinic=self.clinic,
+            role="nurse",
         )
 
         self.status1 = Status.objects.create(
-            name="Waiting", clinic=self.clinic, color="#ffc107", order=1
+            name="Waiting",
+            clinic=self.clinic,
+            color="#ffc107",
+            order=1,
         )
         self.status2 = Status.objects.create(
-            name="Complete", clinic=self.clinic, color="#28a745", order=2
+            name="Complete",
+            clinic=self.clinic,
+            color="#28a745",
+            order=2,
         )
 
         self.patient = Patient.objects.create(
-            first_name="Filter", last_name="Test", clinic=self.clinic
+            first_name="Filter",
+            last_name="Test",
+            clinic=self.clinic,
         )
 
         # Create appointments for today and yesterday
@@ -508,7 +545,7 @@ class PatientFlowFilterTests(APITestCase):
             patient=self.patient,
             clinic=self.clinic,
             scheduled_time=timezone.now(),
-            status=self.status1
+            status=self.status1,
         )
 
         yesterday = timezone.now() - timedelta(days=1)
@@ -516,7 +553,7 @@ class PatientFlowFilterTests(APITestCase):
             patient=self.patient,
             clinic=self.clinic,
             scheduled_time=yesterday,
-            status=self.status2
+            status=self.status2,
         )
 
         self.client.force_authenticate(user=self.user)
@@ -527,8 +564,8 @@ class PatientFlowFilterTests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)
-        self.assertEqual(response.data['results'][0]['id'], self.today_appointment.id)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["id"], self.today_appointment.id)
 
     def test_appointment_status_filter(self):
         """Test filtering appointments by status."""
@@ -536,8 +573,8 @@ class PatientFlowFilterTests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)
-        self.assertEqual(response.data['results'][0]['status'], self.status1.id)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["status"], self.status1.id)
 
     def test_patient_name_search(self):
         """Test searching patients by name."""
@@ -545,9 +582,9 @@ class PatientFlowFilterTests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)
-        self.assertEqual(response.data['results'][0]['first_name'], "Filter")
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["first_name"], "Filter")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

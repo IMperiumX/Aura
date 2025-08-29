@@ -12,6 +12,7 @@ class PatientAssessmentFilterSet(drf_filters.FilterSet):
         field_name="result",
         search_fields=["result", "recommendations"],
     )
+
     class Meta:
         model = PatientAssessment
         exclude = ["embedding"]
@@ -35,7 +36,8 @@ class RiskPredictionFilterSet(drf_filters.FilterSet):
 class QuestionFilterSet(drf_filters.FilterSet):
     allow_multiple = drf_filters.BooleanFilter(method="filter_allow_multiple")
     qa_type = drf_filters.ChoiceFilter(
-        field_name="assessment__assessment_type", choices=Assessment.Type.choices
+        field_name="assessment__assessment_type",
+        choices=Assessment.Type.choices,
     )
     question_text = drf_filters.CharFilter(field_name="text", lookup_expr="icontains")
 

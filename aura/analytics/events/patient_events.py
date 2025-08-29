@@ -3,6 +3,7 @@ from aura import analytics
 
 class PatientCreatedEvent(analytics.Event):
     """Event fired when a new patient is created."""
+
     type = "patient.created"
 
     attributes = (
@@ -17,6 +18,7 @@ class PatientCreatedEvent(analytics.Event):
 
 class PatientUpdatedEvent(analytics.Event):
     """Event fired when patient information is updated."""
+
     type = "patient.updated"
 
     attributes = (
@@ -29,6 +31,7 @@ class PatientUpdatedEvent(analytics.Event):
 
 class AppointmentCreatedEvent(analytics.Event):
     """Event fired when a new appointment is scheduled."""
+
     type = "appointment.created"
 
     attributes = (
@@ -44,6 +47,7 @@ class AppointmentCreatedEvent(analytics.Event):
 
 class AppointmentStatusChangedEvent(analytics.Event):
     """Event fired when appointment status changes."""
+
     type = "appointment.status_changed"
 
     attributes = (
@@ -59,6 +63,7 @@ class AppointmentStatusChangedEvent(analytics.Event):
 
 class AppointmentCancelledEvent(analytics.Event):
     """Event fired when an appointment is cancelled."""
+
     type = "appointment.cancelled"
 
     attributes = (
@@ -67,12 +72,17 @@ class AppointmentCancelledEvent(analytics.Event):
         analytics.Attribute("clinic_id"),
         analytics.Attribute("reason", required=False),
         analytics.Attribute("cancelled_by_user_id"),
-        analytics.Attribute("notice_hours", type=int, required=False),  # How much notice was given
+        analytics.Attribute(
+            "notice_hours",
+            type=int,
+            required=False,
+        ),  # How much notice was given
     )
 
 
 class AssessmentCompletedEvent(analytics.Event):
     """Event fired when a patient assessment is completed."""
+
     type = "assessment.completed"
 
     attributes = (
@@ -87,6 +97,7 @@ class AssessmentCompletedEvent(analytics.Event):
 
 class RiskPredictionGeneratedEvent(analytics.Event):
     """Event fired when a risk prediction is generated."""
+
     type = "risk_prediction.generated"
 
     attributes = (

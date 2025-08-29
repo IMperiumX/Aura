@@ -1,29 +1,32 @@
-from django.urls import path, include
+from django.urls import include
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
-    ClinicViewSet, StatusViewSet, PatientViewSet, AppointmentViewSet,
-    PatientFlowEventViewSet, NotificationViewSet, FlowBoardViewSet,
-    AnalyticsViewSet
-)
+from .views import AnalyticsViewSet
+from .views import AppointmentViewSet
+from .views import ClinicViewSet
+from .views import FlowBoardViewSet
+from .views import NotificationViewSet
+from .views import PatientFlowEventViewSet
+from .views import PatientViewSet
+from .views import StatusViewSet
 
 # Create router and register viewsets
 router = DefaultRouter()
-router.register(r'clinics', ClinicViewSet)
-router.register(r'statuses', StatusViewSet)
-router.register(r'patients', PatientViewSet)
-router.register(r'appointments', AppointmentViewSet)
-router.register(r'flow-events', PatientFlowEventViewSet)
-router.register(r'notifications', NotificationViewSet)
-router.register(r'flow-board', FlowBoardViewSet, basename='flowboard')
-router.register(r'analytics', AnalyticsViewSet, basename='analytics')
+router.register(r"clinics", ClinicViewSet)
+router.register(r"statuses", StatusViewSet)
+router.register(r"patients", PatientViewSet)
+router.register(r"appointments", AppointmentViewSet)
+router.register(r"flow-events", PatientFlowEventViewSet)
+router.register(r"notifications", NotificationViewSet)
+router.register(r"flow-board", FlowBoardViewSet, basename="flowboard")
+router.register(r"analytics", AnalyticsViewSet, basename="analytics")
 
-app_name = 'patientflow'
+app_name = "patientflow"
 
 urlpatterns = [
     # API v1 endpoints
-    path('api/v1/', include(router.urls)),
-
+    path("api/v1/", include(router.urls)),
     # Custom API endpoints (if needed)
     # path('api/v1/custom-endpoint/', custom_view, name='custom-endpoint'),
 ]

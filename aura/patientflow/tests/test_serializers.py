@@ -5,34 +5,24 @@ This module tests the serializers to ensure they work correctly with
 the custom User model and provide proper validation and error handling.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
 
-from aura.patientflow.models import (
-    Appointment,
-    Clinic,
-    Notification,
-    Patient,
-    PatientFlowEvent,
-    Status,
-    UserProfile,
-)
-from aura.patientflow.serializers import (
-    AppointmentCreateUpdateSerializer,
-    AppointmentDetailSerializer,
-    AppointmentListSerializer,
-    ClinicSerializer,
-    NotificationSerializer,
-    PatientFlowPatientSerializer,
-    PatientFlowUserSerializer,
-    StatusSerializer,
-    UserProfileSerializer,
-)
+from aura.patientflow.models import Appointment
+from aura.patientflow.models import Clinic
+from aura.patientflow.models import Patient
+from aura.patientflow.models import PatientFlowEvent
+from aura.patientflow.models import Status
+from aura.patientflow.models import UserProfile
+from aura.patientflow.serializers import AppointmentCreateUpdateSerializer
+from aura.patientflow.serializers import AppointmentListSerializer
+from aura.patientflow.serializers import ClinicSerializer
+from aura.patientflow.serializers import PatientFlowUserSerializer
+from aura.patientflow.serializers import UserProfileSerializer
 
 User = get_user_model()
 
@@ -87,18 +77,26 @@ class AppointmentCreateUpdateSerializerTest(TestCase):
         # Create test data
         self.clinic = Clinic.objects.create(name="Test Clinic", address="123 Test St")
         self.status = Status.objects.create(
-            clinic=self.clinic, name="Waiting", color="#FF0000"
+            clinic=self.clinic,
+            name="Waiting",
+            color="#FF0000",
         )
         self.patient = Patient.objects.create(
-            first_name="Jane", last_name="Doe", clinic=self.clinic
+            first_name="Jane",
+            last_name="Doe",
+            clinic=self.clinic,
         )
         self.provider = User.objects.create_user(
-            email="provider@example.com", name="Dr. Provider", password="testpass123"
+            email="provider@example.com",
+            name="Dr. Provider",
+            password="testpass123",
         )
 
         # Create user profile for provider
         UserProfile.objects.create(
-            user=self.provider, clinic=self.clinic, role="provider"
+            user=self.provider,
+            clinic=self.clinic,
+            role="provider",
         )
 
         self.valid_data = {
@@ -124,7 +122,9 @@ class AppointmentCreateUpdateSerializerTest(TestCase):
         """Test validation fails when patient doesn't belong to clinic."""
         other_clinic = Clinic.objects.create(name="Other Clinic")
         other_patient = Patient.objects.create(
-            first_name="John", last_name="Other", clinic=other_clinic
+            first_name="John",
+            last_name="Other",
+            clinic=other_clinic,
         )
 
         invalid_data = self.valid_data.copy()
@@ -138,7 +138,9 @@ class AppointmentCreateUpdateSerializerTest(TestCase):
         """Test validation fails when status doesn't belong to clinic."""
         other_clinic = Clinic.objects.create(name="Other Clinic")
         other_status = Status.objects.create(
-            clinic=other_clinic, name="Other Status", color="#00FF00"
+            clinic=other_clinic,
+            name="Other Status",
+            color="#00FF00",
         )
 
         invalid_data = self.valid_data.copy()
@@ -161,13 +163,11 @@ class AppointmentCreateUpdateSerializerTest(TestCase):
         """Test validation fails when provider has scheduling conflict."""
         # Create first appointment
         first_appointment = Appointment.objects.create(
-            **{
-                "patient": self.patient,
-                "clinic": self.clinic,
-                "scheduled_time": self.valid_data["scheduled_time"],
-                "provider": self.provider,
-                "status": self.status,
-            }
+            patient=self.patient,
+            clinic=self.clinic,
+            scheduled_time=self.valid_data["scheduled_time"],
+            provider=self.provider,
+            status=self.status,
         )
 
         # Try to create second appointment at same time
@@ -199,15 +199,21 @@ class ClinicSerializerTest(TestCase):
 
         # Create some test data for computed fields
         self.patient = Patient.objects.create(
-            first_name="Jane", last_name="Doe", clinic=self.clinic
+            first_name="Jane",
+            last_name="Doe",
+            clinic=self.clinic,
         )
 
         self.provider = User.objects.create_user(
-            email="provider@example.com", name="Dr. Provider", password="testpass123"
+            email="provider@example.com",
+            name="Dr. Provider",
+            password="testpass123",
         )
 
         UserProfile.objects.create(
-            user=self.provider, clinic=self.clinic, role="provider"
+            user=self.provider,
+            clinic=self.clinic,
+            role="provider",
         )
 
     def test_computed_fields(self):
@@ -251,7 +257,9 @@ class UserProfileSerializerTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            email="test@example.com", name="Test User", password="testpass123"
+            email="test@example.com",
+            name="Test User",
+            password="testpass123",
         )
         self.clinic = Clinic.objects.create(name="Test Clinic")
 
@@ -282,7 +290,9 @@ class SerializerPerformanceTest(TestCase):
 
         for i in range(10):
             patient = Patient.objects.create(
-                first_name=f"Patient{i}", last_name=f"Last{i}", clinic=self.clinic
+                first_name=f"Patient{i}",
+                last_name=f"Last{i}",
+                clinic=self.clinic,
             )
             self.patients.append(patient)
 
@@ -297,7 +307,9 @@ class SerializerPerformanceTest(TestCase):
         """Test that AppointmentListSerializer performs reasonably with multiple appointments."""
         # Create appointments
         appointments = []
-        for i, (patient, provider) in enumerate(zip(self.patients, self.providers)):
+        for i, (patient, provider) in enumerate(
+            zip(self.patients, self.providers, strict=False),
+        ):
             appointment = Appointment.objects.create(
                 patient=patient,
                 clinic=self.clinic,

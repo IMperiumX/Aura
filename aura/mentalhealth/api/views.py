@@ -1,49 +1,43 @@
 import logging
 import time
 from contextlib import contextmanager
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # Celery imports
 from celery import shared_task
 
 # Django imports
-from django.conf import settings as django_settings
 from django.core.cache import cache
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import models, transaction
+from django.db import models
+from django.db import transaction
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
 
 # DRF imports
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, status, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
 # Internal imports
-from aura import analytics, audit_log
+from aura import analytics
+from aura import audit_log
 from aura.analytics.mixins import AnalyticsRecordingMixin
 from aura.audit_log.utils import create_audit_entry
 from aura.core.cache_instrumentation import get_instrumented_cache
 from aura.mentalhealth.api.filters import TherapySessionFilter
-from aura.mentalhealth.api.serializers import (
-    ChatbotInteractionSerializer,
-    DisorderSerializer,
-    TherapyApproachSerializer,
-    TherapySessionSerializer,
-)
-from aura.mentalhealth.models import (
-    ChatbotInteraction,
-    Disorder,
-    TherapyApproach,
-    TherapySession,
-)
+from aura.mentalhealth.api.serializers import ChatbotInteractionSerializer
+from aura.mentalhealth.api.serializers import DisorderSerializer
+from aura.mentalhealth.api.serializers import TherapyApproachSerializer
+from aura.mentalhealth.api.serializers import TherapySessionSerializer
+from aura.mentalhealth.models import ChatbotInteraction
+from aura.mentalhealth.models import Disorder
+from aura.mentalhealth.models import TherapyApproach
+from aura.mentalhealth.models import TherapySession
 from aura.users.api.permissions import ReadOnly
 
 logger = logging.getLogger(__name__)
@@ -77,7 +71,7 @@ def process_therapy_session(self, session_id):
         )
 
         logger.info(
-            f"Processed therapy session {session_id} with effectiveness score {effectiveness_score}"
+            f"Processed therapy session {session_id} with effectiveness score {effectiveness_score}",
         )
         return {
             "status": "success",
@@ -132,14 +126,15 @@ def generate_treatment_insights(self, patient_id):
     try:
         # Aggregate patient therapy sessions
         sessions = TherapySession.objects.filter(
-            patient_id=patient_id, status="completed"
+            patient_id=patient_id,
+            status="completed",
         )
 
         # Generate insights
         insights = {
             "total_sessions": sessions.count(),
             "avg_effectiveness": sessions.aggregate(
-                avg_score=models.Avg("effectiveness_score")
+                avg_score=models.Avg("effectiveness_score"),
             )["avg_score"],
             "progress_trend": calculate_progress_trend(sessions),
             "recommended_adjustments": generate_treatment_recommendations(sessions),
@@ -161,13 +156,13 @@ def generate_treatment_insights(self, patient_id):
 
     except Exception as e:
         logger.error(
-            f"Failed to generate treatment insights for patient {patient_id}: {e}"
+            f"Failed to generate treatment insights for patient {patient_id}: {e}",
         )
         raise
 
 
 # Helper functions for background tasks
-def analyze_session_notes(notes: str) -> List[str]:
+def analyze_session_notes(notes: str) -> list[str]:
     """Analyze therapy session notes for insights."""
     try:
         # Placeholder for NLP analysis
@@ -212,7 +207,7 @@ def analyze_conversation_sentiment(conversation_data: str) -> float:
         return 0.5  # Neutral
 
 
-def extract_conversation_topics(conversation_data: str) -> List[str]:
+def extract_conversation_topics(conversation_data: str) -> list[str]:
     """Extract main topics from conversation."""
     try:
         # Placeholder for topic extraction
@@ -239,14 +234,14 @@ def calculate_progress_trend(sessions) -> str:
         # Simple trend calculation
         recent_avg = (
             sessions.order_by("-created")[:3].aggregate(
-                avg=models.Avg("effectiveness_score")
+                avg=models.Avg("effectiveness_score"),
             )["avg"]
             or 0
         )
 
         older_avg = (
             sessions.order_by("-created")[3:6].aggregate(
-                avg=models.Avg("effectiveness_score")
+                avg=models.Avg("effectiveness_score"),
             )["avg"]
             or 0
         )
@@ -261,7 +256,7 @@ def calculate_progress_trend(sessions) -> str:
         return "unknown"
 
 
-def generate_treatment_recommendations(sessions) -> List[str]:
+def generate_treatment_recommendations(sessions) -> list[str]:
     """Generate treatment recommendations based on session history."""
     try:
         recommendations = []
@@ -520,18 +515,18 @@ class ComprehensiveMentalHealthMixin(AnalyticsRecordingMixin):
             # Record successful transaction
             duration = (time.time() - start_time) * 1000
             logger.debug(
-                f"Mental health database transaction completed in {duration:.2f}ms"
+                f"Mental health database transaction completed in {duration:.2f}ms",
             )
 
         except Exception as e:
             # Record failed transaction
             duration = (time.time() - start_time) * 1000
             logger.warning(
-                f"Mental health database transaction failed after {duration:.2f}ms: {e}"
+                f"Mental health database transaction failed after {duration:.2f}ms: {e}",
             )
             raise
 
-    def get_cached_data(self, cache_key: str, timeout: Optional[int] = None) -> Any:
+    def get_cached_data(self, cache_key: str, timeout: int | None = None) -> Any:
         """Get data from cache with hit/miss tracking."""
         timeout = timeout or self.cache_timeout
 
@@ -551,7 +546,10 @@ class ComprehensiveMentalHealthMixin(AnalyticsRecordingMixin):
             return None
 
     def set_cached_data(
-        self, cache_key: str, data: Any, timeout: Optional[int] = None
+        self,
+        cache_key: str,
+        data: Any,
+        timeout: int | None = None,
     ) -> bool:
         """Set data in cache with error handling."""
         timeout = timeout or self.cache_timeout
@@ -565,7 +563,8 @@ class ComprehensiveMentalHealthMixin(AnalyticsRecordingMixin):
 
 
 class TherapyApproachViewSet(
-    ComprehensiveMentalHealthMixin, viewsets.ReadOnlyModelViewSet
+    ComprehensiveMentalHealthMixin,
+    viewsets.ReadOnlyModelViewSet,
 ):
     """
     Enhanced Therapy Approach ViewSet with comprehensive infrastructure integration.
@@ -645,7 +644,8 @@ class TherapySessionViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSe
     """
 
     queryset = TherapySession.objects.select_related(
-        "patient", "therapist"
+        "patient",
+        "therapist",
     ).prefetch_related("notes")
     serializer_class = TherapySessionSerializer
     filterset_class = TherapySessionFilter
@@ -769,7 +769,9 @@ class TherapySessionViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSe
         try:
             if hasattr(TherapySession, "SessionStatus"):
                 if new_status == getattr(
-                    TherapySession.SessionStatus, "ACCEPTED", "accepted"
+                    TherapySession.SessionStatus,
+                    "ACCEPTED",
+                    "accepted",
                 ):
                     self.record_analytics_event(
                         "therapy_session.accepted",
@@ -790,11 +792,15 @@ class TherapySessionViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSe
                         },
                     )
                 elif new_status == getattr(
-                    TherapySession.SessionStatus, "CANCELLED", "cancelled"
+                    TherapySession.SessionStatus,
+                    "CANCELLED",
+                    "cancelled",
                 ):
                     self._track_session_cancellation(session)
                 elif new_status == getattr(
-                    TherapySession.SessionStatus, "COMPLETED", "completed"
+                    TherapySession.SessionStatus,
+                    "COMPLETED",
+                    "completed",
                 ):
                     self._track_session_completion(session)
         except Exception as e:
@@ -878,7 +884,9 @@ class TherapySessionViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSe
             session.started_at = timezone.now()
             if hasattr(session, "status") and hasattr(TherapySession, "SessionStatus"):
                 session.status = getattr(
-                    TherapySession.SessionStatus, "IN_PROGRESS", "in_progress"
+                    TherapySession.SessionStatus,
+                    "IN_PROGRESS",
+                    "in_progress",
                 )
             session.save()
 
@@ -949,7 +957,9 @@ class TherapySessionViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSe
             session.ended_at = timezone.now()
             if hasattr(session, "status") and hasattr(TherapySession, "SessionStatus"):
                 session.status = getattr(
-                    TherapySession.SessionStatus, "COMPLETED", "completed"
+                    TherapySession.SessionStatus,
+                    "COMPLETED",
+                    "completed",
                 )
             session.save()
 
@@ -1008,7 +1018,9 @@ class TherapySessionViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSe
         with self.database_transaction_context():
             if hasattr(session, "status") and hasattr(TherapySession, "SessionStatus"):
                 session.status = getattr(
-                    TherapySession.SessionStatus, "CANCELLED", "cancelled"
+                    TherapySession.SessionStatus,
+                    "CANCELLED",
+                    "cancelled",
                 )
             if hasattr(session, "cancellation_reason"):
                 session.cancellation_reason = reason
@@ -1114,10 +1126,14 @@ class ChatbotInteractionViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelVi
                     ),
                     "message_count": getattr(interaction, "message_count", 1),
                     "session_duration_seconds": getattr(
-                        interaction, "session_duration_seconds", None
+                        interaction,
+                        "session_duration_seconds",
+                        None,
                     ),
                     "satisfaction_score": getattr(
-                        interaction, "satisfaction_score", None
+                        interaction,
+                        "satisfaction_score",
+                        None,
                     ),
                 },
             )
@@ -1195,7 +1211,9 @@ class DisorderViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSet):
         cached_data = self.get_cached_data(cache_key)
         if cached_data:
             self.record_analytics_event(
-                "disorder.list.cache_hit", request=request, extra_data={"cached": True}
+                "disorder.list.cache_hit",
+                request=request,
+                extra_data={"cached": True},
             )
             return Response(cached_data)
 
@@ -1279,7 +1297,7 @@ class DisorderViewSet(ComprehensiveMentalHealthMixin, viewsets.ModelViewSet):
             cache.delete_many(
                 [
                     "disorders_list:*",  # Would need custom implementation for wildcard
-                ]
+                ],
             )
             logger.debug("Invalidated disorder caches")
         except Exception as e:

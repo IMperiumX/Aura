@@ -3,6 +3,7 @@ from aura import analytics
 
 class UserLoginEvent(analytics.Event):
     """Event fired when a user logs in."""
+
     type = "user.login"
 
     attributes = (
@@ -18,6 +19,7 @@ class UserLoginEvent(analytics.Event):
 
 class UserLogoutEvent(analytics.Event):
     """Event fired when a user logs out."""
+
     type = "user.logout"
 
     attributes = (
@@ -29,6 +31,7 @@ class UserLogoutEvent(analytics.Event):
 
 class UserProfileUpdatedEvent(analytics.Event):
     """Event fired when user profile is updated."""
+
     type = "user.profile_updated"
 
     attributes = (
@@ -41,6 +44,7 @@ class UserProfileUpdatedEvent(analytics.Event):
 
 class AuthenticationFailedEvent(analytics.Event):
     """Event fired when authentication fails."""
+
     type = "auth.failed"
 
     attributes = (
@@ -54,6 +58,7 @@ class AuthenticationFailedEvent(analytics.Event):
 
 class APIErrorEvent(analytics.Event):
     """Event fired when an API error occurs."""
+
     type = "api.error"
 
     attributes = (
@@ -69,6 +74,7 @@ class APIErrorEvent(analytics.Event):
 
 class BackgroundTaskCompletedEvent(analytics.Event):
     """Event fired when a background task completes."""
+
     type = "task.completed"
 
     attributes = (
@@ -83,6 +89,7 @@ class BackgroundTaskCompletedEvent(analytics.Event):
 
 class ReportGeneratedEvent(analytics.Event):
     """Event fired when a report is generated."""
+
     type = "report.generated"
 
     attributes = (
@@ -97,6 +104,7 @@ class ReportGeneratedEvent(analytics.Event):
 
 class DataExportEvent(analytics.Event):
     """Event fired when data is exported."""
+
     type = "data.export"
 
     attributes = (

@@ -1,8 +1,9 @@
+import builtins
 import logging
 import time
 from contextlib import contextmanager
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from datetime import timedelta
+from typing import Any
 
 # Celery imports
 from celery import shared_task
@@ -13,51 +14,48 @@ from dj_rest_auth.registration import views as dj_views
 # Django imports
 from django.conf import settings as django_settings
 from django.core.cache import cache
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import models, transaction
+from django.db import transaction
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
-from rest_framework import generics, permissions, status
+from rest_framework import generics
+from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.exceptions import (
-    NotFound,
-    PermissionDenied,
-    Throttled,
-    ValidationError,
-)
-from rest_framework.mixins import (
-    CreateModelMixin,
-    DestroyModelMixin,
-    ListModelMixin,
-    RetrieveModelMixin,
-    UpdateModelMixin,
-)
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import Throttled
+from rest_framework.exceptions import ValidationError
+from rest_framework.mixins import ListModelMixin
+from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.mixins import UpdateModelMixin
+from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
-from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSetMixin
+from rest_framework.throttling import UserRateThrottle
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ViewSetMixin
 
 # Internal imports
-from aura import analytics, audit_log
+from aura import analytics
+from aura import audit_log
 from aura.analytics.mixins import AnalyticsRecordingMixin
 from aura.audit_log.utils import create_audit_entry
 from aura.core.cache_instrumentation import get_instrumented_cache
 from aura.core.models import PhysicianReferral
 from aura.core.utils import jwt_encode
-from aura.users.api.serializers import (
-    LoginSerializer,
-    PatientSerializer,
-    PhysicianReferralSerializer,
-    ReviewSerializer,
-    TherapistSerializer,
-    UserSerializer,
-)
+from aura.users.api.serializers import LoginSerializer
+from aura.users.api.serializers import PatientSerializer
+from aura.users.api.serializers import PhysicianReferralSerializer
+from aura.users.api.serializers import ReviewSerializer
+from aura.users.api.serializers import TherapistSerializer
+from aura.users.api.serializers import UserSerializer
 from aura.users.mixins import LoginMixin
-from aura.users.models import Patient, Therapist, User
+from aura.users.models import Patient
+from aura.users.models import Therapist
+from aura.users.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +81,7 @@ def process_new_review(self, review_id):
         )
 
         logger.info(
-            f"Processed review {review_id} with sentiment score {sentiment_score}"
+            f"Processed review {review_id} with sentiment score {sentiment_score}",
         )
         return {
             "status": "success",
@@ -345,7 +343,9 @@ class ComprehensiveViewSetMixin(AnalyticsRecordingMixin):
             # Record error analytics
             if self.track_analytics:
                 self.record_analytics_event(
-                    "api.request.error", request=request, extra_data=error_context
+                    "api.request.error",
+                    request=request,
+                    extra_data=error_context,
                 )
 
             # Create audit log for security-related errors
@@ -387,8 +387,8 @@ class ComprehensiveViewSetMixin(AnalyticsRecordingMixin):
                     "message": str(exception),
                     "endpoint": request.path,
                     "method": request.method,
-                    "user_agent": request.META.get("HTTP_USER_AGENT", ""),
-                    "referer": request.META.get("HTTP_REFERER", ""),
+                    "user_agent": request.headers.get("user-agent", ""),
+                    "referer": request.headers.get("referer", ""),
                 },
             )
         except Exception as e:
@@ -428,7 +428,7 @@ class ComprehensiveViewSetMixin(AnalyticsRecordingMixin):
             logger.warning(f"Database transaction failed after {duration:.2f}ms: {e}")
             raise
 
-    def get_cached_data(self, cache_key: str, timeout: Optional[int] = None) -> Any:
+    def get_cached_data(self, cache_key: str, timeout: int | None = None) -> Any:
         """Get data from cache with hit/miss tracking."""
         timeout = timeout or self.cache_timeout
 
@@ -449,7 +449,10 @@ class ComprehensiveViewSetMixin(AnalyticsRecordingMixin):
             return None
 
     def set_cached_data(
-        self, cache_key: str, data: Any, timeout: Optional[int] = None
+        self,
+        cache_key: str,
+        data: Any,
+        timeout: int | None = None,
     ) -> bool:
         """Set data in cache with error handling."""
         timeout = timeout or self.cache_timeout
@@ -482,7 +485,8 @@ class UserViewSet(
 
     serializer_class = UserSerializer
     queryset = User.objects.select_related("profile").prefetch_related(
-        "groups", "user_permissions"
+        "groups",
+        "user_permissions",
     )
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
@@ -550,7 +554,7 @@ class UserViewSet(
                 "last_login_analytics": self._get_user_login_analytics(request.user),
                 "security_summary": self._get_user_security_summary(request.user),
                 "preferences": self._get_user_preferences(request.user),
-            }
+            },
         )
 
         # Cache the response
@@ -563,7 +567,7 @@ class UserViewSet(
             request=request,
             extra_data={
                 "profile_completeness": self._calculate_profile_completeness(
-                    request.user
+                    request.user,
                 ),
                 "cache_miss": True,
             },
@@ -583,7 +587,7 @@ class UserViewSet(
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-    def _get_user_login_analytics(self, user) -> Dict[str, Any]:
+    def _get_user_login_analytics(self, user) -> dict[str, Any]:
         """Get user login analytics summary."""
         try:
             # This would integrate with the analytics backend
@@ -610,7 +614,7 @@ class UserViewSet(
             logger.warning(f"Failed to get user login analytics: {e}")
             return {}
 
-    def _get_user_security_summary(self, user) -> Dict[str, Any]:
+    def _get_user_security_summary(self, user) -> dict[str, Any]:
         """Get user security summary."""
         try:
             return {
@@ -624,7 +628,7 @@ class UserViewSet(
             logger.warning(f"Failed to get user security summary: {e}")
             return {}
 
-    def _get_user_preferences(self, user) -> Dict[str, Any]:
+    def _get_user_preferences(self, user) -> dict[str, Any]:
         """Get user preferences with defaults."""
         try:
             cache_key = f"user_preferences:{user.id}"
@@ -680,7 +684,7 @@ class UserViewSet(
         except Exception:
             return 0
 
-    def _get_avg_session_duration(self, user) -> Optional[float]:
+    def _get_avg_session_duration(self, user) -> float | None:
         """Get average session duration in minutes."""
         try:
             # This would integrate with analytics backend
@@ -688,7 +692,7 @@ class UserViewSet(
         except Exception:
             return None
 
-    def _get_most_used_device(self, user) -> Optional[str]:
+    def _get_most_used_device(self, user) -> str | None:
         """Get most used device type."""
         try:
             # This would integrate with analytics backend
@@ -820,7 +824,7 @@ class UserViewSet(
         """
         start_time = time.time()
         client_ip = self._get_client_ip(request)
-        user_agent = request.META.get("HTTP_USER_AGENT", "")
+        user_agent = request.headers.get("user-agent", "")
 
         try:
             self.request = request
@@ -847,7 +851,9 @@ class UserViewSet(
                 from aura.core.utils import default_create_token
 
                 self.token = default_create_token(
-                    token_model, self.user, self.serializer
+                    token_model,
+                    self.user,
+                    self.serializer,
                 )
 
             # Record successful login analytics
@@ -892,7 +898,7 @@ class UserViewSet(
 
             return self.get_response()
 
-        except ValidationError as e:
+        except ValidationError:
             # Record failed login attempt
             login_duration = (time.time() - start_time) * 1000
             email = request.data.get("email", "unknown")
@@ -932,7 +938,7 @@ class UserViewSet(
 
     def _get_client_ip(self, request) -> str:
         """Extract client IP address with proxy support."""
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        x_forwarded_for = request.headers.get("x-forwarded-for")
         if x_forwarded_for:
             return x_forwarded_for.split(",")[0].strip()
         return request.META.get("REMOTE_ADDR", "")
@@ -1032,7 +1038,8 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
     serializer_class = PatientSerializer
     queryset = Patient.objects.select_related("user").prefetch_related(
-        "disorders", "therapy_sessions"
+        "disorders",
+        "therapy_sessions",
     )
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
@@ -1068,7 +1075,8 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
         # Try cache first
         cached_data = self.get_cached_data(
-            cache_key, timeout=300
+            cache_key,
+            timeout=300,
         )  # 5 minutes for lists
         if cached_data:
             self.record_analytics_event(
@@ -1107,7 +1115,9 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
         cached_data = self.get_cached_data(cache_key)
         if cached_data:
             self.record_analytics_event(
-                "patient.detail.cache_hit", instance=patient, request=request
+                "patient.detail.cache_hit",
+                instance=patient,
+                request=request,
             )
             return Response(cached_data)
 
@@ -1121,7 +1131,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
                 "care_summary": self._get_patient_care_summary(patient),
                 "recent_activity": self._get_patient_recent_activity(patient),
                 "risk_assessment": self._get_patient_risk_assessment(patient),
-            }
+            },
         )
 
         # Cache the enhanced response
@@ -1192,7 +1202,9 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
             headers = self.get_success_headers(serializer.data)
             return Response(
-                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers,
             )
 
     def perform_create(self, serializer):
@@ -1319,7 +1331,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
             return response
 
-    def _get_patient_care_summary(self, patient) -> Dict[str, Any]:
+    def _get_patient_care_summary(self, patient) -> dict[str, Any]:
         """Get comprehensive care summary for patient."""
         try:
             cache_key = f"patient_care_summary:{patient.id}"
@@ -1359,7 +1371,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
             logger.warning(f"Failed to get patient care summary: {e}")
             return {}
 
-    def _get_patient_recent_activity(self, patient) -> List[Dict[str, Any]]:
+    def _get_patient_recent_activity(self, patient) -> builtins.list[dict[str, Any]]:
         """Get recent activity for patient."""
         try:
             # This would integrate with the analytics backend
@@ -1367,7 +1379,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
         except Exception:
             return []
 
-    def _get_patient_risk_assessment(self, patient) -> Dict[str, Any]:
+    def _get_patient_risk_assessment(self, patient) -> dict[str, Any]:
         """Get patient risk assessment."""
         try:
             # This would integrate with ML/AI risk assessment
@@ -1380,7 +1392,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
         except Exception:
             return {}
 
-    def _get_patient_audit_data(self, patient) -> Dict[str, Any]:
+    def _get_patient_audit_data(self, patient) -> dict[str, Any]:
         """Get comprehensive audit data for patient."""
         try:
             return {
@@ -1396,7 +1408,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
             logger.warning(f"Failed to get patient audit data: {e}")
             return {"patient_id": patient.id}
 
-    def _get_patient_snapshot(self, patient) -> Dict[str, Any]:
+    def _get_patient_snapshot(self, patient) -> dict[str, Any]:
         """Get patient data snapshot for change tracking."""
         try:
             return {
@@ -1415,8 +1427,10 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
             return {}
 
     def _calculate_patient_changes(
-        self, old_data: Dict, new_data: Dict
-    ) -> Dict[str, Any]:
+        self,
+        old_data: dict,
+        new_data: dict,
+    ) -> dict[str, Any]:
         """Calculate changes between patient snapshots."""
         changes = {}
 
@@ -1451,7 +1465,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
         return changes
 
-    def _is_significant_change(self, changes: Dict) -> bool:
+    def _is_significant_change(self, changes: dict) -> bool:
         """Determine if changes are significant enough to trigger tasks."""
         return bool(changes.get("disorders") or changes.get("user_data"))
 
@@ -1484,7 +1498,7 @@ class PatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
             cache_keys = [
                 f"patient_detail:{patient.id}",
                 f"patient_care_summary:{patient.id}",
-                f"patient_list:*",  # Wildcard - would need custom cache invalidation
+                "patient_list:*",  # Wildcard - would need custom cache invalidation
             ]
 
             for key in cache_keys:
@@ -1566,7 +1580,7 @@ def process_new_review(self, review_id):
         )
 
         logger.info(
-            f"Processed review {review_id} with sentiment score {sentiment_score}"
+            f"Processed review {review_id} with sentiment score {sentiment_score}",
         )
         return {
             "status": "success",
@@ -1698,7 +1712,7 @@ def analyze_review_sentiment(content: str) -> float:
         return 0.5  # Default neutral
 
 
-def get_ip_geolocation(ip_address: str) -> Dict[str, Any]:
+def get_ip_geolocation(ip_address: str) -> dict[str, Any]:
     """Get geolocation data for IP address."""
     try:
         # Placeholder for geolocation service
@@ -1713,7 +1727,7 @@ def get_ip_geolocation(ip_address: str) -> Dict[str, Any]:
         return {}
 
 
-def parse_user_agent(user_agent: str) -> Dict[str, Any]:
+def parse_user_agent(user_agent: str) -> dict[str, Any]:
     """Parse user agent string for device information."""
     try:
         # Placeholder for user agent parsing
@@ -1729,7 +1743,10 @@ def parse_user_agent(user_agent: str) -> Dict[str, Any]:
 
 
 def calculate_login_risk(
-    user_id: int, ip_address: str, location: Dict, device: Dict
+    user_id: int,
+    ip_address: str,
+    location: dict,
+    device: dict,
 ) -> float:
     """Calculate risk score for login attempt."""
     try:
@@ -1756,13 +1773,13 @@ def calculate_login_risk(
         return 0.5
 
 
-def is_known_location(user_id: int, location: Dict) -> bool:
+def is_known_location(user_id: int, location: dict) -> bool:
     """Check if location is known for user."""
     # Placeholder implementation
     return True
 
 
-def is_known_device(user_id: int, device: Dict) -> bool:
+def is_known_device(user_id: int, device: dict) -> bool:
     """Check if device is known for user."""
     # Placeholder implementation
     return True
@@ -1780,7 +1797,7 @@ def is_unusual_time(user_id: int) -> bool:
     return False
 
 
-def store_login_analysis(user_id: int, analysis_data: Dict):
+def store_login_analysis(user_id: int, analysis_data: dict):
     """Store login analysis results."""
     try:
         cache_key = f"login_analysis:{user_id}:{int(time.time())}"
@@ -1814,7 +1831,7 @@ def update_login_statistics(user):
         logger.error(f"Failed to update login statistics: {e}")
 
 
-def get_recent_failed_logins(ip_address: str, hours: int = 1) -> List[Dict]:
+def get_recent_failed_logins(ip_address: str, hours: int = 1) -> list[dict]:
     """Get recent failed login attempts for IP."""
     try:
         # This would query the analytics backend
@@ -1845,7 +1862,7 @@ def block_ip_temporarily(self, ip_address: str, duration_minutes: int = 30):
 
 
 @shared_task(bind=True, name="users.send_security_alert")
-def send_security_alert(self, user_id: Optional[int], alert_type: str, context: Dict):
+def send_security_alert(self, user_id: int | None, alert_type: str, context: dict):
     """Send security alert to administrators."""
     try:
         # This would integrate with the notification system
@@ -1871,7 +1888,8 @@ class EnhancedPatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
     serializer_class = PatientSerializer
     queryset = Patient.objects.select_related("user").prefetch_related(
-        "disorders", "therapy_sessions"
+        "disorders",
+        "therapy_sessions",
     )
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
@@ -1939,7 +1957,9 @@ class EnhancedPatientViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
             headers = self.get_success_headers(serializer.data)
             return Response(
-                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers,
             )
 
     def perform_create(self, serializer):
@@ -1991,7 +2011,8 @@ class EnhancedTherapistViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
     serializer_class = TherapistSerializer
     queryset = Therapist.objects.select_related("user").prefetch_related(
-        "specialties", "therapy_sessions"
+        "specialties",
+        "therapy_sessions",
     )
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
@@ -2037,7 +2058,9 @@ class EnhancedTherapistViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
             headers = self.get_success_headers(serializer.data)
             return Response(
-                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers,
             )
 
     def perform_create(self, serializer):
@@ -2074,7 +2097,7 @@ class EnhancedTherapistViewSet(ComprehensiveViewSetMixin, ModelViewSet):
             },
         )
 
-    def _get_therapist_snapshot(self, therapist) -> Dict[str, Any]:
+    def _get_therapist_snapshot(self, therapist) -> dict[str, Any]:
         """Get therapist data snapshot for change tracking."""
         try:
             return {
@@ -2090,8 +2113,10 @@ class EnhancedTherapistViewSet(ComprehensiveViewSetMixin, ModelViewSet):
             return {}
 
     def _calculate_therapist_changes(
-        self, old_data: Dict, new_data: Dict
-    ) -> Dict[str, Any]:
+        self,
+        old_data: dict,
+        new_data: dict,
+    ) -> dict[str, Any]:
         """Calculate changes between therapist snapshots."""
         changes = {}
 
@@ -2126,7 +2151,8 @@ class EnhancedPhysicianReferralViewSet(ComprehensiveViewSetMixin, ModelViewSet):
     """
 
     queryset = PhysicianReferral.objects.select_related(
-        "patient", "referring_physician"
+        "patient",
+        "referring_physician",
     )
     serializer_class = PhysicianReferralSerializer
     permission_classes = [IsAuthenticated]
@@ -2177,7 +2203,9 @@ class EnhancedPhysicianReferralViewSet(ComprehensiveViewSetMixin, ModelViewSet):
 
             headers = self.get_success_headers(serializer.data)
             return Response(
-                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers,
             )
 
 
@@ -2193,7 +2221,8 @@ class PhysicianReferralListCreate(
     generics.ListCreateAPIView,
 ):
     queryset = PhysicianReferral.objects.select_related(
-        "patient", "referring_physician"
+        "patient",
+        "referring_physician",
     )
     serializer_class = PhysicianReferralSerializer
     permission_classes = [IsAuthenticated]
@@ -2226,7 +2255,8 @@ class PhysicianReferralRetrieveUpdateDestroy(
     generics.RetrieveUpdateDestroyAPIView,
 ):
     queryset = PhysicianReferral.objects.select_related(
-        "patient", "referring_physician"
+        "patient",
+        "referring_physician",
     )
     serializer_class = PhysicianReferralSerializer
     lookup_field = "id"

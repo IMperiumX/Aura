@@ -67,7 +67,7 @@ class ManyToManyWidgetWithCreation(ManyToManyWidget):
             if self.create:
                 for object_value in object_list:
                     _instance, _new = self.model.objects.get_or_create(
-                        **{self.field: object_value}
+                        **{self.field: object_value},
                     )
 
             # Use `filter` to re-locate all the objects in the list.

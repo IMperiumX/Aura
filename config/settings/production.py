@@ -286,7 +286,7 @@ sentry_sdk.init(
     environment=env("SENTRY_ENVIRONMENT", default="production"),
     traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
     send_default_pii=True,
-    release=env("SENTRY_RELEASE", default="aura@latest")
+    release=env("SENTRY_RELEASE", default="aura@latest"),
 )
 
 # django-rest-framework
@@ -336,34 +336,34 @@ MIDDLEWARE += ["silk.middleware.SilkyMiddleware"]
 # ------------------------------------------------------------------------------
 # Override for production with Redis + Multi-backend setup
 ANALYTICS_CONFIG = {
-    'primary': 'multi',
-    'backends': [
+    "primary": "multi",
+    "backends": [
         {
-            'name': 'redis',
-            'class': 'aura.analytics.backends.redis_backend.RedisAnalytics',
-            'options': {
-                'redis_url': REDIS_URL,
-                'stream_name': 'analytics:events',
-                'batch_size': 500,
-                'enable_metrics': True,
-                'metrics_retention_seconds': 7200,  # 2 hours
-            }
+            "name": "redis",
+            "class": "aura.analytics.backends.redis_backend.RedisAnalytics",
+            "options": {
+                "redis_url": REDIS_URL,
+                "stream_name": "analytics:events",
+                "batch_size": 500,
+                "enable_metrics": True,
+                "metrics_retention_seconds": 7200,  # 2 hours
+            },
         },
         {
-            'name': 'database',
-            'class': 'aura.analytics.backends.database.DatabaseAnalytics',
-            'options': {
-                'enable_batching': True,
-                'batch_size': 200,
-                'max_retries': 5
-            }
-        }
+            "name": "database",
+            "class": "aura.analytics.backends.database.DatabaseAnalytics",
+            "options": {
+                "enable_batching": True,
+                "batch_size": 200,
+                "max_retries": 5,
+            },
+        },
     ],
-    'health_check_interval': 60,  # 1 minute in production
-    'enable_health_monitoring': True,
-    'fail_silently': True,
-    'parallel_execution': True,
-    'max_parallel_workers': 4,
+    "health_check_interval": 60,  # 1 minute in production
+    "enable_health_monitoring": True,
+    "fail_silently": True,
+    "parallel_execution": True,
+    "max_parallel_workers": 4,
 }
 
 # Production Analytics Monitoring

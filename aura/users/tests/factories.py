@@ -5,9 +5,7 @@ from typing import Any
 
 import factory
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.utils import timezone
-from factory import fuzzy
 from factory.django import DjangoModelFactory
 from faker import Faker
 
@@ -160,7 +158,8 @@ class PatientFactory(AbstractProfileFactoryMixin, DjangoModelFactory):
                         ],
                     ),
                     "date": fake.date_between(
-                        start_date="-10y", end_date="today"
+                        start_date="-10y",
+                        end_date="today",
                     ).isoformat(),
                     "hospital": fake.company() + " Hospital",
                 }
@@ -179,7 +178,8 @@ class PatientFactory(AbstractProfileFactoryMixin, DjangoModelFactory):
                         ],
                     ),
                     "date": fake.date_between(
-                        start_date="-5y", end_date="today"
+                        start_date="-5y",
+                        end_date="today",
                     ).isoformat(),
                     "duration_days": fake.random_int(min=1, max=14),
                 }
@@ -225,7 +225,8 @@ class PatientFactory(AbstractProfileFactoryMixin, DjangoModelFactory):
                     "systolic": fake.random_int(min=110, max=140),
                     "diastolic": fake.random_int(min=70, max=90),
                     "last_reading": fake.date_between(
-                        start_date="-30d", end_date="today"
+                        start_date="-30d",
+                        end_date="today",
                     ).isoformat(),
                 },
                 "heart_rate": fake.random_int(min=60, max=100),
@@ -238,14 +239,16 @@ class PatientFactory(AbstractProfileFactoryMixin, DjangoModelFactory):
                     "ldl": fake.random_int(min=70, max=160),
                     "hdl": fake.random_int(min=35, max=80),
                     "date": fake.date_between(
-                        start_date="-6m", end_date="today"
+                        start_date="-6m",
+                        end_date="today",
                     ).isoformat(),
                 },
                 "blood_sugar": {
                     "fasting": fake.random_int(min=80, max=130),
                     "hba1c": round(fake.random_int(min=50, max=80) / 10, 1),
                     "date": fake.date_between(
-                        start_date="-3m", end_date="today"
+                        start_date="-3m",
+                        end_date="today",
                     ).isoformat(),
                 },
             },
@@ -257,11 +260,11 @@ class PatientFactory(AbstractProfileFactoryMixin, DjangoModelFactory):
         return {
             "communication": {
                 "preferred_method": fake.random_element(
-                    elements=["email", "phone", "text", "portal"]
+                    elements=["email", "phone", "text", "portal"],
                 ),
                 "language": fake.random_element(elements=["en", "es", "fr", "ar"]),
                 "best_time_to_contact": fake.random_element(
-                    elements=["morning", "afternoon", "evening"]
+                    elements=["morning", "afternoon", "evening"],
                 ),
             },
             "appointments": {
@@ -269,10 +272,10 @@ class PatientFactory(AbstractProfileFactoryMixin, DjangoModelFactory):
                     elements=["monday", "tuesday", "wednesday", "thursday", "friday"],
                 ),
                 "preferred_time": fake.random_element(
-                    elements=["morning", "afternoon", "evening"]
+                    elements=["morning", "afternoon", "evening"],
                 ),
                 "reminder_preference": fake.random_element(
-                    elements=["24h", "2h", "1h", "none"]
+                    elements=["24h", "2h", "1h", "none"],
                 ),
             },
             "accessibility": {
@@ -567,7 +570,7 @@ class PhysicianFactory(AbstractProfileFactoryMixin, DjangoModelFactory):
                         elements=["monday", "wednesday", "friday"],
                         length=fake.random_int(min=1, max=3),
                         unique=True,
-                    )
+                    ),
                 ),
                 "time": "06:00-08:00",
             },

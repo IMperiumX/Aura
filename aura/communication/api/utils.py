@@ -1,4 +1,5 @@
 from typing import Literal
+
 import magic
 from django.conf import settings
 from pdfreader import SimplePDFViewer
@@ -33,7 +34,8 @@ def validate_image(image):
     if image.size > settings.MAX_IMAGE_SIZE:
         raise FileSizeExceedsLimitError(settings.MAX_IMAGE_SIZE)
 
-def get_user_type(user) -> Literal['admin', 'therapist', 'patient']:
+
+def get_user_type(user) -> Literal["admin", "therapist", "patient"]:
     if user.is_superuser:
         return "admin"
     elif user.is_staff:

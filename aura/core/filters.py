@@ -3,6 +3,8 @@ from django.contrib.postgres.search import SearchVector
 from django_filters import rest_framework as drf_filters
 
 DEFAULT_SEARCH_FIELDS = []
+
+
 class BaseFilterSet(drf_filters.FilterSet):
     def do_nothing(self, queryset, name, value):
         return queryset

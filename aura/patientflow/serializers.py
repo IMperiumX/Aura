@@ -1,19 +1,17 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import (
-    Appointment,
-    Clinic,
-    Notification,
-    Patient,
-    PatientFlowEvent,
-    Status,
-    UserProfile,
-)
+from .models import Appointment
+from .models import Clinic
+from .models import Notification
+from .models import Patient
+from .models import PatientFlowEvent
+from .models import Status
+from .models import UserProfile
 
 User = get_user_model()
 
@@ -142,7 +140,7 @@ class StatusSerializer(serializers.ModelSerializer):
         """Validate hex color format."""
         if not value.startswith("#") or len(value) != 7:
             raise serializers.ValidationError(
-                "Color must be a valid hex color (e.g., #FFFFFF)"
+                "Color must be a valid hex color (e.g., #FFFFFF)",
             )
         return value
 
@@ -183,7 +181,8 @@ class PatientFlowEventSerializer(serializers.ModelSerializer):
     status_name = serializers.CharField(source="status.name", read_only=True)
     status_color = serializers.CharField(source="status.color", read_only=True)
     updated_by_name = serializers.CharField(
-        source="updated_by.get_full_name", read_only=True
+        source="updated_by.get_full_name",
+        read_only=True,
     )
     duration_minutes = serializers.SerializerMethodField()
 
@@ -203,11 +202,12 @@ class PatientFlowEventSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "timestamp"]
 
-    def get_duration_minutes(self, obj) -> Optional[float]:
+    def get_duration_minutes(self, obj) -> float | None:
         """Calculate duration in this status in minutes."""
         # Get the next event for this appointment
         next_event = PatientFlowEvent.objects.filter(
-            appointment=obj.appointment, timestamp__gt=obj.timestamp
+            appointment=obj.appointment,
+            timestamp__gt=obj.timestamp,
         ).first()
 
         if next_event:
@@ -224,11 +224,13 @@ class AppointmentListSerializer(serializers.ModelSerializer):
 
     patient_name = serializers.CharField(source="patient.first_name", read_only=True)
     patient_last_name = serializers.CharField(
-        source="patient.last_name", read_only=True
+        source="patient.last_name",
+        read_only=True,
     )
     clinic_name = serializers.CharField(source="clinic.name", read_only=True)
     provider_name = serializers.CharField(
-        source="provider.get_full_name", read_only=True
+        source="provider.get_full_name",
+        read_only=True,
     )
     status_name = serializers.CharField(source="status.name", read_only=True)
     status_color = serializers.CharField(source="status.color", read_only=True)
@@ -258,7 +260,7 @@ class AppointmentListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
-    def get_time_in_system_minutes(self, obj) -> Optional[float]:
+    def get_time_in_system_minutes(self, obj) -> float | None:
         """Total time patient has been in the system."""
         if obj.flow_events.exists():
             first_event = obj.flow_events.first()
@@ -266,7 +268,7 @@ class AppointmentListSerializer(serializers.ModelSerializer):
             return round(duration.total_seconds() / 60, 2)
         return None
 
-    def get_current_status_duration_minutes(self, obj) -> Optional[float]:
+    def get_current_status_duration_minutes(self, obj) -> float | None:
         """Time in current status."""
         if obj.flow_events.exists():
             latest_event = obj.flow_events.last()
@@ -306,7 +308,7 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
-    def get_time_in_system_minutes(self, obj) -> Optional[float]:
+    def get_time_in_system_minutes(self, obj) -> float | None:
         """Total time patient has been in the system."""
         if obj.flow_events.exists():
             first_event = obj.flow_events.first()
@@ -339,12 +341,12 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
                         event.updated_by.get_full_name() if event.updated_by else None
                     ),
                     "notes": event.notes,
-                }
+                },
             )
 
         return history
 
-    def get_analytics(self, obj) -> Dict[str, Any]:
+    def get_analytics(self, obj) -> dict[str, Any]:
         """Get analytics for this appointment."""
         events = obj.flow_events.all()
         if not events:
@@ -394,7 +396,7 @@ class AppointmentCreateUpdateSerializer(serializers.ModelSerializer):
         """Validate scheduled time is not in the past."""
         if value < timezone.now():
             raise serializers.ValidationError(
-                "Appointment cannot be scheduled in the past"
+                "Appointment cannot be scheduled in the past",
             )
         return value
 
@@ -412,14 +414,14 @@ class AppointmentCreateUpdateSerializer(serializers.ModelSerializer):
         if "patient" in data and "clinic" in data:
             if data["patient"].clinic != data["clinic"]:
                 raise serializers.ValidationError(
-                    {"patient": "Patient must belong to the selected clinic"}
+                    {"patient": "Patient must belong to the selected clinic"},
                 )
 
         # Ensure status belongs to the same clinic
         if "status" in data and "clinic" in data:
             if data["status"].clinic != data["clinic"]:
                 raise serializers.ValidationError(
-                    {"status": "Status must belong to the selected clinic"}
+                    {"status": "Status must belong to the selected clinic"},
                 )
 
         # Validate provider has access to clinic (if UserProfile exists)
@@ -428,7 +430,7 @@ class AppointmentCreateUpdateSerializer(serializers.ModelSerializer):
                 profile = data["provider"].profile
                 if profile.clinic and profile.clinic != data["clinic"]:
                     raise serializers.ValidationError(
-                        {"provider": "Provider does not have access to this clinic"}
+                        {"provider": "Provider does not have access to this clinic"},
                     )
             except UserProfile.DoesNotExist:
                 # Provider doesn't have a profile - this might be acceptable
@@ -438,7 +440,8 @@ class AppointmentCreateUpdateSerializer(serializers.ModelSerializer):
         # Check for scheduling conflicts (optional - you may want to allow overlaps)
         if "scheduled_time" in data and "provider" in data and data["provider"]:
             conflicting = Appointment.objects.filter(
-                provider=data["provider"], scheduled_time=data["scheduled_time"]
+                provider=data["provider"],
+                scheduled_time=data["scheduled_time"],
             )
 
             # Exclude current instance if updating
@@ -448,8 +451,8 @@ class AppointmentCreateUpdateSerializer(serializers.ModelSerializer):
             if conflicting.exists():
                 raise serializers.ValidationError(
                     {
-                        "scheduled_time": "Provider already has an appointment at this time"
-                    }
+                        "scheduled_time": "Provider already has an appointment at this time",
+                    },
                 )
 
         return data
@@ -512,7 +515,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     """Serializer for Notification model."""
 
     recipient_name = serializers.CharField(
-        source="recipient.get_full_name", read_only=True
+        source="recipient.get_full_name",
+        read_only=True,
     )
     event_details = serializers.SerializerMethodField()
     delivery_methods = serializers.SerializerMethodField()
@@ -533,7 +537,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "sent_at"]
 
-    def get_event_details(self, obj) -> Dict[str, Any]:
+    def get_event_details(self, obj) -> dict[str, Any]:
         """Get event details for the notification."""
         event = obj.event
         return {
@@ -562,7 +566,7 @@ class FlowBoardSerializer(serializers.Serializer):
     appointments_by_status = serializers.SerializerMethodField()
     summary = serializers.SerializerMethodField()
 
-    def get_appointments_by_status(self, obj) -> Dict[str, list]:
+    def get_appointments_by_status(self, obj) -> dict[str, list]:
         """Group appointments by status."""
         clinic = obj["clinic"]
         appointments = obj["appointments"]
@@ -584,7 +588,7 @@ class FlowBoardSerializer(serializers.Serializer):
 
         return result
 
-    def get_summary(self, obj) -> Dict[str, Any]:
+    def get_summary(self, obj) -> dict[str, Any]:
         """Get summary statistics for the flow board."""
         appointments = obj["appointments"]
         total_appointments = len(appointments)

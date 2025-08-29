@@ -2,14 +2,10 @@ import hashlib
 import logging
 import time
 import uuid
-from typing import Any, Dict, Optional
 
 import psutil
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.core.handlers.wsgi import WSGIRequest
-from django.utils import timezone
 
 from aura.core.request_middleware import get_request
 
@@ -79,16 +75,16 @@ class RequestContextFilter(logging.Filter):
 
         return True
 
-    def _get_correlation_id(self, request: Optional[WSGIRequest]) -> str:
+    def _get_correlation_id(self, request: WSGIRequest | None) -> str:
         """
         Generates or retrieves correlation ID with proper propagation.
         """
         if request:
             # Check for existing correlation ID in headers (from upstream services)
             correlation_id = (
-                request.META.get("HTTP_X_CORRELATION_ID")
-                or request.META.get("HTTP_X_REQUEST_ID")
-                or request.META.get("HTTP_X_TRACE_ID")
+                request.headers.get("x-correlation-id")
+                or request.headers.get("x-request-id")
+                or request.headers.get("x-trace-id")
             )
 
             if not correlation_id:
@@ -105,7 +101,9 @@ class RequestContextFilter(logging.Filter):
             return f"system-{uuid.uuid4().hex[:8]}"
 
     def _add_user_context(
-        self, record: logging.LogRecord, request: WSGIRequest
+        self,
+        record: logging.LogRecord,
+        request: WSGIRequest,
     ) -> None:
         """
         Adds comprehensive user context to log records.
@@ -113,7 +111,9 @@ class RequestContextFilter(logging.Filter):
         if hasattr(request, "user") and request.user.is_authenticated:
             record.user_id = str(request.user.pk)
             record.username = getattr(request.user, "username", "") or getattr(
-                request.user, "email", ""
+                request.user,
+                "email",
+                "",
             )
             record.user_type = getattr(request.user, "user_type", "unknown")
             record.is_staff = getattr(request.user, "is_staff", False)
@@ -129,35 +129,38 @@ class RequestContextFilter(logging.Filter):
         if hasattr(request, "session"):
             record.session_key = request.session.session_key or "no-session"
             record.session_age = time.time() - request.session.get(
-                "_session_init_timestamp_", time.time()
+                "_session_init_timestamp_",
+                time.time(),
             )
         else:
             record.session_key = "no-session"
             record.session_age = 0
 
     def _add_security_context(
-        self, record: logging.LogRecord, request: WSGIRequest
+        self,
+        record: logging.LogRecord,
+        request: WSGIRequest,
     ) -> None:
         """
         Adds security-related context for threat detection and compliance.
         """
         # IP Address information
         record.client_ip = self._get_client_ip(request)
-        record.forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
-        record.real_ip = request.META.get("HTTP_X_REAL_IP", "")
+        record.forwarded_for = request.headers.get("x-forwarded-for", "")
+        record.real_ip = request.headers.get("x-real-ip", "")
 
         # User Agent and Device information
-        user_agent = request.META.get("HTTP_USER_AGENT", "")
+        user_agent = request.headers.get("user-agent", "")
         record.user_agent = user_agent
         record.user_agent_hash = hashlib.md5(user_agent.encode()).hexdigest()[:16]
 
         # Security headers
-        record.referer = request.META.get("HTTP_REFERER", "")
-        record.origin = request.META.get("HTTP_ORIGIN", "")
-        record.host = request.META.get("HTTP_HOST", "")
+        record.referer = request.headers.get("referer", "")
+        record.origin = request.headers.get("origin", "")
+        record.host = request.headers.get("host", "")
 
         # Request size (for potential DoS detection)
-        content_length_str = request.META.get("CONTENT_LENGTH", "0")
+        content_length_str = request.headers.get("content-length", "0")
         try:
             record.content_length = int(content_length_str) if content_length_str else 0
         except (ValueError, TypeError):
@@ -167,7 +170,9 @@ class RequestContextFilter(logging.Filter):
         record.auth_method = self._detect_auth_method(request)
 
     def _add_performance_context(
-        self, record: logging.LogRecord, request: WSGIRequest
+        self,
+        record: logging.LogRecord,
+        request: WSGIRequest,
     ) -> None:
         """
         Adds performance metrics for monitoring and optimization.
@@ -190,7 +195,9 @@ class RequestContextFilter(logging.Filter):
         record.cache_misses = getattr(request, "_cache_misses", 0)
 
     def _add_geographic_context(
-        self, record: logging.LogRecord, request: WSGIRequest
+        self,
+        record: logging.LogRecord,
+        request: WSGIRequest,
     ) -> None:
         """
         Adds geographic context using GeoIP data.
@@ -294,8 +301,8 @@ class RequestContextFilter(logging.Filter):
         """
         if hasattr(request, "auth") and request.auth:
             return "token"
-        elif "HTTP_AUTHORIZATION" in request.META:
-            auth_header = request.META["HTTP_AUTHORIZATION"]
+        elif "authorization" in request.headers:
+            auth_header = request.headers["authorization"]
             if auth_header.startswith("Bearer"):
                 return "jwt"
             elif auth_header.startswith("Token"):
@@ -375,7 +382,8 @@ class SamplingFilter(logging.Filter):
 
         # Refill tokens
         bucket["tokens"] = min(
-            bucket["max_tokens"], bucket["tokens"] + time_passed * bucket["refill_rate"]
+            bucket["max_tokens"],
+            bucket["tokens"] + time_passed * bucket["refill_rate"],
         )
         bucket["last_update"] = current_time
 

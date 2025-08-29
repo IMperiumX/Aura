@@ -1,18 +1,16 @@
 """
 Django REST Framework serializers for analytics dashboard API.
 """
-from rest_framework import serializers
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from typing import Dict, Any
+from rest_framework import serializers
 
-from aura.analytics.models import (
-    DashboardWidget,
-    AlertRule,
-    AlertInstance,
-    MetricsSnapshot,
-    DashboardConfig
-)
+from aura.analytics.models import AlertInstance
+from aura.analytics.models import AlertRule
+from aura.analytics.models import DashboardConfig
+from aura.analytics.models import DashboardWidget
+from aura.analytics.models import MetricsSnapshot
 
 User = get_user_model()
 
@@ -20,20 +18,38 @@ User = get_user_model()
 class DashboardWidgetSerializer(serializers.ModelSerializer):
     """Serializer for dashboard widgets with layout and configuration."""
 
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_name = serializers.CharField(
+        source="created_by.get_full_name",
+        read_only=True,
+    )
     last_accessed_relative = serializers.SerializerMethodField()
 
     class Meta:
         model = DashboardWidget
         fields = [
-            'id', 'name', 'widget_type', 'dashboard_id',
-            'position_x', 'position_y', 'width', 'height',
-            'title', 'description', 'refresh_interval', 'auto_refresh',
-            'filters', 'settings', 'is_public',
-            'created_by', 'created_by_name', 'created_at', 'updated_at',
-            'last_accessed', 'last_accessed_relative'
+            "id",
+            "name",
+            "widget_type",
+            "dashboard_id",
+            "position_x",
+            "position_y",
+            "width",
+            "height",
+            "title",
+            "description",
+            "refresh_interval",
+            "auto_refresh",
+            "filters",
+            "settings",
+            "is_public",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+            "last_accessed",
+            "last_accessed_relative",
         ]
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
+        read_only_fields = ["created_by", "created_at", "updated_at"]
 
     def get_last_accessed_relative(self, obj) -> str:
         """Get human-readable last access time."""
@@ -59,8 +75,13 @@ class DashboardWidgetSerializer(serializers.ModelSerializer):
 
         # Add filter validation logic here
         allowed_filter_keys = [
-            'event_type', 'user_id', 'start_date', 'end_date',
-            'time_range', 'aggregation', 'group_by'
+            "event_type",
+            "user_id",
+            "start_date",
+            "end_date",
+            "time_range",
+            "aggregation",
+            "group_by",
         ]
 
         for key in value.keys():
@@ -79,15 +100,17 @@ class DashboardWidgetSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """Validate widget layout constraints."""
         # Check grid boundaries
-        if data.get('position_x', 0) + data.get('width', 1) > 12:
+        if data.get("position_x", 0) + data.get("width", 1) > 12:
             raise serializers.ValidationError("Widget extends beyond grid boundaries")
 
         # Validate refresh interval for widget type
-        widget_type = data.get('widget_type')
-        refresh_interval = data.get('refresh_interval', 30)
+        widget_type = data.get("widget_type")
+        refresh_interval = data.get("refresh_interval", 30)
 
-        if widget_type == 'real_time_feed' and refresh_interval > 30:
-            raise serializers.ValidationError("Real-time widgets should refresh every 30 seconds or less")
+        if widget_type == "real_time_feed" and refresh_interval > 30:
+            raise serializers.ValidationError(
+                "Real-time widgets should refresh every 30 seconds or less",
+            )
 
         return data
 
@@ -95,21 +118,44 @@ class DashboardWidgetSerializer(serializers.ModelSerializer):
 class AlertRuleSerializer(serializers.ModelSerializer):
     """Serializer for alert rules with validation."""
 
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_name = serializers.CharField(
+        source="created_by.get_full_name",
+        read_only=True,
+    )
     can_trigger = serializers.SerializerMethodField()
     recent_triggers = serializers.SerializerMethodField()
 
     class Meta:
         model = AlertRule
         fields = [
-            'id', 'name', 'description', 'event_type', 'metric',
-            'condition_type', 'threshold_value', 'time_window',
-            'severity', 'notification_channels', 'cooldown_minutes',
-            'is_active', 'last_triggered', 'trigger_count',
-            'created_by', 'created_by_name', 'created_at', 'updated_at',
-            'can_trigger', 'recent_triggers'
+            "id",
+            "name",
+            "description",
+            "event_type",
+            "metric",
+            "condition_type",
+            "threshold_value",
+            "time_window",
+            "severity",
+            "notification_channels",
+            "cooldown_minutes",
+            "is_active",
+            "last_triggered",
+            "trigger_count",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+            "can_trigger",
+            "recent_triggers",
         ]
-        read_only_fields = ['created_by', 'created_at', 'updated_at', 'last_triggered', 'trigger_count']
+        read_only_fields = [
+            "created_by",
+            "created_at",
+            "updated_at",
+            "last_triggered",
+            "trigger_count",
+        ]
 
     def get_can_trigger(self, obj) -> bool:
         """Check if alert can currently trigger."""
@@ -128,14 +174,21 @@ class AlertRuleSerializer(serializers.ModelSerializer):
         valid_channels = dict(AlertRule.NOTIFICATION_CHANNELS).keys()
         for channel in value:
             if channel not in valid_channels:
-                raise serializers.ValidationError(f"Invalid notification channel: {channel}")
+                raise serializers.ValidationError(
+                    f"Invalid notification channel: {channel}",
+                )
 
         return value
 
     def validate_threshold_value(self, value):
         """Validate threshold value based on condition type."""
-        if value < 0 and self.initial_data.get('condition_type') in ['greater_than', 'less_than']:
-            raise serializers.ValidationError("Threshold value cannot be negative for comparison conditions")
+        if value < 0 and self.initial_data.get("condition_type") in [
+            "greater_than",
+            "less_than",
+        ]:
+            raise serializers.ValidationError(
+                "Threshold value cannot be negative for comparison conditions",
+            )
 
         return value
 
@@ -153,23 +206,41 @@ class AlertRuleSerializer(serializers.ModelSerializer):
 class AlertInstanceSerializer(serializers.ModelSerializer):
     """Serializer for alert instances."""
 
-    rule_name = serializers.CharField(source='rule.name', read_only=True)
-    rule_severity = serializers.CharField(source='rule.severity', read_only=True)
-    acknowledged_by_name = serializers.CharField(source='acknowledged_by.get_full_name', read_only=True)
+    rule_name = serializers.CharField(source="rule.name", read_only=True)
+    rule_severity = serializers.CharField(source="rule.severity", read_only=True)
+    acknowledged_by_name = serializers.CharField(
+        source="acknowledged_by.get_full_name",
+        read_only=True,
+    )
     time_since_triggered = serializers.SerializerMethodField()
 
     class Meta:
         model = AlertInstance
         fields = [
-            'id', 'rule', 'rule_name', 'rule_severity',
-            'triggered_value', 'threshold_value', 'severity', 'context',
-            'status', 'acknowledged_by', 'acknowledged_by_name',
-            'acknowledged_at', 'resolved_at', 'created_at', 'updated_at',
-            'time_since_triggered'
+            "id",
+            "rule",
+            "rule_name",
+            "rule_severity",
+            "triggered_value",
+            "threshold_value",
+            "severity",
+            "context",
+            "status",
+            "acknowledged_by",
+            "acknowledged_by_name",
+            "acknowledged_at",
+            "resolved_at",
+            "created_at",
+            "updated_at",
+            "time_since_triggered",
         ]
         read_only_fields = [
-            'rule', 'triggered_value', 'threshold_value', 'severity',
-            'created_at', 'updated_at'
+            "rule",
+            "triggered_value",
+            "threshold_value",
+            "severity",
+            "created_at",
+            "updated_at",
         ]
 
     def get_time_since_triggered(self, obj) -> str:
@@ -195,13 +266,23 @@ class MetricsSnapshotSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetricsSnapshot
         fields = [
-            'id', 'aggregation_type', 'period_start', 'period_end',
-            'event_counts', 'user_metrics', 'system_metrics', 'custom_metrics',
-            'total_events', 'unique_users', 'top_event_type',
-            'processed_at', 'data_quality_score',
-            'period_duration', 'top_events'
+            "id",
+            "aggregation_type",
+            "period_start",
+            "period_end",
+            "event_counts",
+            "user_metrics",
+            "system_metrics",
+            "custom_metrics",
+            "total_events",
+            "unique_users",
+            "top_event_type",
+            "processed_at",
+            "data_quality_score",
+            "period_duration",
+            "top_events",
         ]
-        read_only_fields = ['processed_at']
+        read_only_fields = ["processed_at"]
 
     def get_period_duration(self, obj) -> str:
         """Get human-readable period duration."""
@@ -223,19 +304,33 @@ class MetricsSnapshotSerializer(serializers.ModelSerializer):
 class DashboardConfigSerializer(serializers.ModelSerializer):
     """Serializer for dashboard configurations."""
 
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_name = serializers.CharField(
+        source="created_by.get_full_name",
+        read_only=True,
+    )
     widget_count = serializers.SerializerMethodField()
 
     class Meta:
         model = DashboardConfig
         fields = [
-            'id', 'name', 'slug', 'description', 'theme',
-            'grid_columns', 'auto_refresh_enabled', 'default_refresh_interval',
-            'layout_config', 'global_filters', 'is_public',
-            'created_by', 'created_by_name', 'created_at', 'updated_at',
-            'widget_count'
+            "id",
+            "name",
+            "slug",
+            "description",
+            "theme",
+            "grid_columns",
+            "auto_refresh_enabled",
+            "default_refresh_interval",
+            "layout_config",
+            "global_filters",
+            "is_public",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+            "widget_count",
         ]
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
+        read_only_fields = ["created_by", "created_at", "updated_at"]
 
     def get_widget_count(self, obj) -> int:
         """Get count of widgets in this dashboard."""
@@ -244,7 +339,7 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
     def validate_slug(self, value):
         """Validate dashboard slug."""
         # Check for reserved slugs
-        reserved_slugs = ['admin', 'api', 'health', 'status', 'metrics']
+        reserved_slugs = ["admin", "api", "health", "status", "metrics"]
         if value.lower() in reserved_slugs:
             raise serializers.ValidationError(f"'{value}' is a reserved slug")
 
@@ -253,7 +348,9 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
     def validate_grid_columns(self, value):
         """Validate grid columns."""
         if value not in [6, 8, 10, 12, 16, 20, 24]:
-            raise serializers.ValidationError("Grid columns must be one of: 6, 8, 10, 12, 16, 20, 24")
+            raise serializers.ValidationError(
+                "Grid columns must be one of: 6, 8, 10, 12, 16, 20, 24",
+            )
 
         return value
 
@@ -271,9 +368,13 @@ class LiveMetricsSerializer(serializers.Serializer):
 
     class Meta:
         fields = [
-            'timestamp', 'total_events', 'events_per_minute',
-            'unique_users', 'top_event_types', 'system_health',
-            'backend_status'
+            "timestamp",
+            "total_events",
+            "events_per_minute",
+            "unique_users",
+            "top_event_types",
+            "system_health",
+            "backend_status",
         ]
 
 
@@ -287,16 +388,16 @@ class AnalyticsQuerySerializer(serializers.Serializer):
     limit = serializers.IntegerField(default=100, min_value=1, max_value=1000)
     offset = serializers.IntegerField(default=0, min_value=0)
     aggregation = serializers.ChoiceField(
-        choices=['hour', 'day', 'week', 'month'],
+        choices=["hour", "day", "week", "month"],
         required=False,
-        allow_blank=True
+        allow_blank=True,
     )
     group_by = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, data):
         """Validate query parameters."""
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
 
         if start_date and end_date and start_date >= end_date:
             raise serializers.ValidationError("Start date must be before end date")
@@ -323,7 +424,11 @@ class SystemStatusSerializer(serializers.Serializer):
 
     class Meta:
         fields = [
-            'timestamp', 'environment', 'production_ready',
-            'backend_status', 'active_alerts', 'widget_count',
-            'system_health'
+            "timestamp",
+            "environment",
+            "production_ready",
+            "backend_status",
+            "active_alerts",
+            "widget_count",
+            "system_health",
         ]

@@ -16,9 +16,11 @@ from rest_framework.decorators import parser_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser
 from rest_framework.parsers import MultiPartParser
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
+from aura.analytics import AnalyticsRecordingMixin
+from aura.communication.api.utils import get_user_type
 from aura.communication.models import Attachment
 from aura.communication.models import Folder
 from aura.communication.models import Message
@@ -32,8 +34,6 @@ from .serializers import TherapySessionThreadSerializer
 from .serializers import ThreadSerializer
 from .utils import validate_file
 from .utils import validate_image
-from aura.analytics import AnalyticsRecordingMixin
-from aura.communication.api.utils import get_user_type
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ class ThreadViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     API viewset for managing conversation threads.
     Handles thread creation, retrieval, and management.
     """
+
     queryset = Thread.objects.all()
     serializer_class = ThreadSerializer
     filter_backends = [
@@ -61,8 +62,7 @@ class ThreadViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
         Users can only see threads they're part of.
         """
         return self.queryset.filter(
-            Q(messages__sender=self.request.user) |
-            Q(participants=self.request.user)
+            Q(messages__sender=self.request.user) | Q(participants=self.request.user),
         ).distinct()
 
     def perform_create(self, serializer):
@@ -75,9 +75,9 @@ class ThreadViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
                 thread.participants.add(self.request.user)
 
             # Determine thread type
-            thread_type = 'general'
-            if hasattr(thread, 'therapy_session'):
-                thread_type = 'therapy_session'
+            thread_type = "general"
+            if hasattr(thread, "therapy_session"):
+                thread_type = "therapy_session"
 
             self.record_analytics_event(
                 "thread.created",
@@ -87,22 +87,26 @@ class ThreadViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
                 created_by_id=self.request.user.id,
                 thread_type=thread_type,
                 participant_count=thread.participants.count(),
-                therapy_session_id=getattr(thread, 'therapy_session_id', None),
+                therapy_session_id=getattr(thread, "therapy_session_id", None),
             )
         except Exception as e:
             logger.warning(f"Failed to record thread creation event: {e}")
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def add_participant(self, request, pk=None):
         """Add a participant to the thread."""
         thread = self.get_object()
-        user_id = request.data.get('user_id')
+        user_id = request.data.get("user_id")
 
         if not user_id:
-            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "user_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             from django.contrib.auth import get_user_model
+
             User = get_user_model()
             user = User.objects.get(id=user_id)
 
@@ -118,10 +122,10 @@ class ThreadViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
                     added_by_id=request.user.id,
                 )
 
-            return Response({'status': 'participant added'})
+            return Response({"status": "participant added"})
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"])
     def stats(self, request):
@@ -138,6 +142,7 @@ class MessageViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     API viewset for managing messages within threads.
     Handles message creation, retrieval, and management.
     """
+
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -151,8 +156,7 @@ class MessageViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
         Users can only see messages in threads they're part of.
         """
         user_threads = Thread.objects.filter(
-            Q(messages__sender=self.request.user) |
-            Q(participants=self.request.user)
+            Q(messages__sender=self.request.user) | Q(participants=self.request.user),
         ).distinct()
 
         return self.queryset.filter(thread__in=user_threads)
@@ -166,15 +170,21 @@ class MessageViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
             sender_type = get_user_type(self.request.user)
 
             # Count recipients (thread participants excluding sender)
-            recipient_count = message.thread.participants.exclude(id=self.request.user.id).count()
+            recipient_count = message.thread.participants.exclude(
+                id=self.request.user.id,
+            ).count()
 
             # Check for attachments
-            has_attachments = message.attachments.exists() if hasattr(message, 'attachments') else False
+            has_attachments = (
+                message.attachments.exists()
+                if hasattr(message, "attachments")
+                else False
+            )
 
             # Determine thread type
-            thread_type = 'general'
-            if hasattr(message.thread, 'therapy_session'):
-                thread_type = 'therapy_session'
+            thread_type = "general"
+            if hasattr(message.thread, "therapy_session"):
+                thread_type = "therapy_session"
 
             self.record_analytics_event(
                 "message.sent",
@@ -192,7 +202,7 @@ class MessageViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
         except Exception as e:
             logger.warning(f"Failed to record message sent event: {e}")
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def mark_read(self, request, pk=None):
         """Mark message as read by the current user."""
         message = self.get_object()
@@ -212,7 +222,7 @@ class MessageViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
         except Exception as e:
             logger.warning(f"Failed to record message read event: {e}")
 
-        return Response({'status': 'marked as read'})
+        return Response({"status": "marked as read"})
 
     @action(detail=False, methods=["post"])
     def bulk_mark_read(self, request):
@@ -243,6 +253,7 @@ class TherapySessionThreadViewSet(ThreadViewSet):
     Specialized viewset for therapy session threads.
     Inherits from ThreadViewSet with therapy-specific filtering.
     """
+
     queryset = TherapySessionThread.objects.all()
     serializer_class = TherapySessionThreadSerializer
 
@@ -264,14 +275,16 @@ class TherapySessionThreadViewSet(ThreadViewSet):
                 request=self.request,
                 thread_id=thread.id,
                 created_by_id=self.request.user.id,
-                thread_type='therapy_session',
+                thread_type="therapy_session",
                 participant_count=2,  # Therapist + Patient
                 therapy_session_id=thread.session.id,
             )
         except Exception as e:
-            logger.warning(f"Failed to record therapy session thread creation event: {e}")
+            logger.warning(
+                f"Failed to record therapy session thread creation event: {e}",
+            )
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def start_video_call(self, request, pk=None):
         """Initiate a video call for the therapy session."""
         thread = self.get_object()
@@ -281,6 +294,7 @@ class TherapySessionThreadViewSet(ThreadViewSet):
 
         try:
             import uuid
+
             call_id = str(uuid.uuid4())
 
             self.record_analytics_event(
@@ -289,26 +303,31 @@ class TherapySessionThreadViewSet(ThreadViewSet):
                 call_id=call_id,
                 initiator_id=request.user.id,
                 participant_count=2,  # Therapist + Patient
-                call_type='therapy',
+                call_type="therapy",
                 therapy_session_id=thread.session.id,
             )
 
-            return Response({
-                'status': 'video call started',
-                'call_id': call_id,
-                'participants': [thread.session.therapist.id, thread.session.patient.id]
-            })
+            return Response(
+                {
+                    "status": "video call started",
+                    "call_id": call_id,
+                    "participants": [
+                        thread.session.therapist.id,
+                        thread.session.patient.id,
+                    ],
+                },
+            )
 
         except Exception as e:
             logger.warning(f"Failed to record video call start event: {e}")
-            return Response({'error': 'Failed to start video call'}, status=500)
+            return Response({"error": "Failed to start video call"}, status=500)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def end_video_call(self, request, pk=None):
         """End a video call for the therapy session."""
-        call_id = request.data.get('call_id')
-        duration_minutes = request.data.get('duration_minutes', 0)
-        quality_rating = request.data.get('quality_rating')
+        call_id = request.data.get("call_id")
+        duration_minutes = request.data.get("duration_minutes", 0)
+        quality_rating = request.data.get("quality_rating")
 
         try:
             self.record_analytics_event(
@@ -321,11 +340,11 @@ class TherapySessionThreadViewSet(ThreadViewSet):
                 quality_rating=int(quality_rating) if quality_rating else None,
             )
 
-            return Response({'status': 'video call ended'})
+            return Response({"status": "video call ended"})
 
         except Exception as e:
             logger.warning(f"Failed to record video call end event: {e}")
-            return Response({'error': 'Failed to record call end'}, status=500)
+            return Response({"error": "Failed to record call end"}, status=500)
 
 
 class AttachmentViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
@@ -333,6 +352,7 @@ class AttachmentViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     API viewset for managing file attachments.
     Handles file upload and attachment management.
     """
+
     queryset = Attachment.objects.all()
     serializer_class = AttachmentSerializer
     permission_classes = [IsAuthenticated]
@@ -340,7 +360,7 @@ class AttachmentViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
     def get_queryset(self):
         """Filter attachments based on message access."""
         user_messages = Message.objects.filter(
-            thread__participants=self.request.user
+            thread__participants=self.request.user,
         )
         return self.queryset.filter(message__in=user_messages)
 
@@ -350,8 +370,12 @@ class AttachmentViewSet(viewsets.ModelViewSet, AnalyticsRecordingMixin):
 
         try:
             # Get file information
-            file_size = attachment.file.size if hasattr(attachment.file, 'size') else 0
-            file_type = attachment.file.name.split('.')[-1] if hasattr(attachment.file, 'name') else 'unknown'
+            file_size = attachment.file.size if hasattr(attachment.file, "size") else 0
+            file_type = (
+                attachment.file.name.split(".")[-1]
+                if hasattr(attachment.file, "name")
+                else "unknown"
+            )
 
             self.record_analytics_event(
                 "attachment.uploaded",

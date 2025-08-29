@@ -2,11 +2,13 @@
 Redis backend for analytics events.
 High-performance streaming and caching for real-time analytics.
 """
+
 import json
 import logging
-from typing import Any, Dict, List, Optional
-from django.utils import timezone
+from typing import Any
+
 from django.conf import settings
+from django.utils import timezone
 
 from aura.analytics.base import Analytics
 from aura.analytics.event import Event
@@ -26,14 +28,15 @@ class RedisAnalytics(Analytics):
     - Automatic expiration management
     """
 
-    def __init__(self,
-                 redis_url: str = None,
-                 stream_name: str = "analytics:events",
-                 cache_prefix: str = "analytics:cache:",
-                 pubsub_channel: str = "analytics:live",
-                 max_stream_length: int = 10000,
-                 ttl_seconds: int = 86400 * 7):  # 7 days
-
+    def __init__(
+        self,
+        redis_url: str = None,
+        stream_name: str = "analytics:events",
+        cache_prefix: str = "analytics:cache:",
+        pubsub_channel: str = "analytics:live",
+        max_stream_length: int = 10000,
+        ttl_seconds: int = 86400 * 7,
+    ):  # 7 days
         self.stream_name = stream_name
         self.cache_prefix = cache_prefix
         self.pubsub_channel = pubsub_channel
@@ -42,7 +45,7 @@ class RedisAnalytics(Analytics):
 
         self._setup_redis_connection(redis_url)
 
-    def _setup_redis_connection(self, redis_url: Optional[str]):
+    def _setup_redis_connection(self, redis_url: str | None):
         """Setup Redis connection with fallback configuration."""
         try:
             import redis
@@ -51,12 +54,16 @@ class RedisAnalytics(Analytics):
                 self.redis = redis.from_url(redis_url)
             else:
                 # Use Django cache Redis if available
-                redis_config = getattr(settings, 'REDIS_CONFIG', {
-                    'host': 'localhost',
-                    'port': 6379,
-                    'db': 1,  # Use different DB than cache
-                    'decode_responses': False  # We handle encoding ourselves
-                })
+                redis_config = getattr(
+                    settings,
+                    "REDIS_CONFIG",
+                    {
+                        "host": "localhost",
+                        "port": 6379,
+                        "db": 1,  # Use different DB than cache
+                        "decode_responses": False,  # We handle encoding ourselves
+                    },
+                )
 
                 self.redis = redis.Redis(**redis_config)
 
@@ -93,18 +100,24 @@ class RedisAnalytics(Analytics):
         except Exception as e:
             logger.error(f"Failed to record event to Redis: {e}")
 
-    def _prepare_event_data(self, event: Event, serialized: Dict[str, Any]) -> Dict[str, str]:
+    def _prepare_event_data(
+        self,
+        event: Event,
+        serialized: dict[str, Any],
+    ) -> dict[str, str]:
         """Prepare event data for Redis storage."""
         return {
-            'uuid': serialized['uuid'].decode() if isinstance(serialized['uuid'], bytes) else str(serialized['uuid']),
-            'type': event.type,
-            'timestamp': str(serialized['timestamp']),
-            'data': json.dumps(serialized['data'], default=str),
-            'user_id': str(serialized['data'].get('user_id', '')),
-            'ip_address': serialized['data'].get('ip_address', ''),
+            "uuid": serialized["uuid"].decode()
+            if isinstance(serialized["uuid"], bytes)
+            else str(serialized["uuid"]),
+            "type": event.type,
+            "timestamp": str(serialized["timestamp"]),
+            "data": json.dumps(serialized["data"], default=str),
+            "user_id": str(serialized["data"].get("user_id", "")),
+            "ip_address": serialized["data"].get("ip_address", ""),
         }
 
-    def _add_to_stream(self, event_data: Dict[str, str]) -> None:
+    def _add_to_stream(self, event_data: dict[str, str]) -> None:
         """Add event to Redis stream."""
         try:
             # Add to stream
@@ -112,7 +125,7 @@ class RedisAnalytics(Analytics):
                 self.stream_name,
                 event_data,
                 maxlen=self.max_stream_length,
-                approximate=True
+                approximate=True,
             )
 
             # Set expiration on stream if it's new
@@ -123,7 +136,7 @@ class RedisAnalytics(Analytics):
         except Exception as e:
             logger.error(f"Failed to add event to stream: {e}")
 
-    def _cache_event(self, event: Event, event_data: Dict[str, str]) -> None:
+    def _cache_event(self, event: Event, event_data: dict[str, str]) -> None:
         """Cache event for fast retrieval."""
         try:
             # Cache by UUID
@@ -132,26 +145,29 @@ class RedisAnalytics(Analytics):
 
             # Add to type-based sets for filtering
             type_key = f"{self.cache_prefix}type:{event.type}"
-            self.redis.zadd(type_key, {event_data['uuid']: event.datetime.timestamp()})
+            self.redis.zadd(type_key, {event_data["uuid"]: event.datetime.timestamp()})
             self.redis.expire(type_key, self.ttl_seconds)
 
             # Add to user-based sets if user_id exists
-            if event_data.get('user_id'):
+            if event_data.get("user_id"):
                 user_key = f"{self.cache_prefix}user:{event_data['user_id']}"
-                self.redis.zadd(user_key, {event_data['uuid']: event.datetime.timestamp()})
+                self.redis.zadd(
+                    user_key,
+                    {event_data["uuid"]: event.datetime.timestamp()},
+                )
                 self.redis.expire(user_key, self.ttl_seconds)
 
         except Exception as e:
             logger.error(f"Failed to cache event: {e}")
 
-    def _publish_live_update(self, event_data: Dict[str, str]) -> None:
+    def _publish_live_update(self, event_data: dict[str, str]) -> None:
         """Publish event for live dashboard updates."""
         try:
             live_data = {
-                'type': 'new_event',
-                'event_type': event_data['type'],
-                'timestamp': event_data['timestamp'],
-                'user_id': event_data.get('user_id'),
+                "type": "new_event",
+                "event_type": event_data["type"],
+                "timestamp": event_data["timestamp"],
+                "user_id": event_data.get("user_id"),
             }
 
             self.redis.publish(self.pubsub_channel, json.dumps(live_data))
@@ -170,17 +186,17 @@ class RedisAnalytics(Analytics):
             pipe = self.redis.pipeline()
 
             # Hourly metrics
-            pipe.hincrby(hour_key, f"total_events", 1)
+            pipe.hincrby(hour_key, "total_events", 1)
             pipe.hincrby(hour_key, f"event_type:{event.type}", 1)
             pipe.expire(hour_key, 86400 * 2)  # Keep for 2 days
 
             # Daily metrics
-            pipe.hincrby(day_key, f"total_events", 1)
+            pipe.hincrby(day_key, "total_events", 1)
             pipe.hincrby(day_key, f"event_type:{event.type}", 1)
             pipe.expire(day_key, 86400 * 30)  # Keep for 30 days
 
             # User metrics if available
-            user_id = getattr(event, 'data', {}).get('user_id')
+            user_id = getattr(event, "data", {}).get("user_id")
             if user_id:
                 pipe.hincrby(hour_key, f"user:{user_id}", 1)
                 pipe.hincrby(day_key, f"user:{user_id}", 1)
@@ -190,19 +206,25 @@ class RedisAnalytics(Analytics):
         except Exception as e:
             logger.error(f"Failed to update metrics: {e}")
 
-    def get_events(self,
-                   event_type: Optional[str] = None,
-                   user_id: Optional[int] = None,
-                   start_time: Optional[timezone.datetime] = None,
-                   end_time: Optional[timezone.datetime] = None,
-                   limit: int = 100) -> List[Dict[str, Any]]:
+    def get_events(
+        self,
+        event_type: str | None = None,
+        user_id: int | None = None,
+        start_time: timezone.datetime | None = None,
+        end_time: timezone.datetime | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
         """Retrieve events from Redis cache."""
         if not self.redis:
             return []
 
         try:
             event_uuids = self._get_filtered_event_uuids(
-                event_type, user_id, start_time, end_time, limit
+                event_type,
+                user_id,
+                start_time,
+                end_time,
+                limit,
             )
 
             events = []
@@ -218,12 +240,14 @@ class RedisAnalytics(Analytics):
             logger.error(f"Failed to retrieve events: {e}")
             return []
 
-    def _get_filtered_event_uuids(self,
-                                  event_type: Optional[str],
-                                  user_id: Optional[int],
-                                  start_time: Optional[timezone.datetime],
-                                  end_time: Optional[timezone.datetime],
-                                  limit: int) -> List[str]:
+    def _get_filtered_event_uuids(
+        self,
+        event_type: str | None,
+        user_id: int | None,
+        start_time: timezone.datetime | None,
+        end_time: timezone.datetime | None,
+        limit: int,
+    ) -> list[str]:
         """Get filtered list of event UUIDs."""
         # Determine which index to use
         if event_type:
@@ -239,21 +263,29 @@ class RedisAnalytics(Analytics):
         max_score = end_time.timestamp() if end_time else "+inf"
 
         # Get UUIDs in reverse chronological order
-        return self.redis.zrevrangebyscore(key, max_score, min_score, start=0, num=limit)
+        return self.redis.zrevrangebyscore(
+            key,
+            max_score,
+            min_score,
+            start=0,
+            num=limit,
+        )
 
-    def _get_uuids_from_stream(self,
-                               start_time: Optional[timezone.datetime],
-                               end_time: Optional[timezone.datetime],
-                               limit: int) -> List[str]:
+    def _get_uuids_from_stream(
+        self,
+        start_time: timezone.datetime | None,
+        end_time: timezone.datetime | None,
+        limit: int,
+    ) -> list[str]:
         """Get event UUIDs from stream when no specific index is available."""
         try:
             # Read from stream (latest events first)
             events = self.redis.xrevrange(self.stream_name, count=limit)
-            return [event_data[b'uuid'].decode() for _, event_data in events]
+            return [event_data[b"uuid"].decode() for _, event_data in events]
         except Exception:
             return []
 
-    def get_live_metrics(self, time_window: str = "hour") -> Dict[str, Any]:
+    def get_live_metrics(self, time_window: str = "hour") -> dict[str, Any]:
         """Get real-time metrics for dashboard."""
         if not self.redis:
             return {}
@@ -300,7 +332,9 @@ class RedisAnalytics(Analytics):
             return 0
 
         try:
-            cutoff_timestamp = (timezone.now() - timezone.timedelta(days=days_to_keep)).timestamp()
+            cutoff_timestamp = (
+                timezone.now() - timezone.timedelta(days=days_to_keep)
+            ).timestamp()
 
             # Clean up time-based sorted sets
             pattern = f"{self.cache_prefix}type:*"

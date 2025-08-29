@@ -31,23 +31,23 @@ class Command(BaseCommand):
             '--format',
             choices=['json', 'table', 'summary'],
             default='table',
-            help='Output format for the health check report'
+            help='Output format for the health check report',
         )
         parser.add_argument(
             '--check-handlers',
             action='store_true',
-            help='Perform detailed handler health checks'
+            help='Perform detailed handler health checks',
         )
         parser.add_argument(
             '--metrics-window',
             type=int,
             default=3600,
-            help='Time window in seconds for metrics analysis (default: 1 hour)'
+            help='Time window in seconds for metrics analysis (default: 1 hour)',
         )
         parser.add_argument(
             '--alert-thresholds',
             action='store_true',
-            help='Check if any alert thresholds have been exceeded'
+            help='Check if any alert thresholds have been exceeded',
         )
 
     def handle(self, *args, **options):
@@ -55,7 +55,7 @@ class Command(BaseCommand):
         Main command handler that orchestrates all health checks.
         """
         self.stdout.write(
-            self.style.SUCCESS('🔍 Starting Aura Logging System Health Check...\n')
+            self.style.SUCCESS('🔍 Starting Aura Logging System Health Check...\n'),
         )
 
         # Collect all health data
@@ -78,12 +78,12 @@ class Command(BaseCommand):
         # Determine exit code based on health status
         if self._has_critical_issues(health_data):
             self.stdout.write(
-                self.style.ERROR('\n❌ Critical issues detected in logging system!')
+                self.style.ERROR('\n❌ Critical issues detected in logging system!'),
             )
             exit(1)
         else:
             self.stdout.write(
-                self.style.SUCCESS('\n✅ Logging system health check completed successfully!')
+                self.style.SUCCESS('\n✅ Logging system health check completed successfully!'),
             )
 
     def _get_system_info(self) -> Dict[str, Any]:
@@ -196,14 +196,14 @@ class Command(BaseCommand):
 
                     if stats.get('records_dropped', 0) > 0:
                         health_info['issues'].append(
-                            f"Records dropped: {stats['records_dropped']}"
+                            f"Records dropped: {stats['records_dropped']}",
                         )
 
                     error_rate = (stats.get('error_count', 0) /
                                 max(1, stats.get('records_processed', 1)))
                     if error_rate > 0.1:
                         health_info['issues'].append(
-                            f"High error rate: {error_rate:.1%}"
+                            f"High error rate: {error_rate:.1%}",
                         )
 
                 except Exception as e:

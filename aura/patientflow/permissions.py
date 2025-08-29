@@ -1,8 +1,7 @@
-from rest_framework import permissions
-from django.contrib.auth import get_user_model
 from typing import Any
 
-from .models import UserProfile, Clinic
+from django.contrib.auth import get_user_model
+from rest_framework import permissions
 
 User = get_user_model()
 
@@ -19,9 +18,9 @@ class HasUserProfile(permissions.BasePermission):
 
     def has_permission(self, request, view) -> bool:
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            hasattr(request.user, 'profile')
+            request.user
+            and request.user.is_authenticated
+            and hasattr(request.user, "profile"),
         )
 
 
@@ -32,7 +31,7 @@ class IsClinicStaff(permissions.BasePermission):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
         return bool(request.user.profile.clinic)
@@ -45,10 +44,10 @@ class IsAdminUser(permissions.BasePermission):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
-        return request.user.profile.role == 'admin' or request.user.is_superuser
+        return request.user.profile.role == "admin" or request.user.is_superuser
 
 
 class IsFrontDeskOrAbove(permissions.BasePermission):
@@ -58,10 +57,10 @@ class IsFrontDeskOrAbove(permissions.BasePermission):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
-        allowed_roles = ['front_desk', 'nurse', 'provider', 'admin']
+        allowed_roles = ["front_desk", "nurse", "provider", "admin"]
         return request.user.profile.role in allowed_roles or request.user.is_superuser
 
 
@@ -72,10 +71,10 @@ class IsNurseOrAbove(permissions.BasePermission):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
-        allowed_roles = ['nurse', 'provider', 'admin']
+        allowed_roles = ["nurse", "provider", "admin"]
         return request.user.profile.role in allowed_roles or request.user.is_superuser
 
 
@@ -86,10 +85,10 @@ class IsProviderOrAbove(permissions.BasePermission):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
-        allowed_roles = ['provider', 'admin']
+        allowed_roles = ["provider", "admin"]
         return request.user.profile.role in allowed_roles or request.user.is_superuser
 
 
@@ -101,7 +100,7 @@ class ClinicPermissionMixin:
         if not user.is_authenticated:
             return None
 
-        if not hasattr(user, 'profile'):
+        if not hasattr(user, "profile"):
             return None
 
         return user.profile.clinic
@@ -113,11 +112,11 @@ class ClinicPermissionMixin:
             return False
 
         # Handle different object types
-        if hasattr(obj, 'clinic'):
+        if hasattr(obj, "clinic"):
             return obj.clinic == user_clinic
-        elif hasattr(obj, 'appointment') and hasattr(obj.appointment, 'clinic'):
+        elif hasattr(obj, "appointment") and hasattr(obj.appointment, "clinic"):
             return obj.appointment.clinic == user_clinic
-        elif hasattr(obj, 'patient') and hasattr(obj.patient, 'clinic'):
+        elif hasattr(obj, "patient") and hasattr(obj.patient, "clinic"):
             return obj.patient.clinic == user_clinic
 
         return False
@@ -128,15 +127,17 @@ class ClinicPatientPermission(permissions.BasePermission, ClinicPermissionMixin)
 
     def has_permission(self, request, view) -> bool:
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            hasattr(request.user, 'profile') and
-            request.user.profile.clinic
+            request.user
+            and request.user.is_authenticated
+            and hasattr(request.user, "profile")
+            and request.user.profile.clinic,
         )
 
     def has_object_permission(self, request, view, obj) -> bool:
         # Admins can access everything
-        if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.role == 'admin'):
+        if request.user.is_superuser or (
+            hasattr(request.user, "profile") and request.user.profile.role == "admin"
+        ):
             return True
 
         # Check clinic association
@@ -150,7 +151,7 @@ class ClinicAppointmentPermission(permissions.BasePermission, ClinicPermissionMi
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
         # Different roles have different access levels
@@ -158,24 +159,24 @@ class ClinicAppointmentPermission(permissions.BasePermission, ClinicPermissionMi
 
         if request.method in permissions.SAFE_METHODS:
             # Read access for all clinic staff
-            return user_role in ['front_desk', 'nurse', 'provider', 'admin']
-        else:
-            # Write access based on role and action
-            if view.action == 'update_status':
-                # Status updates allowed for all clinic staff
-                return user_role in ['front_desk', 'nurse', 'provider', 'admin']
-            elif view.action in ['create', 'update', 'partial_update']:
-                # Create/update appointments - front desk and above
-                return user_role in ['front_desk', 'nurse', 'provider', 'admin']
-            elif view.action == 'destroy':
-                # Delete appointments - admin only
-                return user_role == 'admin'
+            return user_role in ["front_desk", "nurse", "provider", "admin"]
+        elif view.action == "update_status":
+            # Status updates allowed for all clinic staff
+            return user_role in ["front_desk", "nurse", "provider", "admin"]
+        elif view.action in ["create", "update", "partial_update"]:
+            # Create/update appointments - front desk and above
+            return user_role in ["front_desk", "nurse", "provider", "admin"]
+        elif view.action == "destroy":
+            # Delete appointments - admin only
+            return user_role == "admin"
 
         return False
 
     def has_object_permission(self, request, view, obj) -> bool:
         # Admins can access everything
-        if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.role == 'admin'):
+        if request.user.is_superuser or (
+            hasattr(request.user, "profile") and request.user.profile.role == "admin"
+        ):
             return True
 
         # Check clinic association
@@ -183,10 +184,12 @@ class ClinicAppointmentPermission(permissions.BasePermission, ClinicPermissionMi
             return False
 
         # Providers can only modify their own appointments for certain actions
-        if (hasattr(request.user, 'profile') and
-            request.user.profile.role == 'provider' and
-            view.action in ['update', 'partial_update'] and
-            obj.provider != request.user):
+        if (
+            hasattr(request.user, "profile")
+            and request.user.profile.role == "provider"
+            and view.action in ["update", "partial_update"]
+            and obj.provider != request.user
+        ):
             return False
 
         return True
@@ -199,21 +202,23 @@ class ClinicStatusPermission(permissions.BasePermission, ClinicPermissionMixin):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
         user_role = request.user.profile.role
 
         if request.method in permissions.SAFE_METHODS:
             # Read access for all clinic staff
-            return user_role in ['front_desk', 'nurse', 'provider', 'admin']
+            return user_role in ["front_desk", "nurse", "provider", "admin"]
         else:
             # Write access - admin and providers can manage statuses
-            return user_role in ['provider', 'admin']
+            return user_role in ["provider", "admin"]
 
     def has_object_permission(self, request, view, obj) -> bool:
         # Admins can access everything
-        if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.role == 'admin'):
+        if request.user.is_superuser or (
+            hasattr(request.user, "profile") and request.user.profile.role == "admin"
+        ):
             return True
 
         # Check clinic association
@@ -232,8 +237,9 @@ class NotificationPermission(permissions.BasePermission):
             return True
 
         # Admins can access all notifications
-        if (request.user.is_superuser or
-            (hasattr(request.user, 'profile') and request.user.profile.role == 'admin')):
+        if request.user.is_superuser or (
+            hasattr(request.user, "profile") and request.user.profile.role == "admin"
+        ):
             return True
 
         return False
@@ -246,16 +252,18 @@ class FlowEventPermission(permissions.BasePermission, ClinicPermissionMixin):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        if not hasattr(request.user, 'profile'):
+        if not hasattr(request.user, "profile"):
             return False
 
         # All clinic staff can view flow events
         user_role = request.user.profile.role
-        return user_role in ['front_desk', 'nurse', 'provider', 'admin']
+        return user_role in ["front_desk", "nurse", "provider", "admin"]
 
     def has_object_permission(self, request, view, obj) -> bool:
         # Admins can access everything
-        if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.role == 'admin'):
+        if request.user.is_superuser or (
+            hasattr(request.user, "profile") and request.user.profile.role == "admin"
+        ):
             return True
 
         # Check clinic association
@@ -279,8 +287,10 @@ class ClinicPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj) -> bool:
         if request.method in permissions.SAFE_METHODS:
             # Users can view their own clinic and admins can view all
-            if (hasattr(request.user, 'profile') and
-                (request.user.profile.clinic == obj or request.user.profile.role == 'admin')):
+            if hasattr(request.user, "profile") and (
+                request.user.profile.clinic == obj
+                or request.user.profile.role == "admin"
+            ):
                 return True
             return request.user.is_superuser
         else:
@@ -294,9 +304,9 @@ class PatientFlowStaffPermission(permissions.BasePermission):
 
     def has_permission(self, request, view) -> bool:
         return (
-            IsAuthenticated().has_permission(request, view) and
-            HasUserProfile().has_permission(request, view) and
-            IsClinicStaff().has_permission(request, view)
+            IsAuthenticated().has_permission(request, view)
+            and HasUserProfile().has_permission(request, view)
+            and IsClinicStaff().has_permission(request, view)
         )
 
 
@@ -305,7 +315,7 @@ class PatientFlowManagerPermission(permissions.BasePermission):
 
     def has_permission(self, request, view) -> bool:
         return (
-            IsAuthenticated().has_permission(request, view) and
-            HasUserProfile().has_permission(request, view) and
-            IsNurseOrAbove().has_permission(request, view)
+            IsAuthenticated().has_permission(request, view)
+            and HasUserProfile().has_permission(request, view)
+            and IsNurseOrAbove().has_permission(request, view)
         )

@@ -123,7 +123,7 @@ class LazyServiceWrapper(Generic[T]):
         for key in itertools.chain(base.__all__, ("validate", "setup")):
             if inspect.isroutine(getattr(base_instance, key)):
                 context[key] = (lambda f: lambda *a, **k: getattr(self, f)(*a, **k))(
-                    key
+                    key,
                 )
             else:
                 context[key] = getattr(base_instance, key)

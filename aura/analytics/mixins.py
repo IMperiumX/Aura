@@ -1,9 +1,12 @@
 """
 Analytics mixins to provide easy event recording capabilities.
 """
+
 import logging
-from typing import Any, Optional, Dict, Union
+from typing import Any
+
 from django.http import HttpRequest
+
 from aura import analytics
 
 logger = logging.getLogger(__name__)
@@ -20,9 +23,9 @@ class AnalyticsRecordingMixin:
         self,
         event_type: str,
         instance: Any = None,
-        request: Optional[HttpRequest] = None,
-        extra_data: Optional[Dict[str, Any]] = None,
-        **kwargs: Any
+        request: HttpRequest | None = None,
+        extra_data: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> None:
         """
         Record an analytics event safely with error handling.
@@ -41,14 +44,16 @@ class AnalyticsRecordingMixin:
                 event_data.update(extra_data)
 
             # Add user context from request if available
-            if request and hasattr(request, 'user') and request.user.is_authenticated:
+            if request and hasattr(request, "user") and request.user.is_authenticated:
                 # Only add user info if not already provided
-                if 'user_id' not in event_data and not any(k.endswith('_user_id') for k in event_data):
-                    event_data['user_id'] = request.user.id
+                if "user_id" not in event_data and not any(
+                    k.endswith("_user_id") for k in event_data
+                ):
+                    event_data["user_id"] = request.user.id
 
                 # Add IP address if available
-                if 'ip_address' not in event_data:
-                    event_data['ip_address'] = self._get_client_ip(request)
+                if "ip_address" not in event_data:
+                    event_data["ip_address"] = self._get_client_ip(request)
 
             # Record the event
             analytics.record(event_type, instance=instance, **event_data)
@@ -59,26 +64,26 @@ class AnalyticsRecordingMixin:
                 f"Failed to record analytics event '{event_type}': {e}",
                 exc_info=True,
                 extra={
-                    'event_type': event_type,
-                    'instance_type': type(instance).__name__ if instance else None,
-                    'instance_id': getattr(instance, 'id', None) if instance else None,
-                    'extra_data': extra_data,
-                }
+                    "event_type": event_type,
+                    "instance_type": type(instance).__name__ if instance else None,
+                    "instance_id": getattr(instance, "id", None) if instance else None,
+                    "extra_data": extra_data,
+                },
             )
 
-    def _get_client_ip(self, request: HttpRequest) -> Optional[str]:
+    def _get_client_ip(self, request: HttpRequest) -> str | None:
         """Extract client IP address from request."""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.headers.get("x-forwarded-for")
         if x_forwarded_for:
-            return x_forwarded_for.split(',')[0].strip()
-        return request.META.get('REMOTE_ADDR')
+            return x_forwarded_for.split(",")[0].strip()
+        return request.META.get("REMOTE_ADDR")
 
     def record_user_action(
         self,
         action: str,
-        user_id: Optional[int] = None,
-        request: Optional[HttpRequest] = None,
-        **kwargs: Any
+        user_id: int | None = None,
+        request: HttpRequest | None = None,
+        **kwargs: Any,
     ) -> None:
         """
         Convenience method to record user actions.
@@ -89,16 +94,23 @@ class AnalyticsRecordingMixin:
             request: HTTP request object
             **kwargs: Additional event data
         """
-        if not user_id and request and hasattr(request, 'user') and request.user.is_authenticated:
+        if (
+            not user_id
+            and request
+            and hasattr(request, "user")
+            and request.user.is_authenticated
+        ):
             user_id = request.user.id
 
         event_data = kwargs.copy()
         if user_id:
-            event_data['user_id'] = user_id
+            event_data["user_id"] = user_id
 
         if request:
-            event_data['ip_address'] = self._get_client_ip(request)
-            event_data['user_agent'] = request.META.get('HTTP_USER_AGENT', '')[:500]  # Truncate long user agents
+            event_data["ip_address"] = self._get_client_ip(request)
+            event_data["user_agent"] = request.headers.get("user-agent", "")[
+                :500
+            ]  # Truncate long user agents
 
         self.record_analytics_event(f"user.{action}", extra_data=event_data)
 
@@ -106,8 +118,8 @@ class AnalyticsRecordingMixin:
         self,
         model_instance: Any,
         action: str,
-        request: Optional[HttpRequest] = None,
-        **kwargs: Any
+        request: HttpRequest | None = None,
+        **kwargs: Any,
     ) -> None:
         """
         Convenience method to record model-related events.
@@ -129,5 +141,5 @@ class AnalyticsRecordingMixin:
             event_type,
             instance=model_instance,
             request=request,
-            extra_data=event_data
+            extra_data=event_data,
         )

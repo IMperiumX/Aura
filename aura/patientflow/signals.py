@@ -1,17 +1,20 @@
-from django.db.models.signals import post_save, pre_save
-from django.dispatch import receiver
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-from typing import Optional
-import json
 import logging
 
-from .models import (
-    UserProfile, Appointment, PatientFlowEvent,
-    Notification, Status, Patient
-)
-from .tasks import send_notification_email, send_notification_sms
+from django.contrib.auth import get_user_model
+from django.db.models.signals import post_save
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from django.utils import timezone
+
 from aura import analytics
+
+from .models import Appointment
+from .models import Notification
+from .models import Patient
+from .models import PatientFlowEvent
+from .models import UserProfile
+from .tasks import send_notification_email
+from .tasks import send_notification_sms
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -27,7 +30,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     """Save UserProfile when User is saved."""
-    if hasattr(instance, 'profile'):
+    if hasattr(instance, "profile"):
         instance.profile.save()
 
 
@@ -37,7 +40,7 @@ def track_patient_creation(sender, instance, created, **kwargs):
     if created:
         try:
             # Get the user who created this patient (if available in context)
-            created_by_user_id = getattr(instance, '_created_by_user_id', None)
+            created_by_user_id = getattr(instance, "_created_by_user_id", None)
 
             analytics.record(
                 "patient.created",
@@ -46,7 +49,7 @@ def track_patient_creation(sender, instance, created, **kwargs):
                 clinic_id=instance.clinic.id if instance.clinic else None,
                 first_name=instance.first_name,
                 last_name=instance.last_name,
-                email=getattr(instance, 'email', '') or '',
+                email=getattr(instance, "email", "") or "",
                 created_by_user_id=created_by_user_id,
             )
         except Exception as e:
@@ -59,7 +62,7 @@ def track_appointment_creation(sender, instance, created, **kwargs):
     if created:
         try:
             # Get the user who created this appointment (if available in context)
-            created_by_user_id = getattr(instance, '_created_by_user_id', None)
+            created_by_user_id = getattr(instance, "_created_by_user_id", None)
 
             analytics.record(
                 "appointment.created",
@@ -91,14 +94,22 @@ def track_appointment_status_change(sender, instance, **kwargs):
                 # Calculate duration in previous status
                 if old_instance.status:
                     # Find the most recent flow event for the old status
-                    latest_flow_event = PatientFlowEvent.objects.filter(
-                        appointment=instance,
-                        status=old_instance.status
-                    ).order_by('-timestamp').first()
+                    latest_flow_event = (
+                        PatientFlowEvent.objects.filter(
+                            appointment=instance,
+                            status=old_instance.status,
+                        )
+                        .order_by("-timestamp")
+                        .first()
+                    )
 
                     if latest_flow_event:
-                        duration = instance._status_change_time - latest_flow_event.timestamp
-                        instance._duration_in_status = int(duration.total_seconds() / 60)  # Minutes
+                        duration = (
+                            instance._status_change_time - latest_flow_event.timestamp
+                        )
+                        instance._duration_in_status = int(
+                            duration.total_seconds() / 60,
+                        )  # Minutes
 
         except Appointment.DoesNotExist:
             pass
@@ -114,19 +125,19 @@ def create_flow_event_on_status_change(sender, instance, created, **kwargs):
         flow_event = PatientFlowEvent.objects.create(
             appointment=instance,
             status=instance.status,
-            notes=f"Initial status set to {instance.status.name}"
+            notes=f"Initial status set to {instance.status.name}",
         )
         generate_notifications_for_flow_event(flow_event)
 
-    elif hasattr(instance, '_status_changed') and instance._status_changed:
+    elif hasattr(instance, "_status_changed") and instance._status_changed:
         # Status changed on existing appointment
-        changed_by_user_id = getattr(instance, '_changed_by_user_id', None)
+        changed_by_user_id = getattr(instance, "_changed_by_user_id", None)
 
         flow_event = PatientFlowEvent.objects.create(
             appointment=instance,
             status=instance.status,
             updated_by_id=changed_by_user_id,
-            notes=f"Status changed from {instance._old_status.name if instance._old_status else 'None'} to {instance.status.name}"
+            notes=f"Status changed from {instance._old_status.name if instance._old_status else 'None'} to {instance.status.name}",
         )
         generate_notifications_for_flow_event(flow_event)
 
@@ -141,7 +152,11 @@ def create_flow_event_on_status_change(sender, instance, created, **kwargs):
                 old_status=instance._old_status.name if instance._old_status else None,
                 new_status=instance.status.name,
                 changed_by_user_id=changed_by_user_id,
-                duration_in_status_minutes=getattr(instance, '_duration_in_status', None),
+                duration_in_status_minutes=getattr(
+                    instance,
+                    "_duration_in_status",
+                    None,
+                ),
             )
         except Exception as e:
             logger.warning(f"Failed to record appointment status change event: {e}")
@@ -159,7 +174,7 @@ def generate_notifications_for_flow_event(flow_event: PatientFlowEvent):
     # Rule 1: Notify all clinic staff
     clinic_staff = User.objects.filter(
         profile__clinic=clinic,
-        profile__role__in=['front_desk', 'nurse', 'provider', 'admin']
+        profile__role__in=["front_desk", "nurse", "provider", "admin"],
     )
     notification_recipients.extend(clinic_staff)
 
@@ -168,18 +183,18 @@ def generate_notifications_for_flow_event(flow_event: PatientFlowEvent):
         notification_recipients.append(appointment.provider)
 
     # Rule 3: Notify front desk for check-in/check-out statuses
-    if status.name.lower() in ['checked in', 'ready for checkout', 'checked out']:
+    if status.name.lower() in ["checked in", "ready for checkout", "checked out"]:
         front_desk_staff = User.objects.filter(
             profile__clinic=clinic,
-            profile__role='front_desk'
+            profile__role="front_desk",
         )
         notification_recipients.extend(front_desk_staff)
 
     # Rule 4: Notify nurses for 'waiting for provider' status
-    if status.name.lower() in ['waiting for provider', 'ready for nurse']:
+    if status.name.lower() in ["waiting for provider", "ready for nurse"]:
         nurses = User.objects.filter(
             profile__clinic=clinic,
-            profile__role='nurse'
+            profile__role="nurse",
         )
         notification_recipients.extend(nurses)
 
@@ -195,7 +210,7 @@ def generate_notifications_for_flow_event(flow_event: PatientFlowEvent):
             event=flow_event,
             message=message,
             via_email=should_send_email(recipient, flow_event),
-            via_sms=should_send_sms(recipient, flow_event)
+            via_sms=should_send_sms(recipient, flow_event),
         )
 
         # Send external notifications asynchronously
@@ -212,9 +227,9 @@ def generate_notifications_for_flow_event(flow_event: PatientFlowEvent):
                     "notification.sent",
                     notification_id=notification.id,
                     recipient_id=recipient.id,
-                    notification_type='appointment_status_change',
-                    delivery_method='email',
-                    related_object_type='appointment',
+                    notification_type="appointment_status_change",
+                    delivery_method="email",
+                    related_object_type="appointment",
                     related_object_id=appointment.id,
                     success=True,  # Assume success since we're sending async
                 )
@@ -224,9 +239,9 @@ def generate_notifications_for_flow_event(flow_event: PatientFlowEvent):
                     "notification.sent",
                     notification_id=notification.id,
                     recipient_id=recipient.id,
-                    notification_type='appointment_status_change',
-                    delivery_method='sms',
-                    related_object_type='appointment',
+                    notification_type="appointment_status_change",
+                    delivery_method="sms",
+                    related_object_type="appointment",
                     related_object_id=appointment.id,
                     success=True,  # Assume success since we're sending async
                 )
@@ -240,7 +255,9 @@ def generate_notification_message(flow_event: PatientFlowEvent, recipient: User)
     patient = appointment.patient
     status = flow_event.status
 
-    base_message = f"Patient {patient.first_name} {patient.last_name} is now '{status.name}'"
+    base_message = (
+        f"Patient {patient.first_name} {patient.last_name} is now '{status.name}'"
+    )
 
     # Add time information
     time_info = f" at {flow_event.timestamp.strftime('%H:%M')}"
@@ -257,15 +274,15 @@ def generate_notification_message(flow_event: PatientFlowEvent, recipient: User)
 
     # Add role-specific information
     role_specific = ""
-    if hasattr(recipient, 'profile'):
-        if recipient.profile.role == 'front_desk':
-            if status.name.lower() in ['ready for checkout', 'checked out']:
+    if hasattr(recipient, "profile"):
+        if recipient.profile.role == "front_desk":
+            if status.name.lower() in ["ready for checkout", "checked out"]:
                 role_specific = " - Action may be required"
-        elif recipient.profile.role == 'nurse':
-            if status.name.lower() in ['ready for nurse', 'waiting for provider']:
+        elif recipient.profile.role == "nurse":
+            if status.name.lower() in ["ready for nurse", "waiting for provider"]:
                 role_specific = " - Please assess patient"
-        elif recipient.profile.role == 'provider':
-            if status.name.lower() in ['waiting for provider', 'ready for provider']:
+        elif recipient.profile.role == "provider":
+            if status.name.lower() in ["waiting for provider", "ready for provider"]:
                 role_specific = " - Patient ready for consultation"
 
     return f"{base_message}{time_info}{location_info}{provider_info}{role_specific}"
@@ -276,19 +293,22 @@ def should_send_email(recipient: User, flow_event: PatientFlowEvent) -> bool:
     # Complex business rules for email notifications
 
     # Always send email for critical statuses
-    critical_statuses = ['emergency', 'urgent', 'delayed', 'no show']
+    critical_statuses = ["emergency", "urgent", "delayed", "no show"]
     if flow_event.status.name.lower() in critical_statuses:
         return True
 
     # Send email for providers when their patients are ready
-    if (hasattr(recipient, 'profile') and
-        recipient.profile.role == 'provider' and
-        flow_event.appointment.provider == recipient and
-        flow_event.status.name.lower() in ['waiting for provider', 'ready for provider']):
+    if (
+        hasattr(recipient, "profile")
+        and recipient.profile.role == "provider"
+        and flow_event.appointment.provider == recipient
+        and flow_event.status.name.lower()
+        in ["waiting for provider", "ready for provider"]
+    ):
         return True
 
     # Send email for admin role always
-    if hasattr(recipient, 'profile') and recipient.profile.role == 'admin':
+    if hasattr(recipient, "profile") and recipient.profile.role == "admin":
         return True
 
     # Check if it's after hours (assuming 8 AM - 6 PM are normal hours)
@@ -304,7 +324,7 @@ def should_send_sms(recipient: User, flow_event: PatientFlowEvent) -> bool:
     # SMS only for critical/urgent situations
 
     # Emergency statuses
-    emergency_statuses = ['emergency', 'code blue', 'urgent', 'critical']
+    emergency_statuses = ["emergency", "code blue", "urgent", "critical"]
     if flow_event.status.name.lower() in emergency_statuses:
         return True
 
@@ -316,10 +336,12 @@ def should_send_sms(recipient: User, flow_event: PatientFlowEvent) -> bool:
             return True
 
     # Provider-specific urgent notifications
-    if (hasattr(recipient, 'profile') and
-        recipient.profile.role == 'provider' and
-        flow_event.appointment.provider == recipient and
-        flow_event.status.name.lower() in ['emergency', 'urgent', 'stat']):
+    if (
+        hasattr(recipient, "profile")
+        and recipient.profile.role == "provider"
+        and flow_event.appointment.provider == recipient
+        and flow_event.status.name.lower() in ["emergency", "urgent", "stat"]
+    ):
         return True
 
     return False

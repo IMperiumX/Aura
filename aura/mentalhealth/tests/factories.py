@@ -6,7 +6,9 @@ from factory.django import DjangoModelFactory
 from faker import Faker
 
 from aura.mentalhealth import models
-from aura.users.tests.factories import PatientFactory, TherapistFactory, UserFactory
+from aura.users.tests.factories import PatientFactory
+from aura.users.tests.factories import TherapistFactory
+from aura.users.tests.factories import UserFactory
 
 fake = Faker()
 
@@ -43,15 +45,18 @@ class TherapySessionFactory(DjangoModelFactory):
     """Factory for TherapySession model."""
 
     session_type = factory.Faker(
-        "random_element", elements=models.TherapySession.SessionType.values
+        "random_element",
+        elements=models.TherapySession.SessionType.values,
     )
     status = factory.Faker(
-        "random_element", elements=models.TherapySession.SessionStatus.values
+        "random_element",
+        elements=models.TherapySession.SessionStatus.values,
     )
     summary = factory.Faker("text")
     notes = factory.Faker("text")
     scheduled_at = factory.Faker(
-        "date_time_this_year", tzinfo=timezone.get_current_timezone()
+        "date_time_this_year",
+        tzinfo=timezone.get_current_timezone(),
     )
     target_audience = factory.Faker(
         "random_element",
@@ -89,7 +94,8 @@ class ChatbotInteractionFactory(DjangoModelFactory):
     response = factory.Faker("text")
     conversation_log = factory.LazyFunction(list)
     interaction_date = factory.Faker(
-        "date_time_this_year", tzinfo=timezone.get_current_timezone()
+        "date_time_this_year",
+        tzinfo=timezone.get_current_timezone(),
     )
     user = factory.SubFactory(UserFactory)
 

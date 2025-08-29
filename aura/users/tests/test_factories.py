@@ -12,26 +12,27 @@ from decimal import Decimal
 
 import pytest
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.test import TestCase
 
 from aura.mentalhealth.models import Disorder
-from aura.users.models import Coach, Patient, Physician, Therapist, User
-from aura.users.tests.factories import (
-    CoachFactory,
-    CoachUserFactory,
-    ExperiencedTherapistFactory,
-    HighRatedCoachFactory,
-    PatientFactory,
-    PatientUserFactory,
-    PatientWithDisordersFactory,
-    PhysicianFactory,
-    PhysicianUserFactory,
-    SpecialistPhysicianFactory,
-    TherapistFactory,
-    TherapistUserFactory,
-    UserFactory,
-)
+from aura.users.models import Coach
+from aura.users.models import Patient
+from aura.users.models import Physician
+from aura.users.models import Therapist
+from aura.users.models import User
+from aura.users.tests.factories import CoachFactory
+from aura.users.tests.factories import CoachUserFactory
+from aura.users.tests.factories import ExperiencedTherapistFactory
+from aura.users.tests.factories import HighRatedCoachFactory
+from aura.users.tests.factories import PatientFactory
+from aura.users.tests.factories import PatientUserFactory
+from aura.users.tests.factories import PatientWithDisordersFactory
+from aura.users.tests.factories import PhysicianFactory
+from aura.users.tests.factories import PhysicianUserFactory
+from aura.users.tests.factories import SpecialistPhysicianFactory
+from aura.users.tests.factories import TherapistFactory
+from aura.users.tests.factories import TherapistUserFactory
+from aura.users.tests.factories import UserFactory
 
 
 class UserFactoryTestCase(TestCase):
@@ -423,7 +424,7 @@ class FactoryCustomizationTestCase(TestCase):
             self.assertIn(disorder, patient.disorders.all())
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 class FactoryIntegrationTestCase(TestCase):
     """Integration tests to ensure factories work with Django ORM and constraints."""
 
@@ -438,7 +439,8 @@ class FactoryIntegrationTestCase(TestCase):
         patient1 = PatientFactory()
         patient2 = PatientFactory()
         self.assertNotEqual(
-            patient1.medical_record_number, patient2.medical_record_number
+            patient1.medical_record_number,
+            patient2.medical_record_number,
         )
 
     def test_factories_work_with_django_signals(self):
