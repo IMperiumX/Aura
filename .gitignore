@@ -291,3 +291,7 @@ git-sim*/*
 
 # google cloud account credentials
 *credentials.json
+
+
+# cursor chats
+cursor-chats/
