@@ -1,13 +1,12 @@
-import asyncio
-import json
 import logging
 import logging.handlers
 import queue
 import threading
 import time
-from collections import defaultdict, deque
-from typing import Any, Dict, List, Optional
+from collections import defaultdict
+from collections import deque
 from datetime import datetime
+from typing import Any
 
 import redis
 from django.conf import settings
@@ -28,9 +27,23 @@ class AsyncBufferedHandler(logging.Handler):
     - Graceful degradation under load
     """
 
-    def __init__(self, target_handler, buffer_size=1000, flush_interval=5.0, max_workers=2):
+    def __init__(
+        self,
+        target_handler,
+        buffer_size=1000,
+        flush_interval=5.0,
+        max_workers=2,
+    ):
         super().__init__()
-        self.target_handler = target_handler
+
+        # Handle target_handler configuration
+        if isinstance(target_handler, dict):
+            # If target_handler is a config dict, instantiate the handler
+            self.target_handler = self._instantiate_handler(target_handler)
+        else:
+            # If it's already an instantiated handler
+            self.target_handler = target_handler
+
         self.buffer_size = buffer_size
         self.flush_interval = flush_interval
         self.max_workers = max_workers
@@ -44,13 +57,13 @@ class AsyncBufferedHandler(logging.Handler):
 
         # Health monitoring
         self.health_stats = {
-            'records_processed': 0,
-            'records_dropped': 0,
-            'flush_count': 0,
-            'error_count': 0,
-            'last_flush': time.time(),
-            'circuit_open': False,
-            'circuit_failures': 0,
+            "records_processed": 0,
+            "records_dropped": 0,
+            "flush_count": 0,
+            "error_count": 0,
+            "last_flush": time.time(),
+            "circuit_open": False,
+            "circuit_failures": 0,
         }
 
         # Worker threads
@@ -63,13 +76,88 @@ class AsyncBufferedHandler(logging.Handler):
         # Periodic flush timer
         self._start_flush_timer()
 
+    def _instantiate_handler(self, handler_config: dict[str, Any]) -> logging.Handler:
+        """
+        Instantiate a handler from configuration dictionary.
+
+        Args:
+            handler_config: Dictionary containing handler configuration
+
+        Returns:
+            Instantiated logging handler
+
+        Raises:
+            ValueError: If handler class cannot be imported or instantiated
+        """
+        try:
+            handler_class_name = handler_config.get("class")
+            if not handler_class_name:
+                raise ValueError("Handler configuration must include 'class' key")
+
+            # Import the handler class
+            if "." in handler_class_name:
+                # Full module path (e.g., "aura.core.logging_handlers.StructuredFileHandler")
+                module_path, class_name = handler_class_name.rsplit(".", 1)
+                module = __import__(module_path, fromlist=[class_name])
+                handler_class = getattr(module, class_name)
+            else:
+                # Built-in handler (e.g., "StreamHandler")
+                handler_class = getattr(logging, handler_class_name)
+
+            # Extract configuration parameters
+            config = handler_config.copy()
+            config.pop("class")  # Remove the class name from config
+
+            # Handle formatter
+            formatter_config = config.pop("formatter", None)
+
+            # Instantiate the handler
+            handler = handler_class(**config)
+
+            # Set formatter if specified
+            if formatter_config:
+                from django.conf import settings
+
+                formatters = getattr(settings, "LOGGING", {}).get("formatters", {})
+                if formatter_config in formatters:
+                    formatter_def = formatters[formatter_config]
+                    formatter_class_name = formatter_def.get("()", "logging.Formatter")
+
+                    if "." in formatter_class_name:
+                        module_path, class_name = formatter_class_name.rsplit(".", 1)
+                        module = __import__(module_path, fromlist=[class_name])
+                        formatter_class = getattr(module, class_name)
+                    else:
+                        formatter_class = getattr(
+                            logging,
+                            formatter_class_name.split(".")[-1],
+                        )
+
+                    formatter = formatter_class(formatter_def.get("format", ""))
+                    handler.setFormatter(formatter)
+
+            return handler
+
+        except Exception as e:
+            # Fallback to a simple console handler
+            fallback_handler = logging.StreamHandler()
+            fallback_handler.setFormatter(
+                logging.Formatter(
+                    "[ASYNC_HANDLER_ERROR] %(asctime)s %(levelname)s %(name)s: %(message)s",
+                ),
+            )
+            print(
+                f"Warning: Failed to instantiate target handler: {e}. Using fallback console handler.",
+            )
+            return fallback_handler
+
     def emit(self, record: logging.LogRecord) -> None:
         """
         Emits a log record to the async processing queue.
         """
         try:
             # Check circuit breaker
-            if self.health_stats['circuit_open']:
+            if self.health_stats["circuit_open"]:
                 self._handle_circuit_open(record)
                 return
 
@@ -78,7 +166,7 @@ class AsyncBufferedHandler(logging.Handler):
                 self.log_queue.put_nowait(record)
             except queue.Full:
                 # Queue is full, drop record and update stats
-                self.health_stats['records_dropped'] += 1
+                self.health_stats["records_dropped"] += 1
                 self._check_circuit_breaker()
 
         except Exception:
@@ -93,7 +181,7 @@ class AsyncBufferedHandler(logging.Handler):
             worker = threading.Thread(
                 target=self._worker_loop,
                 name=f"AsyncLogWorker-{i}",
-                daemon=True
+                daemon=True,
             )
             worker.start()
             self.workers.append(worker)
@@ -111,8 +199,11 @@ class AsyncBufferedHandler(logging.Handler):
                     self.buffer.append(record)
 
                     # Check if buffer should be flushed
-                    if (len(self.buffer) >= self.buffer_size or
-                        time.time() - self.health_stats['last_flush'] >= self.flush_interval):
+                    if (
+                        len(self.buffer) >= self.buffer_size
+                        or time.time() - self.health_stats["last_flush"]
+                        >= self.flush_interval
+                    ):
                         self._flush_buffer()
 
                 self.log_queue.task_done()
@@ -120,12 +211,15 @@ class AsyncBufferedHandler(logging.Handler):
             except queue.Empty:
                 # Timeout - check for pending records to flush
                 with self.buffer_lock:
-                    if (self.buffer and
-                        time.time() - self.health_stats['last_flush'] >= self.flush_interval):
+                    if (
+                        self.buffer
+                        and time.time() - self.health_stats["last_flush"]
+                        >= self.flush_interval
+                    ):
                         self._flush_buffer()
 
-            except Exception as e:
-                self.health_stats['error_count'] += 1
+            except Exception:
+                self.health_stats["error_count"] += 1
                 self._check_circuit_breaker()
 
     def _flush_buffer(self) -> None:
@@ -137,23 +231,23 @@ class AsyncBufferedHandler(logging.Handler):
 
         records_to_flush = self.buffer.copy()
         self.buffer.clear()
-        self.health_stats['last_flush'] = time.time()
-        self.health_stats['flush_count'] += 1
+        self.health_stats["last_flush"] = time.time()
+        self.health_stats["flush_count"] += 1
 
         try:
             # Process records in batch
             for record in records_to_flush:
                 self.target_handler.emit(record)
 
-            self.health_stats['records_processed'] += len(records_to_flush)
+            self.health_stats["records_processed"] += len(records_to_flush)
 
             # Reset circuit breaker on successful flush
-            if self.health_stats['circuit_open']:
+            if self.health_stats["circuit_open"]:
                 self._reset_circuit_breaker()
 
-        except Exception as e:
-            self.health_stats['error_count'] += 1
-            self.health_stats['circuit_failures'] += 1
+        except Exception:
+            self.health_stats["error_count"] += 1
+            self.health_stats["circuit_failures"] += 1
             self._check_circuit_breaker()
 
             # Emergency fallback
@@ -164,6 +258,7 @@ class AsyncBufferedHandler(logging.Handler):
         """
         Starts a timer thread for periodic flushing.
         """
+
         def flush_timer():
             while not self.shutdown_event.is_set():
                 time.sleep(self.flush_interval)
@@ -178,33 +273,34 @@ class AsyncBufferedHandler(logging.Handler):
         """
         Implements circuit breaker pattern for reliability.
         """
-        error_rate = (self.health_stats['error_count'] /
-                     max(1, self.health_stats['records_processed'] + self.health_stats['error_count']))
+        error_rate = self.health_stats["error_count"] / max(
+            1,
+            self.health_stats["records_processed"] + self.health_stats["error_count"],
+        )
 
         # Open circuit if error rate is too high
-        if error_rate > 0.1 and self.health_stats['circuit_failures'] > 5:
-            self.health_stats['circuit_open'] = True
-            self.health_stats['circuit_open_time'] = time.time()
+        if error_rate > 0.1 and self.health_stats["circuit_failures"] > 5:
+            self.health_stats["circuit_open"] = True
+            self.health_stats["circuit_open_time"] = time.time()
 
     def _reset_circuit_breaker(self) -> None:
         """
         Resets the circuit breaker after successful operations.
         """
-        self.health_stats['circuit_open'] = False
-        self.health_stats['circuit_failures'] = 0
+        self.health_stats["circuit_open"] = False
+        self.health_stats["circuit_failures"] = 0
 
     def _handle_circuit_open(self, record: logging.LogRecord) -> None:
         """
         Handles logging when circuit breaker is open.
         """
         # Check if circuit should be closed (half-open state)
-        if time.time() - self.health_stats.get('circuit_open_time', 0) > 60:
+        if time.time() - self.health_stats.get("circuit_open_time", 0) > 60:
             self._reset_circuit_breaker()
             self.emit(record)  # Retry
-        else:
-            # Drop record or use emergency logging
-            if record.levelno >= logging.ERROR:
-                self._emergency_log(record)
+        # Drop record or use emergency logging
+        elif record.levelno >= logging.ERROR:
+            self._emergency_log(record)
 
     def _emergency_log(self, record: logging.LogRecord) -> None:
         """
@@ -213,13 +309,16 @@ class AsyncBufferedHandler(logging.Handler):
         try:
             # Use simple console logging as fallback
             console_handler = logging.StreamHandler()
-            console_handler.setFormatter(logging.Formatter(
-                '[EMERGENCY] %(asctime)s %(levelname)s %(name)s: %(message)s'
-            ))
+            console_handler.setFormatter(
+                logging.Formatter(
+                    "[EMERGENCY] %(asctime)s %(levelname)s %(name)s: %(message)s",
+                ),
+            )
             console_handler.emit(record)
         except Exception:
             # Last resort: print to stderr
             import sys
+
             print(f"[CRITICAL LOGGING FAILURE] {record.getMessage()}", file=sys.stderr)
 
     def close(self) -> None:
@@ -238,7 +337,7 @@ class AsyncBufferedHandler(logging.Handler):
 
         super().close()
 
-    def get_health_stats(self) -> Dict[str, Any]:
+    def get_health_stats(self) -> dict[str, Any]:
         """
         Returns health statistics for monitoring.
         """
@@ -256,7 +355,7 @@ class FailoverHandler(logging.Handler):
     - Configurable failover policies
     """
 
-    def __init__(self, handlers: List[logging.Handler], failover_threshold=5):
+    def __init__(self, handlers: list[logging.Handler], failover_threshold=5):
         super().__init__()
         self.handlers = handlers
         self.failover_threshold = failover_threshold
@@ -264,11 +363,11 @@ class FailoverHandler(logging.Handler):
         # Health tracking for each handler
         self.handler_health = {
             id(handler): {
-                'failures': 0,
-                'successes': 0,
-                'last_failure': 0,
-                'is_healthy': True,
-                'total_records': 0,
+                "failures": 0,
+                "successes": 0,
+                "last_failure": 0,
+                "is_healthy": True,
+                "total_records": 0,
             }
             for handler in handlers
         }
@@ -306,22 +405,22 @@ class FailoverHandler(logging.Handler):
 
             # Update success stats
             health = self.handler_health[handler_id]
-            health['successes'] += 1
-            health['total_records'] += 1
-            health['is_healthy'] = True
+            health["successes"] += 1
+            health["total_records"] += 1
+            health["is_healthy"] = True
 
             return True
 
-        except Exception as e:
+        except Exception:
             # Update failure stats
             health = self.handler_health[handler_id]
-            health['failures'] += 1
-            health['total_records'] += 1
-            health['last_failure'] = time.time()
+            health["failures"] += 1
+            health["total_records"] += 1
+            health["last_failure"] = time.time()
 
             # Mark as unhealthy if too many failures
-            if health['failures'] >= self.failover_threshold:
-                health['is_healthy'] = False
+            if health["failures"] >= self.failover_threshold:
+                health["is_healthy"] = False
 
             return False
 
@@ -333,12 +432,12 @@ class FailoverHandler(logging.Handler):
         health = self.handler_health[handler_id]
 
         # Auto-recovery after 5 minutes
-        if not health['is_healthy']:
-            if time.time() - health['last_failure'] > 300:
-                health['is_healthy'] = True
-                health['failures'] = 0
+        if not health["is_healthy"]:
+            if time.time() - health["last_failure"] > 300:
+                health["is_healthy"] = True
+                health["failures"] = 0
 
-        return health['is_healthy']
+        return health["is_healthy"]
 
     def _emergency_log(self, record: logging.LogRecord) -> None:
         """
@@ -346,18 +445,19 @@ class FailoverHandler(logging.Handler):
         """
         try:
             import sys
+
             print(f"[FAILOVER EMERGENCY] {record.getMessage()}", file=sys.stderr)
         except Exception:
             pass
 
-    def get_handler_stats(self) -> Dict[str, Any]:
+    def get_handler_stats(self) -> dict[str, Any]:
         """
         Returns statistics for all handlers.
         """
         return {
             f"handler_{i}": {
-                'class': handler.__class__.__name__,
-                'health': self.handler_health[id(handler)]
+                "class": handler.__class__.__name__,
+                "health": self.handler_health[id(handler)],
             }
             for i, handler in enumerate(self.handlers)
         }
@@ -374,16 +474,18 @@ class MetricsHandler(logging.Handler):
     - Performance tracking
     """
 
-    def __init__(self, metrics_backend='redis'):
+    def __init__(self, metrics_backend="redis"):
         super().__init__()
         self.metrics_backend = metrics_backend
         self.metrics_cache = defaultdict(lambda: defaultdict(int))
         self.anomaly_detector = AnomalyDetector()
 
         # Initialize metrics backend
-        if metrics_backend == 'redis':
+        if metrics_backend == "redis":
             try:
-                self.redis_client = redis.from_url(getattr(settings, 'REDIS_URL', 'redis://localhost:6379/0'))
+                self.redis_client = redis.from_url(
+                    getattr(settings, "REDIS_URL", "redis://localhost:6379/0"),
+                )
             except Exception:
                 self.redis_client = None
 
@@ -418,15 +520,15 @@ class MetricsHandler(logging.Handler):
         timestamp = int(time.time())
 
         # Log level metrics
-        self.metrics_cache[f'log_level_{record.levelname.lower()}'][timestamp] += 1
+        self.metrics_cache[f"log_level_{record.levelname.lower()}"][timestamp] += 1
 
         # Logger metrics
-        logger_name = record.name.replace('.', '_')
-        self.metrics_cache[f'logger_{logger_name}'][timestamp] += 1
+        logger_name = record.name.replace(".", "_")
+        self.metrics_cache[f"logger_{logger_name}"][timestamp] += 1
 
         # Error rate
         if record.levelno >= logging.ERROR:
-            self.metrics_cache['error_rate'][timestamp] += 1
+            self.metrics_cache["error_rate"][timestamp] += 1
 
     def _extract_performance_metrics(self, record: logging.LogRecord) -> None:
         """
@@ -435,25 +537,25 @@ class MetricsHandler(logging.Handler):
         timestamp = int(time.time())
 
         # Request duration
-        if hasattr(record, 'request_duration'):
+        if hasattr(record, "request_duration"):
             duration_ms = int(record.request_duration * 1000)
-            self.metrics_cache['request_duration_ms'][timestamp] = max(
-                self.metrics_cache['request_duration_ms'][timestamp],
-                duration_ms
+            self.metrics_cache["request_duration_ms"][timestamp] = max(
+                self.metrics_cache["request_duration_ms"][timestamp],
+                duration_ms,
             )
 
         # Database queries
-        if hasattr(record, 'db_queries'):
-            self.metrics_cache['db_queries'][timestamp] = max(
-                self.metrics_cache['db_queries'][timestamp],
-                record.db_queries
+        if hasattr(record, "db_queries"):
+            self.metrics_cache["db_queries"][timestamp] = max(
+                self.metrics_cache["db_queries"][timestamp],
+                record.db_queries,
             )
 
         # Memory usage
-        if hasattr(record, 'memory_percent'):
-            self.metrics_cache['memory_usage_percent'][timestamp] = max(
-                self.metrics_cache['memory_usage_percent'][timestamp],
-                int(record.memory_percent)
+        if hasattr(record, "memory_percent"):
+            self.metrics_cache["memory_usage_percent"][timestamp] = max(
+                self.metrics_cache["memory_usage_percent"][timestamp],
+                int(record.memory_percent),
             )
 
     def _extract_security_metrics(self, record: logging.LogRecord) -> None:
@@ -463,18 +565,18 @@ class MetricsHandler(logging.Handler):
         timestamp = int(time.time())
 
         # Security events
-        if hasattr(record, 'security_event') and record.security_event:
-            self.metrics_cache['security_events'][timestamp] += 1
+        if hasattr(record, "security_event") and record.security_event:
+            self.metrics_cache["security_events"][timestamp] += 1
 
             # Threat type metrics
-            if hasattr(record, 'threat_type'):
-                threat_key = f'threat_{record.threat_type}'
+            if hasattr(record, "threat_type"):
+                threat_key = f"threat_{record.threat_type}"
                 self.metrics_cache[threat_key][timestamp] += 1
 
         # Authentication failures
-        message = str(getattr(record, 'msg', '')).lower()
-        if 'authentication failed' in message or 'login failed' in message:
-            self.metrics_cache['auth_failures'][timestamp] += 1
+        message = str(getattr(record, "msg", "")).lower()
+        if "authentication failed" in message or "login failed" in message:
+            self.metrics_cache["auth_failures"][timestamp] += 1
 
     def _check_anomalies(self, record: logging.LogRecord) -> None:
         """
@@ -486,7 +588,7 @@ class MetricsHandler(logging.Handler):
         """
         Exports metrics to the configured backend.
         """
-        if self.metrics_backend == 'redis' and self.redis_client:
+        if self.metrics_backend == "redis" and self.redis_client:
             self._export_to_redis()
 
     def _export_to_redis(self) -> None:
@@ -499,7 +601,8 @@ class MetricsHandler(logging.Handler):
             for metric_name, time_series in self.metrics_cache.items():
                 # Only export recent metrics (last 5 minutes)
                 recent_data = {
-                    ts: value for ts, value in time_series.items()
+                    ts: value
+                    for ts, value in time_series.items()
                     if current_time - ts <= 300
                 }
 
@@ -522,9 +625,9 @@ class AnomalyDetector:
     def __init__(self):
         self.pattern_counts = defaultdict(lambda: deque(maxlen=100))
         self.alert_thresholds = {
-            'error_spike': 10,  # 10 errors in window
-            'auth_failure_spike': 5,  # 5 auth failures in window
-            'performance_degradation': 5,  # 5 slow requests in window
+            "error_spike": 10,  # 10 errors in window
+            "auth_failure_spike": 5,  # 5 auth failures in window
+            "performance_degradation": 5,  # 5 slow requests in window
         }
 
     def check_record(self, record: logging.LogRecord) -> None:
@@ -535,19 +638,19 @@ class AnomalyDetector:
 
         # Error spike detection
         if record.levelno >= logging.ERROR:
-            self.pattern_counts['errors'].append(current_time)
-            self._check_spike('errors', 'error_spike')
+            self.pattern_counts["errors"].append(current_time)
+            self._check_spike("errors", "error_spike")
 
         # Authentication failure detection
-        message = str(getattr(record, 'msg', '')).lower()
-        if 'authentication failed' in message:
-            self.pattern_counts['auth_failures'].append(current_time)
-            self._check_spike('auth_failures', 'auth_failure_spike')
+        message = str(getattr(record, "msg", "")).lower()
+        if "authentication failed" in message:
+            self.pattern_counts["auth_failures"].append(current_time)
+            self._check_spike("auth_failures", "auth_failure_spike")
 
         # Performance degradation detection
-        if hasattr(record, 'request_duration') and record.request_duration > 5.0:
-            self.pattern_counts['slow_requests'].append(current_time)
-            self._check_spike('slow_requests', 'performance_degradation')
+        if hasattr(record, "request_duration") and record.request_duration > 5.0:
+            self.pattern_counts["slow_requests"].append(current_time)
+            self._check_spike("slow_requests", "performance_degradation")
 
     def _check_spike(self, pattern: str, alert_type: str) -> None:
         """
@@ -558,8 +661,7 @@ class AnomalyDetector:
 
         # Count events in window
         recent_events = [
-            ts for ts in self.pattern_counts[pattern]
-            if ts >= window_start
+            ts for ts in self.pattern_counts[pattern] if ts >= window_start
         ]
 
         if len(recent_events) >= self.alert_thresholds[alert_type]:
@@ -572,17 +674,23 @@ class AnomalyDetector:
         try:
             # Send email alert to admins
             subject = f"[AURA ALERT] {alert_type.replace('_', ' ').title()} Detected"
-            message = f"Detected {count} occurrences of {alert_type} in the last 5 minutes."
+            message = (
+                f"Detected {count} occurrences of {alert_type} in the last 5 minutes."
+            )
 
             mail_admins(subject, message, fail_silently=True)
 
             # Store alert in cache for dashboard
             cache_key = f"alert:{alert_type}:{int(time.time())}"
-            cache.set(cache_key, {
-                'type': alert_type,
-                'count': count,
-                'timestamp': timezone.now().isoformat(),
-            }, timeout=3600)
+            cache.set(
+                cache_key,
+                {
+                    "type": alert_type,
+                    "count": count,
+                    "timestamp": timezone.now().isoformat(),
+                },
+                timeout=3600,
+            )
 
         except Exception:
             # Alert sending failure shouldn't break logging
@@ -594,9 +702,16 @@ class StructuredFileHandler(logging.handlers.RotatingFileHandler):
     Enhanced file handler with structured logging and compression.
     """
 
-    def __init__(self, filename, mode='a', maxBytes=100*1024*1024,
-                 backupCount=10, encoding='utf-8', delay=False,
-                 compress_rotated=True):
+    def __init__(
+        self,
+        filename,
+        mode="a",
+        maxBytes=100 * 1024 * 1024,
+        backupCount=10,
+        encoding="utf-8",
+        delay=False,
+        compress_rotated=True,
+    ):
         super().__init__(filename, mode, maxBytes, backupCount, encoding, delay)
         self.compress_rotated = compress_rotated
 
@@ -622,8 +737,8 @@ class StructuredFileHandler(logging.handlers.RotatingFileHandler):
                 compressed_file = f"{log_file}.gz"
 
                 if os.path.exists(log_file) and not os.path.exists(compressed_file):
-                    with open(log_file, 'rb') as f_in:
-                        with gzip.open(compressed_file, 'wb') as f_out:
+                    with open(log_file, "rb") as f_in:
+                        with gzip.open(compressed_file, "wb") as f_out:
                             f_out.writelines(f_in)
 
                     os.remove(log_file)
@@ -641,21 +756,23 @@ class ElasticsearchHandler(logging.Handler):
     logs directly to Elasticsearch with buffering, retries, and failover.
     """
 
-    def __init__(self,
-                 hosts=None,
-                 index_pattern="aura-logs-%Y.%m.%d",
-                 username=None,
-                 password=None,
-                 buffer_size=100,
-                 flush_interval=5.0,
-                 max_retries=3,
-                 timeout=10,
-                 use_ssl=False,
-                 verify_certs=False,
-                 ca_certs=None,
-                 client_cert=None,
-                 client_key=None,
-                 level=logging.NOTSET):
+    def __init__(
+        self,
+        hosts=None,
+        index_pattern="aura-logs-%Y.%m.%d",
+        username=None,
+        password=None,
+        buffer_size=100,
+        flush_interval=5.0,
+        max_retries=3,
+        timeout=10,
+        use_ssl=False,
+        verify_certs=False,
+        ca_certs=None,
+        client_cert=None,
+        client_key=None,
+        level=logging.NOTSET,
+    ):
         """
         Initialize Elasticsearch handler.
 
@@ -700,7 +817,7 @@ class ElasticsearchHandler(logging.Handler):
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=5,
             recovery_timeout=30,
-            expected_exception=Exception
+            expected_exception=Exception,
         )
 
         # Initialize Elasticsearch client
@@ -713,31 +830,32 @@ class ElasticsearchHandler(logging.Handler):
         """Initialize Elasticsearch client with proper configuration."""
         try:
             import elasticsearch
-            from elasticsearch.exceptions import ConnectionError, TransportError
+            from elasticsearch.exceptions import ConnectionError
+            from elasticsearch.exceptions import TransportError
 
             # Build connection configuration
             es_config = {
-                'hosts': self.hosts,
-                'timeout': self.timeout,
-                'max_retries': self.max_retries,
-                'retry_on_timeout': True,
-                'sniff_on_start': False,
-                'sniff_on_connection_fail': False,
+                "hosts": self.hosts,
+                "timeout": self.timeout,
+                "max_retries": self.max_retries,
+                "retry_on_timeout": True,
+                "sniff_on_start": False,
+                "sniff_on_connection_fail": False,
             }
 
             # Add authentication if provided
             if self.username and self.password:
-                es_config['http_auth'] = (self.username, self.password)
+                es_config["http_auth"] = (self.username, self.password)
 
             # Add SSL configuration
             if self.use_ssl:
-                es_config['use_ssl'] = True
-                es_config['verify_certs'] = self.verify_certs
+                es_config["use_ssl"] = True
+                es_config["verify_certs"] = self.verify_certs
                 if self.ca_certs:
-                    es_config['ca_certs'] = self.ca_certs
+                    es_config["ca_certs"] = self.ca_certs
                 if self.client_cert and self.client_key:
-                    es_config['client_cert'] = self.client_cert
-                    es_config['client_key'] = self.client_key
+                    es_config["client_cert"] = self.client_cert
+                    es_config["client_key"] = self.client_key
 
             self.es_client = elasticsearch.Elasticsearch(**es_config)
 
@@ -747,13 +865,16 @@ class ElasticsearchHandler(logging.Handler):
 
         except ImportError:
             self.es_client = None
-            print("Warning: elasticsearch package not installed. ElasticsearchHandler disabled.")
+            print(
+                "Warning: elasticsearch package not installed. ElasticsearchHandler disabled.",
+            )
         except Exception as e:
             self.es_client = None
             print(f"Warning: Failed to initialize Elasticsearch client: {e}")
 
     def _start_flush_thread(self):
         """Start background thread for periodic buffer flushing."""
+
         def flush_worker():
             while True:
                 try:
@@ -761,9 +882,10 @@ class ElasticsearchHandler(logging.Handler):
                     current_time = time.time()
 
                     with self.buffer_lock:
-                        if (self.buffer and
-                            (len(self.buffer) >= self.buffer_size or
-                             current_time - self.last_flush >= self.flush_interval)):
+                        if self.buffer and (
+                            len(self.buffer) >= self.buffer_size
+                            or current_time - self.last_flush >= self.flush_interval
+                        ):
                             self._flush_buffer()
 
                 except Exception as e:
@@ -795,7 +917,7 @@ class ElasticsearchHandler(logging.Handler):
                 if len(self.buffer) >= self.buffer_size:
                     self._flush_buffer()
 
-        except Exception as e:
+        except Exception:
             self.handleError(record)
 
     def _format_record(self, record):
@@ -813,47 +935,64 @@ class ElasticsearchHandler(logging.Handler):
 
         # Base log entry
         log_entry = {
-            '_index': index_name,
-            '_source': {
-                '@timestamp': datetime.fromtimestamp(record.created).isoformat(),
-                'asctime': self.format(record),
-                'levelname': record.levelname,
-                'name': record.name,
-                'message': record.getMessage(),
-                'pathname': record.pathname,
-                'filename': record.filename,
-                'module': record.module,
-                'funcName': record.funcName,
-                'lineno': record.lineno,
-                'process': record.process,
-                'processName': record.processName,
-                'thread': record.thread,
-                'threadName': record.threadName,
-                'service': 'aura',
-                'log_source': 'django_direct',
-                'environment': getattr(record, 'environment', 'production'),
-            }
+            "_index": index_name,
+            "_source": {
+                "@timestamp": datetime.fromtimestamp(record.created).isoformat(),
+                "asctime": self.format(record),
+                "levelname": record.levelname,
+                "name": record.name,
+                "message": record.getMessage(),
+                "pathname": record.pathname,
+                "filename": record.filename,
+                "module": record.module,
+                "funcName": record.funcName,
+                "lineno": record.lineno,
+                "process": record.process,
+                "processName": record.processName,
+                "thread": record.thread,
+                "threadName": record.threadName,
+                "service": "aura",
+                "log_source": "django_direct",
+                "environment": getattr(record, "environment", "production"),
+            },
         }
 
         # Add extra fields from record
         extra_fields = [
-            'correlation_id', 'user_id', 'user_type', 'client_ip', 'user_agent',
-            'method', 'path', 'status_code', 'request_duration', 'db_queries',
-            'db_time', 'cache_hits', 'cache_misses', 'memory_rss', 'memory_percent',
-            'cpu_percent', 'load_avg_1', 'load_avg_5', 'load_avg_15',
-            'security_event', 'threat_type', 'performance_alert'
+            "correlation_id",
+            "user_id",
+            "user_type",
+            "client_ip",
+            "user_agent",
+            "method",
+            "path",
+            "status_code",
+            "request_duration",
+            "db_queries",
+            "db_time",
+            "cache_hits",
+            "cache_misses",
+            "memory_rss",
+            "memory_percent",
+            "cpu_percent",
+            "load_avg_1",
+            "load_avg_5",
+            "load_avg_15",
+            "security_event",
+            "threat_type",
+            "performance_alert",
         ]
 
         for field in extra_fields:
             if hasattr(record, field):
-                log_entry['_source'][field] = getattr(record, field)
+                log_entry["_source"][field] = getattr(record, field)
 
         # Add exception information if present
         if record.exc_info:
-            log_entry['_source']['exception'] = {
-                'class': record.exc_info[0].__name__,
-                'message': str(record.exc_info[1]),
-                'stack_trace': self.format(record)
+            log_entry["_source"]["exception"] = {
+                "class": record.exc_info[0].__name__,
+                "message": str(record.exc_info[1]),
+                "stack_trace": self.format(record),
             }
 
         return log_entry
@@ -872,27 +1011,26 @@ class ElasticsearchHandler(logging.Handler):
                 # Prepare bulk request
                 bulk_body = []
                 for entry in self.buffer:
-                    bulk_body.append({
-                        'index': {
-                            '_index': entry['_index']
-                        }
-                    })
-                    bulk_body.append(entry['_source'])
+                    bulk_body.append({"index": {"_index": entry["_index"]}})
+                    bulk_body.append(entry["_source"])
 
                 # Send to Elasticsearch
                 response = self.es_client.bulk(
                     body=bulk_body,
-                    timeout=f"{self.timeout}s"
+                    timeout=f"{self.timeout}s",
                 )
 
                 # Check for errors
-                if response.get('errors'):
+                if response.get("errors"):
                     failed_items = [
-                        item for item in response['items']
-                        if 'error' in item.get('index', {})
+                        item
+                        for item in response["items"]
+                        if "error" in item.get("index", {})
                     ]
                     if failed_items:
-                        print(f"ElasticsearchHandler: {len(failed_items)} items failed to index")
+                        print(
+                            f"ElasticsearchHandler: {len(failed_items)} items failed to index",
+                        )
 
                 # Clear buffer on success
                 self.buffer.clear()
@@ -904,7 +1042,9 @@ class ElasticsearchHandler(logging.Handler):
 
             # Clear buffer to prevent memory buildup
             if len(self.buffer) > self.buffer_size * 10:
-                print("ElasticsearchHandler: Clearing oversized buffer to prevent memory issues")
+                print(
+                    "ElasticsearchHandler: Clearing oversized buffer to prevent memory issues",
+                )
                 self.buffer.clear()
 
     def flush(self):
@@ -926,21 +1066,26 @@ class CircuitBreaker:
     when failure rate exceeds threshold.
     """
 
-    def __init__(self, failure_threshold=5, recovery_timeout=30, expected_exception=Exception):
+    def __init__(
+        self,
+        failure_threshold=5,
+        recovery_timeout=30,
+        expected_exception=Exception,
+    ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.expected_exception = expected_exception
 
         self.failure_count = 0
         self.last_failure_time = None
-        self.state = 'CLOSED'  # CLOSED, OPEN, HALF_OPEN
+        self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
         self.lock = threading.Lock()
 
     def __enter__(self):
         with self.lock:
-            if self.state == 'OPEN':
+            if self.state == "OPEN":
                 if self._should_attempt_reset():
-                    self.state = 'HALF_OPEN'
+                    self.state = "HALF_OPEN"
                 else:
                     raise self.expected_exception("Circuit breaker is OPEN")
         return self
@@ -955,8 +1100,10 @@ class CircuitBreaker:
 
     def _should_attempt_reset(self):
         """Check if enough time has passed to attempt reset."""
-        return (self.last_failure_time and
-                time.time() - self.last_failure_time >= self.recovery_timeout)
+        return (
+            self.last_failure_time
+            and time.time() - self.last_failure_time >= self.recovery_timeout
+        )
 
     def _record_failure(self):
         """Record a failure and potentially open the circuit."""
@@ -964,9 +1111,13 @@ class CircuitBreaker:
         self.last_failure_time = time.time()
 
         if self.failure_count >= self.failure_threshold:
-            self.state = 'OPEN'
+            self.state = "OPEN"
 
     def _record_success(self):
         """Record a success and potentially close the circuit."""
         self.failure_count = 0
-        self.state = 'CLOSED'
+        self.state = "CLOSED"
+        self.state = "CLOSED"
+        self.state = "CLOSED"
+        self.state = "CLOSED"
+        self.state = "CLOSED"
