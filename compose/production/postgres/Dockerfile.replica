@@ -1,7 +1,0 @@
-FROM pgvector/pgvector:pg16
-
-COPY --chown=postgres:postgres ./compose/production/postgres/init-replica /init-replica
-RUN sed -i 's/\r$//g' /init-replica
-RUN chmod +x /init-replica
-
-ENTRYPOINT ["/init-replica"]

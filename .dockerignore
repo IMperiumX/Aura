@@ -10,8 +10,3 @@
 venv
 .git
 .envs/
-
-.git
-__pycache__/
-*.pyc
-*.pyo

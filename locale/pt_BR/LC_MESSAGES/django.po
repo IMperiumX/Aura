@@ -1,6 +1,6 @@
 # Translations for the aura project
-# Copyright (C) 2024 Yusuf Adel
-# Yusuf Adel <yusufadell.dev@gmail.com>, 2024.
+# Copyright (C) 2025 Yousef Adel
+# Yousef Adel <yusufadell.dev@gmail.com>, 2025.
 #
 #, fuzzy
 msgid ""

@@ -1,29 +1,17 @@
 volumes:
   production_postgres_data: {}
-  production_postgres_replica_data: {}
   production_postgres_data_backups: {}
   production_traefik: {}
-  production_prometheus: {}
-  production_grafana: {}
+
   production_redis_data: {}
 
 
-networks:
-  app_network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16  # Choose a private subnet that won't conflict
-          # specify a gateway if needed, but Docker usually handles it:
-          # gateway: 172.21.0.1
 
 services:
   django: &django
     build:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
-    volumes:
-      - .:/app:z
 
     image: aura_production_django
     depends_on:
@@ -33,8 +21,6 @@ services:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
     command: /start
-    networks:
-      - app_network
 
   postgres:
     build:
@@ -44,31 +30,8 @@ services:
     volumes:
       - production_postgres_data:/var/lib/postgresql/data
       - production_postgres_data_backups:/backups
-      - ./compose/production/postgres/00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
     env_file:
       - ./.envs/.production/.postgres
-    restart: always
-    networks:
-      - app_network
-
-  postgres-replica:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile.replica
-    image: aura_production_postgres_replica
-    ports:
-      - "5433:5432"
-      # Expose replica on a different host port
-    env_file:
-      - ./.envs/.production/.postgres-replica
-    volumes:
-    - production_postgres_replica_data:/var/lib/postgresql/data
-    command: /init-replica
-    depends_on:
-    - postgres
-    restart: always
-    networks:
-      - app_network
 
   traefik:
     build:
@@ -77,83 +40,31 @@ services:
     image: aura_production_traefik
     depends_on:
       - django
+    volumes:
+      - production_traefik:/etc/traefik/acme
     ports:
       - '0.0.0.0:80:80'
       - '0.0.0.0:443:443'
       - '0.0.0.0:5555:5555'
-      - "8080:8080"
-      - "9090:9090"
-      - "3000:3000"
-    networks:
-      - app_network
-
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./prometheus/:/etc/prometheus/
-      - production_prometheus:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.size=256MB'
-    restart: unless-stopped
-    networks:
-      - app_network
-
-  grafana:
-    image: grafana/grafana
-    depends_on:
-      - prometheus
-    volumes:
-      - production_grafana:/var/lib/grafana
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
-    environment:
-      # GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
-      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-clock-panel
-    restart: unless-stopped
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - app_network
 
   redis:
     image: docker.io/redis:6
 
     volumes:
       - production_redis_data:/data
-    networks:
-      - app_network
+
 
   celeryworker:
     <<: *django
     image: aura_production_celeryworker
     command: /start-celeryworker
-    networks:
-      - app_network
 
   celerybeat:
     <<: *django
     image: aura_production_celerybeat
     command: /start-celerybeat
-    networks:
-      - app_network
 
   flower:
     <<: *django
     image: aura_production_flower
     command: /start-flower
-    networks:
-      - app_network
-
-  awscli:
-    build:
-      context: .
-      dockerfile: ./compose/production/aws/Dockerfile
-    env_file:
-      - ./.envs/.production/.django
-    volumes:
-      - production_postgres_data_backups:/backups:z
-    networks:
-      - app_network

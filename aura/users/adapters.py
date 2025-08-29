@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import typing
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.socialaccount.models import SocialLogin
 from django.conf import settings
-from django.http import HttpRequest
 
-from aura.users.models import User
+if typing.TYPE_CHECKING:
+    from allauth.socialaccount.models import SocialLogin
+    from django.http import HttpRequest
+
+    from aura.users.models import User
 
 
 class AccountAdapter(DefaultAccountAdapter):

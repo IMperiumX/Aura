@@ -1,13 +1,8 @@
 {% extends "base.html" %}
-
 {% load i18n %}
+{% block bodyclass %}bg-light{% endblock bodyclass %}
 
-{% block bodyclass %}
-  bg-light
-{% endblock bodyclass %}
-{% block css %}
-  {{ block.super }}
-{% endblock css %}
+{% block css %}{{ block.super }}{% endblock css %}
 {% block title %}
   {% block head_title %}
     {% trans "Sign In" %}
@@ -29,6 +24,8 @@
       {% endif %}
       {% block content %}
       {% endblock content %}
+      {% block extra_body %}
+      {% endblock extra_body %}
     </div>
   </div>
 {% endblock body %}

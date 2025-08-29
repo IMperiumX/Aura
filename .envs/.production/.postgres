@@ -3,8 +3,5 @@
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 POSTGRES_DB=aura
-POSTGRES_USER=VSHRdhUAZGuFUgeRbKxVBOcAJpAYxYxU
-POSTGRES_PASSWORD=6dC9oDWRkdddSxYDMYSiZCUB0ia9n8SNsOMCmLopCZcXpzYon9zS4nEK1oIUyNLD
-# PostgreSQL replica
-# ------------------------------------------------------------------------------
-POSTGRES_REPLICA_HOST=postgres-replica
+POSTGRES_USER=lyRosCgrytrXfmxxwZKSTPyubuVRBITC
+POSTGRES_PASSWORD=CNDFUIAAz0dSL17QJYgrCBspfaqHq8u5TIsOhyeo0r2sIoZ1u7PXAyDkaPFJUj7x

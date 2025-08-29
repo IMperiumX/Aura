@@ -59,9 +59,6 @@ docs/_build/
 # PyBuilder
 target/
 
-# pyenv
-.python-version
-
 # celery beat schedule file
 celerybeat-schedule
 
@@ -272,26 +269,10 @@ tags
 dump.rdb
 
 ### Project template
-mailpit
 aura/media/
 
 .pytest_cache/
-
+.ipython/
 .env
-
-# Pycharm files
-.idea/
-.aider*
-
-# git simulate
-git-sim*/*
-
-# readings
-*.pdf
-
-# google cloud account credentials
-*credentials.json
-
-
-# cursor chats
-cursor-chats/
+.envs/*
+!.envs/.local/
