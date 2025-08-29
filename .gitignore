@@ -276,3 +276,6 @@ aura/media/
 .env
 .envs/*
 !.envs/.local/
+
+# Claude CLI
+.claude
