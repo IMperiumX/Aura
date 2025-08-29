@@ -1,19 +1,14 @@
-from __future__ import annotations
-
+import datetime as dt
 from base64 import b64encode
-from typing import TYPE_CHECKING
+from collections.abc import Mapping
+from collections.abc import Sequence
+from typing import Any
 from uuid import uuid1
 
 from django.utils import timezone
 
 from aura.analytics.attribute import Attribute
 from aura.analytics.utils import get_data
-
-if TYPE_CHECKING:
-    import datetime as dt
-    from collections.abc import Mapping
-    from collections.abc import Sequence
-    from typing import Any
 
 
 class Event:
@@ -26,7 +21,10 @@ class Event:
     attributes: Sequence[Attribute] = ()
 
     def __init__(
-        self, type: Any | None = None, datetime: dt.datetime | None = None, **items: Any
+        self,
+        type: Any | None = None,
+        datetime: dt.datetime | None = None,
+        **items: Any,
     ) -> None:
         self.uuid = uuid1()
         self.datetime = datetime or timezone.now()

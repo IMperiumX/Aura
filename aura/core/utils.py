@@ -1,15 +1,11 @@
-from __future__ import annotations
-
 import base64
-import typing
 import zlib
+from collections.abc import Callable
 from pathlib import Path
 
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-if typing.TYPE_CHECKING:
-    from collections.abc import Callable
 DB_CONFIG = settings.DATABASES[settings.DATABASE_CONNECTION_DEFAULT_NAME]
 
 

@@ -1,9 +1,6 @@
-from __future__ import annotations
-
 import contextlib
 import datetime
 import logging
-import typing
 
 from django.db import IntegrityError
 from django.db import router
@@ -11,13 +8,11 @@ from django.db import transaction
 from django.db.transaction import Atomic
 from django.db.transaction import get_connection
 
+from aura.audit_log.services.log.model import AuditLogEvent
+from aura.audit_log.services.log.model import UserIpEvent
 from aura.audit_log.services.log.service import LogService
 from aura.users.models import User
 from aura.users.userip import UserIP
-
-if typing.TYPE_CHECKING:
-    from aura.audit_log.services.log.model import AuditLogEvent
-    from aura.audit_log.services.log.model import UserIpEvent
 
 logger = logging.getLogger("aura.audit_log_service")
 

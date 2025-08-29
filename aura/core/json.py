@@ -1,12 +1,10 @@
-# flake8: noqa
-# Avoid shadowing the standard library json module
-
-from __future__ import annotations
-
 import datetime
 import decimal
-import typing
 import uuid
+from collections.abc import Callable
+from collections.abc import Collection
+from collections.abc import Generator
+from collections.abc import Mapping
 from enum import Enum
 from typing import IO
 from typing import Any
@@ -21,12 +19,6 @@ from django.utils.timezone import is_aware
 from simplejson import JSONEncoder
 from simplejson import _default_decoder  # type: ignore[attr-defined]
 
-if typing.TYPE_CHECKING:
-    from collections.abc import Callable
-    from collections.abc import Collection
-    from collections.abc import Generator
-    from collections.abc import Mapping
-
 TKey = TypeVar("TKey")
 TValue = TypeVar("TValue")
 
@@ -38,11 +30,11 @@ def datetime_to_str(o: datetime.datetime) -> str:
 def better_default_encoder(o: object) -> object:
     if isinstance(o, uuid.UUID):
         return o.hex
-    elif isinstance(o, datetime.datetime):
+    if isinstance(o, datetime.datetime):
         return datetime_to_str(o)
-    elif isinstance(o, datetime.date):
+    if isinstance(o, datetime.date):
         return o.isoformat()
-    elif isinstance(o, datetime.time):
+    if isinstance(o, datetime.time):
         if is_aware(o):
             msg = "JSON can't represent timezone-aware times."
             raise ValueError(msg)
@@ -50,18 +42,18 @@ def better_default_encoder(o: object) -> object:
         if o.microsecond:
             r = r[:12]
         return r
-    elif isinstance(o, (set, frozenset)):
+    if isinstance(o, (set, frozenset)):
         return list(o)
-    elif isinstance(o, decimal.Decimal):
+    if isinstance(o, decimal.Decimal):
         return str(o)
-    elif isinstance(o, Enum):
+    if isinstance(o, Enum):
         return o.value
-    elif callable(o):
+    if callable(o):
         return "<function>"
-    elif isinstance(o, QuerySet):
+    if isinstance(o, QuerySet):
         return list(o)
     # serialization for certain Django objects here: https://docs.djangoproject.com/en/1.8/topics/serialization/
-    elif isinstance(o, Promise):
+    if isinstance(o, Promise):
         return force_str(o)
     raise TypeError(repr(o) + " is not JSON serializable")
 

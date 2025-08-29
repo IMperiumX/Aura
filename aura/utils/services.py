@@ -1,24 +1,21 @@
-from __future__ import annotations
 
 import enum
 import inspect
 import itertools
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import Final
 from typing import Generic
 from typing import TypeVar
 
-# from aura.utils import metrics
+
 from aura.utils import warnings
 from aura.utils.imports import import_string
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-    from collections.abc import Mapping
-    from collections.abc import MutableMapping
-    from collections.abc import Sequence
-
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import MutableMapping
+from collections.abc import Sequence
+# from aura.utils import metrics  # noqa: ERA001 TODO: study metrics to complete analytics integration
 
 _EmptyType = enum.Enum("_EmptyType", "EMPTY")
 empty: Final = _EmptyType.EMPTY
@@ -64,13 +61,13 @@ class LazyServiceWrapper(Generic[T]):
         backend_path: str,
         options: Mapping[str, Any],
         dangerous: Sequence[type[Service]] = (),
-        metrics_path: str | None = None,
+         TODO: study metrics to complete analytics integration_path: str | None = None,
     ) -> None:
         self._backend = backend_path
         self._options = options
         self._base = backend_base
         self._dangerous = dangerous
-        self._metrics_path = metrics_path
+        self._ TODO: study metrics to complete analytics integration_path =  TODO: study metrics to complete analytics integration_path
 
         self._wrapped: _EmptyType | T = empty
 
@@ -98,12 +95,12 @@ class LazyServiceWrapper(Generic[T]):
 
         attr = getattr(self._wrapped, name)
 
-        # If we want to wrap in metrics, we need to make sure it's some callable,
+        # If we want to wrap in  TODO: study metrics to complete analytics integration, we need to make sure it's some callable,
         # and within our list of exposed attributes. Then we can safely wrap
-        # in our metrics decorator.
-        # if self._metrics_path and callable(attr) and name in self._base.__all__:
-        #     return metrics.wraps(
-        #         self._metrics_path, instance=name, tags={"backend": self._backend}
+        # in our  TODO: study metrics to complete analytics integration decorator.
+        # if self._ TODO: study metrics to complete analytics integration_path and callable(attr) and name in self._base.__all__:
+        #     return  TODO: study metrics to complete analytics integration.wraps(
+        #         self._ TODO: study metrics to complete analytics integration_path, instance=name, tags={"backend": self._backend}
         #     )(attr)
 
         return attr

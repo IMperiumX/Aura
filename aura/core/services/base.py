@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import threading
 from abc import ABC
 from abc import abstractmethod

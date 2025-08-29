@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -16,7 +14,7 @@ def geo_by_addr(ip: str) -> dict[str, Any] | None:
 def _init_geoip() -> None:
     global geo_by_addr  # noqa: PLW0603
 
-    import maxminddb
+    import maxminddb  # noqa: PLC0415
 
     assert settings.GEOIP_PATH_MMDB is not None  # checked below
 

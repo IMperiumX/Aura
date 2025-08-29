@@ -1,13 +1,11 @@
 # ruff: noqa: ERA001
 # Avoid shadowing the standard library json module
 
-from __future__ import annotations
-
 import datetime
 import decimal
 import uuid
+from collections.abc import Generator
 from enum import Enum
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import Never
 
@@ -18,9 +16,6 @@ from django.utils.safestring import SafeString
 from django.utils.safestring import mark_safe
 from django.utils.timezone import is_aware
 from simplejson import JSONEncoder
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
 
 
 def datetime_to_str(o: datetime.datetime) -> str:

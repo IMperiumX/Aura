@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user
 from django.contrib.auth import login

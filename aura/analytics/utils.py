@@ -1,13 +1,8 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from collections.abc import Mapping
+from collections.abc import Sequence
 from typing import Any
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-    from collections.abc import Sequence
-
-    from aura.analytics.attribute import Attribute
+from aura.analytics.attribute import Attribute
 
 
 def get_data(
