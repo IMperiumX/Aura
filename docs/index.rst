@@ -12,6 +12,7 @@ Aura is a mental health platform built with a modular monolith architecture, whe
    :maxdepth: 2
    :caption: Contents:
 
+   ARCHITECTURE
    howto
    users
    creating-new-module
