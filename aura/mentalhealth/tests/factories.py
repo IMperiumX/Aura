@@ -76,10 +76,7 @@ class TherapySessionFactory(DjangoModelFactory):
 
     @factory.lazy_attribute
     def ended_at(self):
-        if (
-            self.status == models.TherapySession.SessionStatus.COMPLETED
-            and self.started_at
-        ):
+        if self.status == models.TherapySession.SessionStatus.COMPLETED and self.started_at:
             return self.started_at + datetime.timedelta(hours=1)
         return None
 

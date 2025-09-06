@@ -1,3 +1,5 @@
+import contextlib
+
 from django.apps import AppConfig
 
 
@@ -6,4 +8,5 @@ class MentalhealthConfig(AppConfig):
     name = "aura.mentalhealth"
 
     def ready(self):
-        import aura.core.schema  # noqa: F401
+        with contextlib.suppress(ImportError):
+            import aura.core.schema  # noqa: F401, PLC0415
