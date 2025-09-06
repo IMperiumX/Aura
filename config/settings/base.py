@@ -6,6 +6,8 @@ from pathlib import Path
 
 import environ
 
+from .modules import AURA_MODULES  # noqa: F401
+
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # aura/
 APPS_DIR = BASE_DIR / "aura"
@@ -70,6 +72,7 @@ DJANGO_APPS = [
     # "django.contrib.humanize", # Handy template tags
     "django.contrib.admin",
     "django.forms",
+    "taggit",
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
@@ -86,7 +89,9 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    "aura.core",
     "aura.users",
+    "aura.mentalhealth",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -349,5 +354,16 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
     "SCHEMA_PATH_PREFIX": "/api/",
 }
+
+
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+# Modular Monolith Configuration
+# ------------------------------------------------------------------------------
+
+
+# Initialize service registry on startup
+
+
+# register_module_services()
