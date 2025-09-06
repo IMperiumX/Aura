@@ -1,3 +1,8 @@
+[project]
+requires-python = ">=3.12,<3.13"
+description = "Aura is a modular monolith platform for building scalable and maintainable applications."
+name = "aura"
+version = "0.1.0"
 # ==== pytest ====
 [tool.pytest.ini_options]
 minversion = "6.0"
