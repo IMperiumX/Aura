@@ -127,7 +127,7 @@ Example Communication Flow
 ==========================
 
 1. **Client Request**
-   - Client sends POST to ``/api/mental-health/therapy-sessions/``
+   - Client sends POST to ``/api/0/mental-health/therapy-sessions/``
 
 2. **API Gateway**
    - Gateway routes request to Mental Health module

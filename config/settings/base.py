@@ -343,7 +343,7 @@ REST_FRAMEWORK = {
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_URLS_REGEX = r"^/api/.*$"
+CORS_URLS_REGEX = r"^/api/0/.*$"
 
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
@@ -352,18 +352,9 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Documentation of API endpoints of aura",
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
-    "SCHEMA_PATH_PREFIX": "/api/",
+    "SCHEMA_PATH_PREFIX": "/api/0/",
 }
 
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-
-# Modular Monolith Configuration
-# ------------------------------------------------------------------------------
-
-
-# Initialize service registry on startup
-
-
-# register_module_services()

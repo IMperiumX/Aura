@@ -35,7 +35,7 @@ class ModuleRegistry:
     def resolve_api_route(self, path: str) -> str | None:
         """Resolve API path to module name."""
         for prefix, module_name in self._api_routes.items():
-            if path.startswith(f"/api/{prefix}/"):
+            if path.startswith(f"/api/0/{prefix}/"):
                 return module_name
         return None
 

@@ -33,13 +33,13 @@ if settings.DEBUG:
 
 # API URLS
 urlpatterns += [
-    # API base url
-    path("api/", include("config.api_router")),
+    # API base url (Versioned API)
+    path("api/0/", include("config.api_router")),
     # DRF auth token
-    path("api/auth-token/", obtain_auth_token, name="obtain_auth_token"),
-    path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
+    path("api/0/auth-token/", obtain_auth_token, name="obtain_auth_token"),
+    path("api/0/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path(
-        "api/docs/",
+        "api/0/docs/",
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),

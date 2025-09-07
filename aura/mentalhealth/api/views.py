@@ -38,6 +38,9 @@ from aura.mentalhealth.models import ChatbotInteraction
 from aura.mentalhealth.models import Disorder
 from aura.mentalhealth.models import TherapySession
 
+# Initialize dependencies using DI container
+from config.dependency_injection import get_container
+
 from .serializers import ChatbotInteractionSerializer
 from .serializers import DisorderSerializer
 from .serializers import TherapySessionSerializer
@@ -55,8 +58,6 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Initialize dependencies using DI container
-        from config.dependency_injection import get_container
 
         container = get_container()
 
