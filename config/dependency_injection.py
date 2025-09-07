@@ -119,12 +119,16 @@ def setup_mental_health_dependencies():
     from aura.mentalhealth.domain.services.therapy_session_service import (
         TherapySessionDomainService,
     )
+    from aura.mentalhealth.infrastructure.repositories.django_chatbot_repository import (
+        DjangoChatbotRepository,
+    )
     from aura.mentalhealth.infrastructure.repositories.django_therapy_session_repository import (
         DjangoTherapySessionRepository,
     )
 
     # Register repositories
     container.register("therapy_session_repository", DjangoTherapySessionRepository)
+    container.register("chatbot_repository", DjangoChatbotRepository)
 
     # Register domain services
     container.register_factory(
