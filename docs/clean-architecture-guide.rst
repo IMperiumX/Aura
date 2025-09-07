@@ -83,19 +83,19 @@ Layer Breakdown
        patient_id: int
        scheduled_at: datetime
        status: SessionStatus = SessionStatus.PENDING
-       
+
        def start_session(self) -> None:
            """Business rule: Only accepted sessions can be started."""
            if self.status != SessionStatus.ACCEPTED:
                raise ValueError("Session must be accepted before starting")
-           
+
            self.started_at = datetime.now()
-       
+
        def complete_session(self, summary: str) -> None:
            """Business rule: Only started sessions can be completed."""
            if not hasattr(self, 'started_at'):
                raise ValueError("Session must be started before completing")
-           
+
            self.status = SessionStatus.COMPLETED
            self.summary = summary
            self.ended_at = datetime.now()
@@ -136,39 +136,39 @@ Layer Breakdown
        error_message: Optional[str] = None
 
    class ScheduleTherapySessionUseCase:
-       def __init__(self, 
+       def __init__(self,
                     session_repository: TherapySessionRepository,
                     user_service: UserService,
                     notification_service: NotificationService):
            self._session_repository = session_repository
            self._user_service = user_service
            self._notification_service = notification_service
-       
+
        def execute(self, request: ScheduleSessionRequest) -> ScheduleSessionResponse:
            try:
                # Validate business rules
                if not self._user_service.is_therapist_available(
                    request.therapist_id, request.scheduled_at):
                    raise ValueError("Therapist not available at requested time")
-               
+
                # Create entity
                session = TherapySession(
                    therapist_id=request.therapist_id,
                    patient_id=request.patient_id,
                    scheduled_at=request.scheduled_at
                )
-               
+
                # Validate entity business rules
                session.validate()
-               
+
                # Persist
                saved_session = self._session_repository.save(session)
-               
+
                # Side effects
                self._notification_service.notify_session_scheduled(saved_session)
-               
+
                return ScheduleSessionResponse(success=True, session=saved_session)
-               
+
            except ValueError as e:
                return ScheduleSessionResponse(success=False, error_message=str(e))
 
@@ -191,9 +191,9 @@ Layer Breakdown
 
    # infrastructure/repositories/django_therapy_session_repository.py
    from typing import List, Optional
-   from ...domain.repositories.therapy_session_repository import TherapySessionRepository
-   from ...domain.entities.therapy_session import TherapySession as SessionEntity
-   from ...models import TherapySession as DjangoSession
+   from aura.mentalhealth.domain.repositories.therapy_session_repository import TherapySessionRepository
+   from aura.mentalhealth.domain.entities.therapy_session import TherapySession as SessionEntity
+   from aura.mentalhealth.models import TherapySession as DjangoSession
 
    class DjangoTherapySessionRepository(TherapySessionRepository):
        def save(self, session: SessionEntity) -> SessionEntity:
@@ -202,17 +202,17 @@ Layer Breakdown
                self._update_model(django_session, session)
            else:
                django_session = self._create_model(session)
-           
+
            django_session.save()
            return self._to_entity(django_session)
-       
+
        def find_by_id(self, session_id: int) -> Optional[SessionEntity]:
            try:
                django_session = DjangoSession.objects.get(id=session_id)
                return self._to_entity(django_session)
            except DjangoSession.DoesNotExist:
                return None
-       
+
        def _to_entity(self, django_model: DjangoSession) -> SessionEntity:
            """Convert Django model to domain entity."""
            return SessionEntity(
@@ -240,7 +240,7 @@ Layer Breakdown
            super().__init__(**kwargs)
            # Dependency injection would happen here
            self.schedule_use_case = container.resolve('schedule_session_use_case')
-       
+
        def create(self, request, *args, **kwargs):
            """Convert HTTP request to use case request."""
            use_case_request = ScheduleSessionRequest(
@@ -249,15 +249,15 @@ Layer Breakdown
                scheduled_at=datetime.fromisoformat(request.data.get('scheduled_at')),
                session_type=request.data.get('session_type')
            )
-           
+
            response = self.schedule_use_case.execute(use_case_request)
-           
+
            if response.success:
                serializer = self.get_serializer(response.session)
                return Response(serializer.data, status=status.HTTP_201_CREATED)
            else:
                return Response(
-                   {'error': response.error_message}, 
+                   {'error': response.error_message},
                    status=status.HTTP_400_BAD_REQUEST
                )
 
@@ -291,12 +291,12 @@ Define clear contracts between layers:
        def save(self, session: TherapySession) -> TherapySession:
            """Save a therapy session."""
            pass
-       
+
        @abstractmethod
        def find_by_id(self, session_id: int) -> Optional[TherapySession]:
            """Find session by ID."""
            pass
-       
+
        @abstractmethod
        def find_by_therapist(self, therapist_id: int) -> List[TherapySession]:
            """Find sessions by therapist."""
@@ -318,30 +318,30 @@ For complex business logic that doesn't belong in entities:
    class TherapySessionDomainService:
        def __init__(self, repository: TherapySessionRepository):
            self._repository = repository
-       
-       def can_schedule_session(self, therapist_id: int, 
+
+       def can_schedule_session(self, therapist_id: int,
                                scheduled_at: datetime) -> bool:
            """Complex business rule: Check if session can be scheduled."""
-           
+
            # Rule 1: Cannot schedule in the past
            if scheduled_at <= datetime.now():
                return False
-           
+
            # Rule 2: Therapist cannot have overlapping sessions
            existing_sessions = self._repository.find_by_therapist(therapist_id)
-           
+
            for session in existing_sessions:
                if self._sessions_overlap(session.scheduled_at, scheduled_at):
                    return False
-           
+
            # Rule 3: Maximum sessions per day
            daily_sessions = self._count_daily_sessions(therapist_id, scheduled_at.date())
            if daily_sessions >= 8:
                return False
-           
+
            return True
-       
-       def _sessions_overlap(self, existing_time: datetime, 
+
+       def _sessions_overlap(self, existing_time: datetime,
                            new_time: datetime) -> bool:
            """Check if two sessions overlap (assuming 1-hour sessions)."""
            time_diff = abs((existing_time - new_time).total_seconds())
@@ -373,7 +373,7 @@ High-level modules should not depend on low-level modules. Both should depend on
    class ScheduleSessionUseCase:
        def __init__(self, repository: TherapySessionRepository):
            self._repository = repository  # Depends on interface, not implementation
-       
+
        def execute(self, request):
            session = TherapySession(
                therapist_id=request.therapist_id,
@@ -404,12 +404,12 @@ Clean Architecture makes testing easy because you can test each layer independen
                scheduled_at=datetime.now(),
                status=SessionStatus.ACCEPTED
            )
-           
+
            session.start_session()
-           
+
            assert hasattr(session, 'started_at')
            assert session.started_at is not None
-       
+
        def test_start_session_fails_when_not_accepted(self):
            session = TherapySession(
                id=1,
@@ -418,7 +418,7 @@ Clean Architecture makes testing easy because you can test each layer independen
                scheduled_at=datetime.now(),
                status=SessionStatus.PENDING
            )
-           
+
            with pytest.raises(ValueError, match="Session must be accepted"):
                session.start_session()
 
@@ -439,14 +439,14 @@ Clean Architecture makes testing easy because you can test each layer independen
            repository = Mock()
            user_service = Mock()
            notification_service = Mock()
-           
+
            user_service.is_therapist_available.return_value = True
            repository.save.return_value = Mock(id=1)
-           
+
            use_case = ScheduleTherapySessionUseCase(
                repository, user_service, notification_service
            )
-           
+
            # Execute
            request = ScheduleSessionRequest(
                therapist_id=1,
@@ -454,9 +454,9 @@ Clean Architecture makes testing easy because you can test each layer independen
                scheduled_at=datetime.now(),
                session_type="video"
            )
-           
+
            response = use_case.execute(request)
-           
+
            # Assert
            assert response.success
            repository.save.assert_called_once()
@@ -477,7 +477,7 @@ Clean Architecture makes testing easy because you can test each layer independen
    class TestDjangoTherapySessionRepository(TestCase):
        def setUp(self):
            self.repository = DjangoTherapySessionRepository()
-       
+
        def test_save_and_find_session(self):
            # Create entity
            session = TherapySession(
@@ -485,13 +485,13 @@ Clean Architecture makes testing easy because you can test each layer independen
                patient_id=1,
                scheduled_at=datetime.now()
            )
-           
+
            # Save through repository
            saved_session = self.repository.save(session)
-           
+
            # Find through repository
            found_session = self.repository.find_by_id(saved_session.id)
-           
+
            # Assert
            assert found_session is not None
            assert found_session.therapist_id == 1
@@ -529,7 +529,7 @@ Common Pitfalls
 
    # Wrong - Entity depends on Django
    from django.db import models
-   
+
    class TherapySession(models.Model):  # Violates clean architecture
        pass
 

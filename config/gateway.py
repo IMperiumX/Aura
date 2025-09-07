@@ -4,9 +4,12 @@ Handles routing and communication between modules.
 """
 
 import importlib
+import logging
 from typing import Any
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ModuleRegistry:
@@ -95,20 +98,25 @@ class APIGateway:
             if service_class:
                 # Try to get from dependency injection container first
                 try:
-                    from .dependency_injection import get_container
+                    from .dependency_injection import get_container  # noqa: PLC0415
 
                     container = get_container()
                     service_instance = container.resolve(cache_key.lower().replace(".", "_"))
-                    self._service_cache[cache_key] = service_instance
-                    return service_instance
                 except (ImportError, ValueError):
                     # Fallback to direct instantiation
                     service_instance = service_class()
                     self._service_cache[cache_key] = service_instance
                     return service_instance
-
+                else:
+                    self._service_cache[cache_key] = service_instance
+                    return service_instance
         except (ImportError, AttributeError) as e:
-            print(f"Warning: Could not import service {service_name} from {module_name}: {e}")
+            logger.warning(
+                "Warning: Could not import service %s from %s: %s",
+                service_name,
+                module_name,
+                e,
+            )
 
         return None
 
@@ -124,7 +132,8 @@ class APIGateway:
         """Enable inter-module communication through the gateway."""
         # Validate that source module is allowed to call target module
         if not self._validate_module_dependency(source_module, target_module):
-            raise ValueError(f"Module {source_module} is not allowed to call {target_module}")
+            msg = f"Module {source_module} is not allowed to call {target_module}"
+            raise ValueError(msg)
 
         service_instance = self.get_module_service(target_module, service)
         if service_instance and hasattr(service_instance, method):

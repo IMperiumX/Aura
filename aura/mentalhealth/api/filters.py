@@ -1,3 +1,4 @@
+# ruff: noqa: F841
 # XXX: recuureces is not a field in TherapySession model we can use ORM agains!!
 """
 patterns could be used tho
@@ -26,7 +27,7 @@ class RecurrenceFilter(filters.DateFromToRangeFilter):
             return qs
 
         try:
-            date = datetime.strptime(value, "%Y-%m-%d").date()
+            date = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).date()
             # using date object instead
             date = date.isoformat()
 
@@ -36,9 +37,9 @@ class RecurrenceFilter(filters.DateFromToRangeFilter):
         recurrences = qs.values_list("recurrences", flat=True)
         dtstart = ...
         dtend = ...
-        IDs = [obj.id for obj in qs if obj.recurrences.between(dtstart, dtend)]
+        ids = [obj.id for obj in qs if obj.recurrences.between(dtstart, dtend)]
         # Filter rec available on the given date
-        return qs.filter(id__in=IDs)
+        return qs.filter(id__in=ids)
 
 
 class RecurrenceDayOfWeekFilter(filters.DateFromToRangeFilter):

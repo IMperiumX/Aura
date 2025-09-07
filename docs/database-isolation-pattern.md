@@ -17,6 +17,7 @@ The database isolation pattern replaces traditional foreign key relationships be
 ### 1. No Cross-Module Foreign Keys
 
 ❌ **Before (Tight Coupling)**:
+
 ```python
 # Mental Health Module
 class TherapySession(models.Model):
@@ -26,6 +27,7 @@ class TherapySession(models.Model):
 ```
 
 ✅ **After (Loose Coupling)**:
+
 ```python
 # Mental Health Module
 class TherapySession(models.Model):
@@ -34,7 +36,7 @@ class TherapySession(models.Model):
         help_text="ID of therapist from users module"
     )
     patient_id = models.PositiveIntegerField(
-        verbose_name="Patient ID", 
+        verbose_name="Patient ID",
         help_text="ID of patient from users module"
     )
     # ... other fields
@@ -54,7 +56,7 @@ All cross-module relationships use simple integer IDs instead of foreign keys:
 # Instead of: user = models.ForeignKey(User)
 # Use: user_id = models.PositiveIntegerField()
 
-# Instead of: category = models.ForeignKey("core.Category")  
+# Instead of: category = models.ForeignKey("core.Category")
 # Use: category_id = models.PositiveIntegerField()
 ```
 
@@ -107,7 +109,7 @@ class ChatbotInteraction(models.Model):
         help_text="ID of user from users module"
     )
     # ...
-    
+
     class Meta:
         indexes = [
             models.Index(fields=["user_id", "-interaction_date"]),
@@ -126,11 +128,11 @@ class ModularMonolithRouter:
         'mentalhealth': 'mentalhealth_db',
         'billing': 'billing_db',
     }
-    
+
     def db_for_read(self, model, **hints):
         module_name = self._get_module_name(model)
         return self.MODULE_DATABASES.get(module_name, 'default')
-    
+
     def db_for_write(self, model, **hints):
         module_name = self._get_module_name(model)
         return self.MODULE_DATABASES.get(module_name, 'default')
@@ -147,7 +149,7 @@ class DjangoTherapySessionRepository:
         session = self.find_by_id(session_id)
         if not session:
             return None
-            
+
         # Get user details through gateway (cross-module)
         try:
             from config.gateway import gateway
@@ -158,15 +160,15 @@ class DjangoTherapySessionRepository:
                 method='get_therapist_by_id',
                 data={'therapist_id': session.therapist_id}
             )
-            
+
             patient_data = gateway.inter_module_call(
                 source_module='mentalhealth',
                 target_module='users',
-                service_name='user_service', 
+                service_name='user_service',
                 method='get_patient_by_id',
                 data={'patient_id': session.patient_id}
             )
-            
+
             # Combine local and remote data
             return {
                 'session': session,
@@ -196,13 +198,13 @@ services:
     environment:
       POSTGRES_DB: aura_users
     ports: ["5434:5432"]
-      
+
   mentalhealth-db:
     image: postgres:15
     environment:
       POSTGRES_DB: aura_mentalhealth
     ports: ["5435:5432"]
-      
+
   billing-db:
     image: postgres:15
     environment:
@@ -269,20 +271,20 @@ class ScheduleTherapySessionUseCase:
     def execute(self, request):
         # Validate therapist exists
         therapist = gateway.inter_module_call(
-            'mentalhealth', 'users', 'user_service', 
+            'mentalhealth', 'users', 'user_service',
             'get_therapist_by_id', {'id': request.therapist_id}
         )
         if not therapist:
             raise ValidationError("Therapist not found")
-            
-        # Validate patient exists  
+
+        # Validate patient exists
         patient = gateway.inter_module_call(
             'mentalhealth', 'users', 'user_service',
             'get_patient_by_id', {'id': request.patient_id}
         )
         if not patient:
             raise ValidationError("Patient not found")
-            
+
         # Create session with validated IDs
         session = TherapySession(
             therapist_id=request.therapist_id,
@@ -295,18 +297,20 @@ class ScheduleTherapySessionUseCase:
 ## Migration Strategy
 
 ### Phase 1: Add ID Fields
+
 ```python
 # Add new ID fields alongside existing FKs
 class Migration(migrations.Migration):
     operations = [
-        migrations.AddField('therapysession', 'therapist_id', 
+        migrations.AddField('therapysession', 'therapist_id',
                           models.PositiveIntegerField(null=True)),
-        migrations.AddField('therapysession', 'patient_id', 
+        migrations.AddField('therapysession', 'patient_id',
                           models.PositiveIntegerField(null=True)),
     ]
 ```
 
 ### Phase 2: Populate ID Fields
+
 ```python
 # Data migration to populate ID fields from FKs
 def populate_id_fields(apps, schema_editor):
@@ -318,15 +322,16 @@ def populate_id_fields(apps, schema_editor):
 ```
 
 ### Phase 3: Remove Foreign Keys
+
 ```python
 # Remove FK constraints and fields
 class Migration(migrations.Migration):
     operations = [
         migrations.RemoveField('therapysession', 'therapist'),
         migrations.RemoveField('therapysession', 'patient'),
-        migrations.AlterField('therapysession', 'therapist_id', 
+        migrations.AlterField('therapysession', 'therapist_id',
                             models.PositiveIntegerField()),
-        migrations.AlterField('therapysession', 'patient_id', 
+        migrations.AlterField('therapysession', 'patient_id',
                             models.PositiveIntegerField()),
     ]
 ```
@@ -334,6 +339,7 @@ class Migration(migrations.Migration):
 ## Performance Considerations
 
 ### Indexing Strategy
+
 ```python
 class Meta:
     indexes = [
@@ -341,7 +347,7 @@ class Meta:
         models.Index(fields=["therapist_id", "scheduled_at"]),
         models.Index(fields=["patient_id", "scheduled_at"]),
         models.Index(fields=["status", "scheduled_at"]),
-        
+
         # Composite indexes for common queries
         models.Index(fields=["therapist_id", "status"]),
         models.Index(fields=["patient_id", "status"]),
@@ -349,41 +355,43 @@ class Meta:
 ```
 
 ### Caching Strategy
+
 ```python
 class UserServiceCache:
     def get_user_by_id(self, user_id: int):
         cache_key = f"user:{user_id}"
         user = cache.get(cache_key)
-        
+
         if not user:
             user = gateway.inter_module_call(
                 'mentalhealth', 'users', 'user_service',
                 'get_user_by_id', {'id': user_id}
             )
             cache.set(cache_key, user, timeout=300)  # 5 minutes
-            
+
         return user
 ```
 
 ### Batch Loading
+
 ```python
 def load_sessions_with_users(session_ids: list[int]):
     # Load all sessions first
     sessions = TherapySession.objects.filter(id__in=session_ids)
-    
+
     # Extract unique user IDs
     user_ids = set()
     for session in sessions:
         user_ids.add(session.therapist_id)
         user_ids.add(session.patient_id)
-    
+
     # Batch load users
     users = gateway.inter_module_call(
         'mentalhealth', 'users', 'user_service',
         'get_users_by_ids', {'ids': list(user_ids)}
     )
     users_by_id = {user['id']: user for user in users}
-    
+
     # Combine data
     return [{
         'session': session,
@@ -395,6 +403,7 @@ def load_sessions_with_users(session_ids: list[int]):
 ## Testing Strategies
 
 ### Unit Testing
+
 ```python
 class TestTherapySessionRepository:
     def test_save_session_with_user_ids(self):
@@ -404,15 +413,16 @@ class TestTherapySessionRepository:
             session_type=SessionType.VIDEO,
             scheduled_at=datetime.now()
         )
-        
+
         saved_session = self.repository.save(session)
-        
+
         assert saved_session.therapist_id == 123
         assert saved_session.patient_id == 456
         assert saved_session.id is not None
 ```
 
 ### Integration Testing
+
 ```python
 class TestCrossModuleIntegration:
     def test_schedule_session_validates_users(self):
@@ -422,16 +432,16 @@ class TestCrossModuleIntegration:
                 {'id': 123, 'name': 'Dr. Smith'},  # therapist
                 {'id': 456, 'name': 'John Doe'},   # patient
             ]
-            
+
             request = ScheduleTherapySessionRequest(
                 therapist_id=123,
                 patient_id=456,
                 session_type='video',
                 scheduled_at=datetime.now()
             )
-            
+
             result = self.use_case.execute(request)
-            
+
             assert result.therapist_id == 123
             assert result.patient_id == 456
 ```
@@ -439,6 +449,7 @@ class TestCrossModuleIntegration:
 ## Monitoring and Observability
 
 ### Health Checks
+
 ```python
 def check_cross_module_connectivity():
     """Check if cross-module communication is working."""
@@ -453,12 +464,13 @@ def check_cross_module_connectivity():
 ```
 
 ### Metrics
+
 ```python
 # Track cross-module call performance
 def track_cross_module_call_metrics(source, target, method, duration, success):
     metrics.histogram('cross_module_call_duration', duration, tags={
         'source_module': source,
-        'target_module': target, 
+        'target_module': target,
         'method': method,
         'success': success
     })

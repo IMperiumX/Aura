@@ -4,9 +4,12 @@ Provides a way for modules to discover and communicate with each other.
 """
 
 import importlib
+import logging
 from typing import Any
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ServiceRegistry:
@@ -67,20 +70,20 @@ class ServiceRegistry:
         # Create service instance
         try:
             service_instance = service_class(*resolved_deps)
+        except Exception as e:
+            msg = f"Failed to create service {key}: {e}"
+            logger.exception(msg)
+            return None
+        else:
             self._service_instances[key] = service_instance
             return service_instance
-        except Exception as e:
-            print(f"Failed to create service {key}: {e}")
-            return None
 
     def get_all_services(self, module_name: str) -> dict[str, Any]:
         """Get all services for a module."""
         if module_name not in self._services:
             return {}
 
-        return {
-            name: self.get_service(module_name, name) for name in self._services[module_name].keys()
-        }
+        return {name: self.get_service(module_name, name) for name in self._services[module_name]}
 
     def list_services(self) -> dict[str, list]:
         """List all registered services by module."""
@@ -119,7 +122,8 @@ class InterModuleEventBus:
                 try:
                     subscriber["handler"](data)
                 except Exception as e:
-                    print(f"Error handling event {event_type} in {subscriber['module']}: {e}")
+                    msg = f"Error handling event {event_type} in {subscriber['module']}: {e}"
+                    logger.exception(msg)
 
     def unsubscribe(self, event_type: str, handler, module_name: str):
         """Unsubscribe from an event type."""

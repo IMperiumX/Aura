@@ -2,10 +2,12 @@
 User module services for inter-module communication.
 """
 
+import logging
 from typing import Any
 
 from django.contrib.auth import get_user_model
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -63,7 +65,7 @@ class AuthenticationService:
 
     def authenticate_user(self, email: str, password: str) -> User | None:
         """Authenticate user with email and password."""
-        from django.contrib.auth import authenticate
+        from django.contrib.auth import authenticate  # noqa: PLC0415
 
         return authenticate(email=email, password=password)
 
@@ -110,15 +112,15 @@ def subscribe_to_events(event_bus, module_name):
         """Handle therapy session scheduled events."""
         patient_id = data.get("patient_id")
         therapist_id = data.get("therapist_id")
-        print(
-            f"Users module handling therapy session scheduled for patient {patient_id} and therapist {therapist_id}",
-        )
+        msg = f"Users module handling therapy session scheduled for patient {patient_id} and therapist {therapist_id}"
+        logger.info(msg)
         # Could send notifications, update user activity, etc.
 
     def handle_payment_completed(data):
         """Handle payment completion events."""
         user_id = data.get("user_id")
-        print(f"Users module handling payment completion for user {user_id}")
+        msg = f"Users module handling payment completion for user {user_id}"
+        logger.info(msg)
         # Could update user subscription status, etc.
 
     # Subscribe to events

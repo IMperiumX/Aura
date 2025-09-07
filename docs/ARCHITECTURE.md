@@ -6,7 +6,7 @@ This document describes the modular monolith architecture implemented in the Aur
 
 Aura is built as a modular monolith where each module can follow its own architectural pattern while communicating through well-defined interfaces.
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                API Gateway                          │
 │              (config/gateway.py)                    │
@@ -29,7 +29,7 @@ Aura is built as a modular monolith where each module can follow its own archite
 - **Responsibilities**: User authentication, profiles, role management
 - **Structure**:
 
-  ```
+  ```bash
   users/
   ├── models.py          # Django models
   ├── services.py        # Business logic services
@@ -45,7 +45,7 @@ Aura is built as a modular monolith where each module can follow its own archite
 - **Responsibilities**: Therapy sessions, disorders, chatbot interactions
 - **Structure**:
 
-  ```
+  ```bash
   mentalhealth/
   ├── models.py                    # Django models (legacy)
   ├── domain/                      # Business logic (Clean Architecture)
@@ -67,7 +67,7 @@ Aura is built as a modular monolith where each module can follow its own archite
 
 The mental health module follows clean architecture principles:
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                 Presentation Layer                  │
 │              (api/views.py)                         │
@@ -198,7 +198,7 @@ When implementing clean architecture:
 4. **Use cases coordinate**: Application layer orchestrates domain operations
 5. **Infrastructure is pluggable**: Database and external services are implementation details
 
-### Inter-Module Communication
+### Inter-Module Communication (Service Registry)
 
 1. **Use the service registry** for synchronous communication
 2. **Use the event bus** for asynchronous notifications

@@ -6,8 +6,8 @@ Defines the contract for data persistence operations.
 from abc import ABC
 from abc import abstractmethod
 
-from ..entities.disorder import Disorder
-from ..entities.disorder import DisorderType
+from aura.mentalhealth.domain.entities.disorder import Disorder
+from aura.mentalhealth.domain.entities.disorder import DisorderType
 
 
 class DisorderRepository(ABC):

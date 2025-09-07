@@ -5,12 +5,14 @@ Adapts Django ORM to domain repository interface.
 
 from datetime import datetime
 
-from ...domain.entities.therapy_session import SessionStatus
-from ...domain.entities.therapy_session import SessionType
-from ...domain.entities.therapy_session import TargetAudience
-from ...domain.entities.therapy_session import TherapySession as TherapySessionEntity
-from ...domain.repositories.therapy_session_repository import TherapySessionRepository
-from ...models import TherapySession as DjangoTherapySession
+from django.utils import timezone
+
+from aura.mentalhealth.domain.entities.therapy_session import SessionStatus
+from aura.mentalhealth.domain.entities.therapy_session import SessionType
+from aura.mentalhealth.domain.entities.therapy_session import TargetAudience
+from aura.mentalhealth.domain.entities.therapy_session import TherapySession as TherapySessionEntity
+from aura.mentalhealth.domain.repositories.therapy_session_repository import TherapySessionRepository
+from aura.mentalhealth.models import TherapySession as DjangoTherapySession
 
 
 class DjangoTherapySessionRepository(TherapySessionRepository):
@@ -81,7 +83,7 @@ class DjangoTherapySessionRepository(TherapySessionRepository):
     ) -> list[TherapySessionEntity]:
         """Find upcoming therapy sessions."""
         queryset = DjangoTherapySession.objects.filter(
-            scheduled_at__gte=datetime.now(),
+            scheduled_at__gte=timezone.now(),
             status__in=[
                 DjangoTherapySession.SessionStatus.PENDING,
                 DjangoTherapySession.SessionStatus.ACCEPTED,
@@ -109,7 +111,8 @@ class DjangoTherapySessionRepository(TherapySessionRepository):
     def update(self, therapy_session: TherapySessionEntity) -> TherapySessionEntity:
         """Update a therapy session."""
         if not therapy_session.id:
-            raise ValueError("Cannot update a session without an ID")
+            msg = "Cannot update a session without an ID"
+            raise ValueError(msg)
 
         django_session = DjangoTherapySession.objects.get(id=therapy_session.id)
         self._update_django_model(django_session, therapy_session)
@@ -121,9 +124,10 @@ class DjangoTherapySessionRepository(TherapySessionRepository):
         """Delete a therapy session."""
         try:
             DjangoTherapySession.objects.get(id=session_id).delete()
-            return True
         except DjangoTherapySession.DoesNotExist:
             return False
+        else:
+            return True
 
     def count_by_therapist(self, therapist_id: int, status: SessionStatus | None = None) -> int:
         """Count sessions by therapist and optionally by status."""

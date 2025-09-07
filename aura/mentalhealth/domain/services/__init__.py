@@ -3,12 +3,15 @@ Domain services for mental health module.
 Export services for inter-module communication.
 """
 
+import logging
+
 from aura.mentalhealth.infrastructure.repositories.django_therapy_session_repository import (
     DjangoTherapySessionRepository,
 )
 
 from .therapy_session_service import TherapySessionDomainService
 
+logger = logging.getLogger(__name__)
 __all__ = ["TherapySessionDomainService"]
 
 
@@ -31,14 +34,16 @@ def subscribe_to_events(event_bus, module_name):
         """Handle user update events."""
         user_id = data.get("user_id")
         # Update any cached user data in mental health contexts
-        print(f"Mental health module handling user update for user {user_id}")
+        msg = f"Mental health module handling user update for user {user_id}"
+        logger.info(msg)
 
     def handle_payment_completed(data):
         """Handle payment completion events."""
         user_id = data.get("user_id")
         session_id = data.get("session_id")
         # Activate therapy session after payment
-        print(f"Mental health module handling payment completion for session {session_id}")
+        msg = f"Mental health module handling payment completion for session {session_id} for user {user_id}"
+        logger.info(msg)
 
     # Subscribe to events
     event_bus.subscribe("user.updated", handle_user_updated, module_name)

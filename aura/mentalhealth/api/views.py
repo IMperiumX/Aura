@@ -13,21 +13,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from aura.mentalhealth.application.use_cases.manage_therapy_session import CancelSessionRequest
-from aura.mentalhealth.application.use_cases.manage_therapy_session import (
-    CancelTherapySessionUseCase,
-)
+from aura.mentalhealth.application.use_cases.manage_therapy_session import CancelTherapySessionUseCase
 from aura.mentalhealth.application.use_cases.manage_therapy_session import EndSessionRequest
 from aura.mentalhealth.application.use_cases.manage_therapy_session import EndTherapySessionUseCase
 from aura.mentalhealth.application.use_cases.manage_therapy_session import StartSessionRequest
-from aura.mentalhealth.application.use_cases.manage_therapy_session import (
-    StartTherapySessionUseCase,
-)
-from aura.mentalhealth.application.use_cases.schedule_therapy_session import (
-    ScheduleTherapySessionRequest,
-)
-from aura.mentalhealth.application.use_cases.schedule_therapy_session import (
-    ScheduleTherapySessionUseCase,
-)
+from aura.mentalhealth.application.use_cases.manage_therapy_session import StartTherapySessionUseCase
+from aura.mentalhealth.application.use_cases.schedule_therapy_session import ScheduleTherapySessionRequest
+from aura.mentalhealth.application.use_cases.schedule_therapy_session import ScheduleTherapySessionUseCase
 from aura.mentalhealth.domain.entities.therapy_session import SessionType
 from aura.mentalhealth.domain.entities.therapy_session import TargetAudience
 from aura.mentalhealth.domain.services.therapy_session_service import TherapySessionDomainService
@@ -136,7 +128,7 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -160,7 +152,7 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -186,7 +178,7 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -211,7 +203,7 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -242,7 +234,7 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
                 },
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -262,7 +254,7 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
 
             return Response(stats)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -272,8 +264,9 @@ class TherapySessionViewSet(viewsets.ModelViewSet):
         """Convert domain entity to Django model for serialization."""
         try:
             return TherapySession.objects.get(id=domain_entity.id)
-        except TherapySession.DoesNotExist:
-            raise Http404("Session not found")
+        except TherapySession.DoesNotExist as e:
+            msg = "Session not found"
+            raise Http404(msg) from e
 
 
 class DisorderViewSet(viewsets.ReadOnlyModelViewSet):
@@ -313,7 +306,7 @@ class DisorderViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = self.get_serializer(disorders, many=True)
             return Response(serializer.data)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -347,7 +340,7 @@ class ChatbotInteractionViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(interactions, many=True)
             return Response(serializer.data)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return Response(
                 {"error": f"An error occurred: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

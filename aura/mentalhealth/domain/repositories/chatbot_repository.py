@@ -7,7 +7,7 @@ from abc import ABC
 from abc import abstractmethod
 from datetime import datetime
 
-from ..entities.chatbot_interaction import ChatbotInteraction
+from aura.mentalhealth.domain.entities.chatbot_interaction import ChatbotInteraction
 
 
 class ChatbotRepository(ABC):

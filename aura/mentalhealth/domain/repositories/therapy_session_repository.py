@@ -7,8 +7,8 @@ from abc import ABC
 from abc import abstractmethod
 from datetime import datetime
 
-from ..entities.therapy_session import SessionStatus
-from ..entities.therapy_session import TherapySession
+from aura.mentalhealth.domain.entities.therapy_session import SessionStatus
+from aura.mentalhealth.domain.entities.therapy_session import TherapySession
 
 
 class TherapySessionRepository(ABC):

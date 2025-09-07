@@ -1,3 +1,5 @@
+# ruff: noqa: ERA001
+
 from decimal import Decimal
 from typing import ClassVar
 

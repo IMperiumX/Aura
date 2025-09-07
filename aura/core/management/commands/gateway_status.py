@@ -55,24 +55,23 @@ class Command(BaseCommand):
                 self.show_services(output_format)
 
         except Exception as e:
-            raise CommandError(f"Gateway operation failed: {e!s}")
+            msg = f"Gateway operation failed: {e!s}"
+            raise CommandError(msg) from e
 
     def show_gateway_status(self, output_format):
         """Show overall gateway status."""
         try:
             # Force initialization if not done
-            if not gateway._initialized:
+            if not gateway._initialized:  # noqa: SLF001
                 gateway.initialize_modules()
 
             modules = gateway.registry.get_all_modules()
             health_data = gateway.list_modules()
 
-            healthy_count = sum(
-                1 for health in health_data.values() if health["status"] == "healthy"
-            )
+            healthy_count = sum(1 for health in health_data.values() if health["status"] == "healthy")
 
             status_data = {
-                "gateway_initialized": gateway._initialized,
+                "gateway_initialized": gateway._initialized,  # noqa: SLF001
                 "total_modules": len(modules),
                 "healthy_modules": healthy_count,
                 "unhealthy_modules": len(modules) - healthy_count,
@@ -96,7 +95,7 @@ class Command(BaseCommand):
                     )
                 self.stdout.write(f"Timestamp: {status_data['timestamp']}")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.stdout.write(self.style.ERROR(f"Failed to get gateway status: {e!s}"))
 
     def show_health_status(self, module_name, output_format):
@@ -126,7 +125,7 @@ class Command(BaseCommand):
                         if "message" in health:
                             self.stdout.write(f"   Error: {health['message']}")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.stdout.write(self.style.ERROR(f"Failed to get health status: {e!s}"))
 
     def show_modules(self, output_format):
@@ -155,7 +154,7 @@ class Command(BaseCommand):
                     if provides:
                         self.stdout.write(f"   Provides: {', '.join(provides)}")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.stdout.write(self.style.ERROR(f"Failed to get modules: {e!s}"))
 
     def show_dependencies(self, output_format):
@@ -189,7 +188,7 @@ class Command(BaseCommand):
                 # Check for circular dependencies
                 self._check_circular_dependencies(dependencies)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.stdout.write(self.style.ERROR(f"Failed to get dependencies: {e!s}"))
 
     def show_services(self, output_format):
@@ -207,7 +206,7 @@ class Command(BaseCommand):
                     try:
                         service_instance = gateway.get_module_service(module_name, service_name)
                         status = "available" if service_instance else "unavailable"
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         status = "error"
 
                     services_data[module_name].append(
@@ -238,11 +237,10 @@ class Command(BaseCommand):
                             }.get(service["status"], self.style.NOTICE)
 
                             self.stdout.write(
-                                f"   {status_icon} {service['name']}: "
-                                f"{status_style(service['status'].upper())}",
+                                f"   {status_icon} {service['name']}: {status_style(service['status'].upper())}",
                             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.stdout.write(self.style.ERROR(f"Failed to get services: {e!s}"))
 
     def _check_circular_dependencies(self, dependencies):
@@ -250,7 +248,7 @@ class Command(BaseCommand):
 
         def has_circular_dep(module, visited, path):
             if module in path:
-                return path[path.index(module) :] + [module]
+                return [*path[path.index(module) :], module]
             if module in visited:
                 return None
 

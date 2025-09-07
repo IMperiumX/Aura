@@ -6,11 +6,11 @@ Orchestrates the scheduling process with validation and business rules.
 from dataclasses import dataclass
 from datetime import datetime
 
-from ...domain.entities.therapy_session import SessionType
-from ...domain.entities.therapy_session import TargetAudience
-from ...domain.entities.therapy_session import TherapySession
-from ...domain.repositories.therapy_session_repository import TherapySessionRepository
-from ...domain.services.therapy_session_service import TherapySessionDomainService
+from aura.mentalhealth.domain.entities.therapy_session import SessionType
+from aura.mentalhealth.domain.entities.therapy_session import TargetAudience
+from aura.mentalhealth.domain.entities.therapy_session import TherapySession
+from aura.mentalhealth.domain.repositories.therapy_session_repository import TherapySessionRepository
+from aura.mentalhealth.domain.services.therapy_session_service import TherapySessionDomainService
 
 
 @dataclass
@@ -75,7 +75,7 @@ class ScheduleTherapySessionUseCase:
                 success=False,
                 error_message=str(e),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return ScheduleTherapySessionResponse(
                 success=False,
                 error_message=f"An unexpected error occurred: {e!s}",
@@ -84,19 +84,25 @@ class ScheduleTherapySessionUseCase:
     def _validate_request(self, request: ScheduleTherapySessionRequest) -> None:
         """Validate the scheduling request."""
         if not request.therapist_id:
-            raise ValueError("Therapist ID is required")
+            msg = "Therapist ID is required"
+            raise ValueError(msg)
 
         if not request.patient_id:
-            raise ValueError("Patient ID is required")
+            msg = "Patient ID is required"
+            raise ValueError(msg)
 
         if not request.scheduled_at:
-            raise ValueError("Scheduled time is required")
+            msg = "Scheduled time is required"
+            raise ValueError(msg)
 
         if not request.session_type:
-            raise ValueError("Session type is required")
+            msg = "Session type is required"
+            raise ValueError(msg)
 
         if not request.target_audience:
-            raise ValueError("Target audience is required")
+            msg = "Target audience is required"
+            raise ValueError(msg)
 
         if request.therapist_id == request.patient_id:
-            raise ValueError("Therapist and patient cannot be the same person")
+            msg = "Therapist and patient cannot be the same person"
+            raise ValueError(msg)

@@ -5,6 +5,8 @@ Adapts Django ORM to domain repository interface.
 
 from datetime import datetime
 
+from django.utils import timezone
+
 from aura.mentalhealth.domain.entities.chatbot_interaction import ChatbotInteraction
 from aura.mentalhealth.domain.repositories.chatbot_repository import ChatbotRepository
 from aura.mentalhealth.models import ChatbotInteraction as DjangoChatbotInteraction
@@ -76,7 +78,8 @@ class DjangoChatbotRepository(ChatbotRepository):
     def update(self, interaction: ChatbotInteraction) -> ChatbotInteraction:
         """Update a chatbot interaction."""
         if not interaction.id:
-            raise ValueError("Cannot update an interaction without an ID")
+            msg = "Cannot update an interaction without an ID"
+            raise ValueError(msg)
 
         django_interaction = DjangoChatbotInteraction.objects.get(id=interaction.id)
         self._update_django_model(django_interaction, interaction)
@@ -88,9 +91,10 @@ class DjangoChatbotRepository(ChatbotRepository):
         """Delete a chatbot interaction."""
         try:
             DjangoChatbotInteraction.objects.get(id=interaction_id).delete()
-            return True
         except DjangoChatbotInteraction.DoesNotExist:
             return False
+        else:
+            return True
 
     def delete_by_user_id(self, user_id: int) -> int:
         """Delete all chatbot interactions for a user. Returns count of deleted interactions."""
@@ -125,9 +129,7 @@ class DjangoChatbotRepository(ChatbotRepository):
         for interaction in interactions:
             total_messages += len(interaction.conversation_log or [])
 
-        average_conversation_length = (
-            total_messages / total_interactions if total_interactions > 0 else 0
-        )
+        average_conversation_length = total_messages / total_interactions if total_interactions > 0 else 0
 
         return {
             "total_interactions": total_interactions,
@@ -143,7 +145,7 @@ class DjangoChatbotRepository(ChatbotRepository):
             message=entity.message,
             response=entity.response,
             conversation_log=entity.conversation_log or [],
-            interaction_date=entity.interaction_date or datetime.now(),
+            interaction_date=entity.interaction_date or timezone.now(),
             user_id=entity.user_id,
         )
 
@@ -156,7 +158,7 @@ class DjangoChatbotRepository(ChatbotRepository):
         django_model.message = entity.message
         django_model.response = entity.response
         django_model.conversation_log = entity.conversation_log or []
-        django_model.interaction_date = entity.interaction_date or datetime.now()
+        django_model.interaction_date = entity.interaction_date or timezone.now()
         django_model.user_id = entity.user_id
 
     def _to_domain_entity(self, django_model: DjangoChatbotInteraction) -> ChatbotInteraction:

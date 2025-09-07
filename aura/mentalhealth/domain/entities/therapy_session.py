@@ -8,6 +8,8 @@ from dataclasses import field
 from datetime import datetime
 from enum import Enum
 
+from django.utils import timezone
+
 
 class SessionType(Enum):
     CHAT = "chat"
@@ -52,55 +54,62 @@ class TherapySession:
     def start_session(self) -> None:
         """Start the therapy session."""
         if self.status != SessionStatus.ACCEPTED:
-            raise ValueError("Session must be accepted before starting")
+            msg = "Session must be accepted before starting"
+            raise ValueError(msg)
 
         if self.started_at is not None:
-            raise ValueError("Session has already been started")
+            msg = "Session has already been started"
+            raise ValueError(msg)
 
-        self.started_at = datetime.now()
+        self.started_at = timezone.now()
         self.status = SessionStatus.COMPLETED
-        self.updated_at = datetime.now()
+        self.updated_at = timezone.now()
 
     def end_session(self, summary: str = "", notes: str = "") -> None:
         """End the therapy session."""
         if self.started_at is None:
-            raise ValueError("Session must be started before ending")
+            msg = "Session must be started before ending"
+            raise ValueError(msg)
 
         if self.ended_at is not None:
-            raise ValueError("Session has already been ended")
+            msg = "Session has already been ended"
+            raise ValueError(msg)
 
-        self.ended_at = datetime.now()
+        self.ended_at = timezone.now()
         self.summary = summary
         self.notes = notes
-        self.updated_at = datetime.now()
+        self.updated_at = timezone.now()
 
     def accept_session(self) -> None:
         """Accept the therapy session."""
         if self.status != SessionStatus.PENDING:
-            raise ValueError("Only pending sessions can be accepted")
+            msg = "Only pending sessions can be accepted"
+            raise ValueError(msg)
 
         self.status = SessionStatus.ACCEPTED
-        self.updated_at = datetime.now()
+        self.updated_at = timezone.now()
 
     def reject_session(self, reason: str = "") -> None:
         """Reject the therapy session."""
         if self.status not in [SessionStatus.PENDING, SessionStatus.ACCEPTED]:
-            raise ValueError("Only pending or accepted sessions can be rejected")
+            msg = "Only pending or accepted sessions can be rejected"
+            raise ValueError(msg)
 
         self.status = SessionStatus.REJECTED
         if reason:
             self.notes = f"Rejection reason: {reason}"
-        self.updated_at = datetime.now()
+        self.updated_at = timezone.now()
 
     def cancel_session(self, reason: str = "") -> None:
         """Cancel the therapy session."""
         if self.status == SessionStatus.COMPLETED:
-            raise ValueError("Cannot cancel a completed session")
+            msg = "Cannot cancel a completed session"
+            raise ValueError(msg)
 
         self.status = SessionStatus.CANCELLED
         if reason:
             self.notes = f"Cancellation reason: {reason}"
-        self.updated_at = datetime.now()
+        self.updated_at = timezone.now()
 
     def can_be_started(self) -> bool:
         """Check if session can be started."""
@@ -108,7 +117,7 @@ class TherapySession:
             self.status == SessionStatus.ACCEPTED
             and self.started_at is None
             and self.scheduled_at is not None
-            and self.scheduled_at <= datetime.now()
+            and self.scheduled_at <= timezone.now()
         )
 
     def is_active(self) -> bool:
@@ -140,4 +149,5 @@ class TherapySession:
             errors.append("End time must be after start time")
 
         if errors:
-            raise ValueError(f"Validation failed: {', '.join(errors)}")
+            msg = f"Validation failed: {', '.join(errors)}"
+            raise ValueError(msg)

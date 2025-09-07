@@ -5,8 +5,11 @@ Manages service creation and dependency resolution.
 """
 
 import inspect
+import logging
 from collections.abc import Callable
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class DIContainer:
@@ -17,7 +20,7 @@ class DIContainer:
         self._factories: dict[str, Callable] = {}
         self._singletons: dict[str, Any] = {}
 
-    def register(self, service_name: str, service_class: type, singleton: bool = True):
+    def register(self, service_name: str, service_class: type, singleton: bool = True):  # noqa: FBT001, FBT002
         """Register a service class."""
         self._services[service_name] = service_class
         if singleton and service_name not in self._singletons:
@@ -53,7 +56,8 @@ class DIContainer:
                 self._singletons[service_name] = instance
             return instance
 
-        raise ValueError(f"Service '{service_name}' not registered")
+        msg = f"Service '{service_name}' not registered"
+        raise ValueError(msg)
 
     def _create_instance(self, service_class: type) -> Any:
         """Create an instance of a service class with dependency injection."""
@@ -72,19 +76,19 @@ class DIContainer:
                     dependency = self._resolve_by_type(param.annotation)
                     if dependency is not None:
                         kwargs[param_name] = dependency
-                except:
-                    pass
+                except Exception:
+                    msg = f"Cannot resolve dependency '{param_name}' for {service_class}"
+                    logger.exception(msg)
 
             # Try to resolve parameter by name
             if param_name not in kwargs:
                 try:
                     kwargs[param_name] = self.resolve(param_name)
-                except:
+                except Exception as e:
                     # If we can't resolve and there's no default, raise error
                     if param.default == inspect.Parameter.empty:
-                        raise ValueError(
-                            f"Cannot resolve dependency '{param_name}' for {service_class}",
-                        )
+                        msg = f"Cannot resolve dependency '{param_name}' for {service_class}"
+                        raise ValueError(msg) from e
 
         return service_class(**kwargs)
 
@@ -104,24 +108,12 @@ container = DIContainer()
 
 def setup_mental_health_dependencies():
     """Set up dependency injection for mental health module."""
-    from aura.mentalhealth.application.use_cases.manage_therapy_session import (
-        CancelTherapySessionUseCase,
-    )
-    from aura.mentalhealth.application.use_cases.manage_therapy_session import (
-        EndTherapySessionUseCase,
-    )
-    from aura.mentalhealth.application.use_cases.manage_therapy_session import (
-        StartTherapySessionUseCase,
-    )
-    from aura.mentalhealth.application.use_cases.schedule_therapy_session import (
-        ScheduleTherapySessionUseCase,
-    )
-    from aura.mentalhealth.domain.services.therapy_session_service import (
-        TherapySessionDomainService,
-    )
-    from aura.mentalhealth.infrastructure.repositories.django_chatbot_repository import (
-        DjangoChatbotRepository,
-    )
+    from aura.mentalhealth.application.use_cases.manage_therapy_session import CancelTherapySessionUseCase
+    from aura.mentalhealth.application.use_cases.manage_therapy_session import EndTherapySessionUseCase
+    from aura.mentalhealth.application.use_cases.manage_therapy_session import StartTherapySessionUseCase
+    from aura.mentalhealth.application.use_cases.schedule_therapy_session import ScheduleTherapySessionUseCase
+    from aura.mentalhealth.domain.services.therapy_session_service import TherapySessionDomainService
+    from aura.mentalhealth.infrastructure.repositories.django_chatbot_repository import DjangoChatbotRepository
     from aura.mentalhealth.infrastructure.repositories.django_therapy_session_repository import (
         DjangoTherapySessionRepository,
     )

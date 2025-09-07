@@ -282,9 +282,9 @@ Create domain services:
    from dataclasses import dataclass
    from typing import Optional, Dict, Any
 
-   from ...domain.entities.notification import Notification, NotificationType
-   from ...domain.repositories.notification_repository import NotificationRepository
-   from ...domain.services.notification_service import NotificationDomainService
+   from aura.mentalhealth.domain.entities.notification import Notification, NotificationType
+   from aura.mentalhealth.domain.repositories.notification_repository import NotificationRepository
+   from aura.mentalhealth.domain.services.notification_service import NotificationDomainService
 
    @dataclass
    class SendNotificationRequest:
@@ -376,9 +376,9 @@ Create domain services:
    from typing import List, Optional
    from datetime import datetime
 
-   from ...domain.entities.notification import Notification as NotificationEntity, NotificationStatus, NotificationType
-   from ...domain.repositories.notification_repository import NotificationRepository
-   from ...models import Notification as DjangoNotification
+   from aura.mentalhealth.domain.entities.notification import Notification as NotificationEntity, NotificationStatus, NotificationType
+   from aura.mentalhealth.domain.repositories.notification_repository import NotificationRepository
+   from aura.mentalhealth.models import Notification as DjangoNotification
 
    class DjangoNotificationRepository(NotificationRepository):
        """Django ORM implementation of notification repository."""

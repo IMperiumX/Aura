@@ -89,7 +89,7 @@ AURA_MODULES: dict[str, dict[str, Any]] = {
 
 
 # Module dependency validation
-def validate_module_dependencies():
+def validate_module_dependencies():  # noqa: C901
     """Validate that module dependencies are properly configured."""
     errors = []
 

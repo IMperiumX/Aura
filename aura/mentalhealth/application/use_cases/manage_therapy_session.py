@@ -4,8 +4,8 @@ Use cases for managing therapy sessions (start, end, cancel, etc.).
 
 from dataclasses import dataclass
 
-from ...domain.entities.therapy_session import TherapySession
-from ...domain.repositories.therapy_session_repository import TherapySessionRepository
+from aura.mentalhealth.domain.entities.therapy_session import TherapySession
+from aura.mentalhealth.domain.repositories.therapy_session_repository import TherapySessionRepository
 
 
 @dataclass
@@ -83,7 +83,7 @@ class StartTherapySessionUseCase:
                 success=False,
                 error_message=str(e),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return SessionManagementResponse(
                 success=False,
                 error_message=f"An unexpected error occurred: {e!s}",
@@ -135,7 +135,7 @@ class EndTherapySessionUseCase:
                 success=False,
                 error_message=str(e),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return SessionManagementResponse(
                 success=False,
                 error_message=f"An unexpected error occurred: {e!s}",
@@ -185,7 +185,7 @@ class CancelTherapySessionUseCase:
                 success=False,
                 error_message=str(e),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return SessionManagementResponse(
                 success=False,
                 error_message=f"An unexpected error occurred: {e!s}",

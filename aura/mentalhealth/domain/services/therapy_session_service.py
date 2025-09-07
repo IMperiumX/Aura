@@ -6,12 +6,15 @@ Contains complex business rules and operations.
 from datetime import datetime
 from datetime import timedelta
 
+from django.utils import timezone
+
 from aura.mentalhealth.domain.entities.therapy_session import SessionStatus
 from aura.mentalhealth.domain.entities.therapy_session import SessionType
 from aura.mentalhealth.domain.entities.therapy_session import TherapySession
-from aura.mentalhealth.domain.repositories.therapy_session_repository import (
-    TherapySessionRepository,
-)
+from aura.mentalhealth.domain.repositories.therapy_session_repository import TherapySessionRepository
+
+MAX_THERAPIST_DAILY_SESSION_LIMIT = 8
+HOUR_IN_SECONDS = 3600
 
 
 class TherapySessionDomainService:
@@ -55,9 +58,10 @@ class TherapySessionDomainService:
         """Check if a session can be scheduled."""
         try:
             self._validate_scheduling_rules(therapist_id, patient_id, scheduled_at)
-            return True
         except ValueError:
             return False
+        else:
+            return True
 
     def _validate_scheduling_rules(
         self,
@@ -68,24 +72,29 @@ class TherapySessionDomainService:
         """Validate business rules for scheduling."""
 
         # Rule 1: Cannot schedule in the past
-        if scheduled_at <= datetime.now():
-            raise ValueError("Cannot schedule sessions in the past")
+        if scheduled_at <= timezone.now():
+            msg = "Cannot schedule sessions in the past"
+            raise ValueError(msg)
 
         # Rule 2: Must be scheduled at least 1 hour in advance
-        if scheduled_at <= datetime.now() + timedelta(hours=1):
-            raise ValueError("Sessions must be scheduled at least 1 hour in advance")
+        if scheduled_at <= timezone.now() + timedelta(hours=1):
+            msg = "Sessions must be scheduled at least 1 hour in advance"
+            raise ValueError(msg)
 
         # Rule 3: Check for therapist conflicts
         if self._has_therapist_conflict(therapist_id, scheduled_at):
-            raise ValueError("Therapist has a conflicting session at this time")
+            msg = "Therapist has a conflicting session at this time"
+            raise ValueError(msg)
 
         # Rule 4: Check for patient conflicts
         if self._has_patient_conflict(patient_id, scheduled_at):
-            raise ValueError("Patient has a conflicting session at this time")
+            msg = "Patient has a conflicting session at this time"
+            raise ValueError(msg)
 
         # Rule 5: Therapist should not have more than 8 sessions per day
-        if self._therapist_daily_session_count(therapist_id, scheduled_at.date()) >= 8:
-            raise ValueError("Therapist has reached maximum daily session limit")
+        if self._therapist_daily_session_count(therapist_id, scheduled_at.date()) >= MAX_THERAPIST_DAILY_SESSION_LIMIT:
+            msg = "Therapist has reached maximum daily session limit"
+            raise ValueError(msg)
 
     def _has_therapist_conflict(self, therapist_id: int, scheduled_at: datetime) -> bool:
         """Check if therapist has a conflicting session."""
@@ -94,8 +103,7 @@ class TherapySessionDomainService:
 
         conflicting_sessions = self._repository.find_by_date_range(window_start, window_end)
         return any(
-            session.therapist_id == therapist_id
-            and session.status in [SessionStatus.ACCEPTED, SessionStatus.PENDING]
+            session.therapist_id == therapist_id and session.status in [SessionStatus.ACCEPTED, SessionStatus.PENDING]
             for session in conflicting_sessions
         )
 
@@ -106,8 +114,7 @@ class TherapySessionDomainService:
 
         conflicting_sessions = self._repository.find_by_date_range(window_start, window_end)
         return any(
-            session.patient_id == patient_id
-            and session.status in [SessionStatus.ACCEPTED, SessionStatus.PENDING]
+            session.patient_id == patient_id and session.status in [SessionStatus.ACCEPTED, SessionStatus.PENDING]
             for session in conflicting_sessions
         )
 
@@ -122,8 +129,7 @@ class TherapySessionDomainService:
                 session
                 for session in daily_sessions
                 if session.therapist_id == therapist_id
-                and session.status
-                in [SessionStatus.ACCEPTED, SessionStatus.PENDING, SessionStatus.COMPLETED]
+                and session.status in [SessionStatus.ACCEPTED, SessionStatus.PENDING, SessionStatus.COMPLETED]
             ],
         )
 
@@ -131,17 +137,19 @@ class TherapySessionDomainService:
         """Reschedule an existing session."""
         session = self._repository.find_by_id(session_id)
         if not session:
-            raise ValueError("Session not found")
+            msg = "Session not found"
+            raise ValueError(msg)
 
         if session.status not in [SessionStatus.PENDING, SessionStatus.ACCEPTED]:
-            raise ValueError("Only pending or accepted sessions can be rescheduled")
+            msg = "Only pending or accepted sessions can be rescheduled"
+            raise ValueError(msg)
 
         # Validate new time
         self._validate_scheduling_rules(session.therapist_id, session.patient_id, new_scheduled_at)
 
         # Update session
         session.scheduled_at = new_scheduled_at
-        session.updated_at = datetime.now()
+        session.updated_at = timezone.now()
 
         return self._repository.update(session)
 
@@ -166,7 +174,7 @@ class TherapySessionDomainService:
         while current_time < end_of_day:
             # Check if slot conflicts with existing sessions
             has_conflict = any(
-                abs((session.scheduled_at - current_time).total_seconds()) < 3600  # 1 hour buffer
+                abs((session.scheduled_at - current_time).total_seconds()) < HOUR_IN_SECONDS  # 1 hour buffer
                 for session in therapist_sessions
             )
 
@@ -193,8 +201,8 @@ class TherapySessionDomainService:
             sessions = self._repository.find_by_patient_id(patient_id)
         else:
             sessions = self._repository.find_by_date_range(
-                start_date or datetime.now() - timedelta(days=30),
-                end_date or datetime.now(),
+                start_date or timezone.now() - timedelta(days=30),
+                end_date or timezone.now(),
             )
 
         # Filter by date range if specified
@@ -215,8 +223,7 @@ class TherapySessionDomainService:
         # Calculate average duration for completed sessions
         completed_with_duration = [s for s in sessions if s.get_duration_minutes()]
         avg_duration = (
-            sum(s.get_duration_minutes() for s in completed_with_duration)
-            / len(completed_with_duration)
+            sum(s.get_duration_minutes() for s in completed_with_duration) / len(completed_with_duration)
             if completed_with_duration
             else 0
         )

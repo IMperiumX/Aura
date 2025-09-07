@@ -1,3 +1,4 @@
+# ruff: noqa: TRY300 TRY400 G004 BLE001 T201 RET504 DTZ005
 """
 Gateway Usage Examples
 =====================
@@ -23,9 +24,7 @@ logger = logging.getLogger(__name__)
 class TherapySessionService:
     """Service that uses gateway to communicate with other modules."""
 
-    def schedule_session(
-        self, patient_id: int, therapist_id: int, scheduled_at: datetime
-    ) -> dict[str, Any]:
+    def schedule_session(self, patient_id: int, therapist_id: int, scheduled_at: datetime) -> dict[str, Any]:
         """Schedule a therapy session with user validation."""
 
         # Method 1: Direct service access
@@ -95,9 +94,7 @@ class TherapySessionService:
                 "error": "Internal error occurred",
             }
 
-    def _create_session(
-        self, patient_id: int, therapist_id: int, scheduled_at: datetime
-    ) -> dict[str, Any]:
+    def _create_session(self, patient_id: int, therapist_id: int, scheduled_at: datetime) -> dict[str, Any]:
         """Mock session creation."""
         return {
             "id": 123,
@@ -264,9 +261,7 @@ class SystemHealthMonitor:
         try:
             module_health = gateway.list_modules()
 
-            healthy_count = sum(
-                1 for health in module_health.values() if health["status"] == "healthy"
-            )
+            healthy_count = sum(1 for health in module_health.values() if health["status"] == "healthy")
             total_count = len(module_health)
 
             overall_status = "healthy" if healthy_count == total_count else "degraded"
