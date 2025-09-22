@@ -38,7 +38,7 @@ drf-spectacular==0.28.0  # https://github.com/tfranzel/drf-spectacular
 # Logging & Monitoring
 # ------------------------------------------------------------------------------
 python-json-logger==2.0.7  # https://github.com/madzak/python-json-logger
-psutil==5.9.8  # https://github.com/giampaolo/psutil
+psutil==7.1.0  # https://github.com/giampaolo/psutil
 elasticsearch==8.11.0  # https://elasticsearch-py.readthedocs.io/
 
 # sentence-transformers==3.0.1 # https://github.com/UKPLab/sentence-transformers/
