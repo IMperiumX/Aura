@@ -13,7 +13,7 @@ channels_redis==4.2.0 # https://github.com/django/channels_redis
 # Django
 # ------------------------------------------------------------------------------
 django==5.1.11  # pyup: < 5.2 # https://www.djangoproject.com/
-django-filter==24.2  # https://github.com/carltongibson/django-filter/
+django-filter==25.1  # https://github.com/carltongibson/django-filter/
 django-environ==0.12.0  # https://github.com/joke2k/django-environ
 django-model-utils==5.0.0  # https://github.com/jazzband/django-model-utils
 django-allauth[mfa]==65.11.1  # https://github.com/pennersr/django-allauth
