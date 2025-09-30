@@ -33,9 +33,13 @@ if settings.DEBUG:
 
 # API URLS
 urlpatterns += [
-    # API base url (Versioned API)
-    path("api/0/", include("config.api_router")),
-    # DRF auth token
+    # Main API URLs (following PRD structure)
+    path("api/v1/", include("aura.api_urls")),
+    # Legacy API base url (Versioned API)
+    path("api/0/legacy/", include("config.api_router")),
+    # Knox auth endpoints
+    path("api/0/", include("knox.urls")),
+    # DRF auth token (legacy)
     path("api/0/auth-token/", obtain_auth_token, name="obtain_auth_token"),
     path("api/0/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path(

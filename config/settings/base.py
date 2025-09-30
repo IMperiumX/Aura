@@ -2,6 +2,7 @@
 """Base settings to build other settings files upon."""
 
 import ssl
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -84,15 +85,17 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "rest_framework",
     "rest_framework.authtoken",
+    "knox",
     "corsheaders",
     "drf_spectacular",
+    "axes",
 ]
 
 LOCAL_APPS = [
-    "aura.core",
     "aura.users",
-    "aura.mentalhealth",
     # Your stuff: custom apps go here
+    "aura.core",
+    "aura.mentalhealth",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -106,6 +109,7 @@ MIGRATION_MODULES = {"sites": "aura.contrib.sites.migrations"}
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
@@ -141,6 +145,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "aura.core.monitoring.RequestContextMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -150,6 +155,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
 
 # STATIC
@@ -254,14 +260,82 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
+            "format": "%(levelname)s %(asctime)s %(name)s %(process)d %(thread)d %(message)s",
+        },
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d",
+        },
+        "structured": {
+            "()": "aura.core.logging_formatters.StructuredFormatter",
         },
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "logs/aura.log",
+            "maxBytes": 1024 * 1024 * 50,  # 50 MB
+            "backupCount": 10,
+            "formatter": "json",
+        },
+        "security_file": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "logs/security.log",
+            "maxBytes": 1024 * 1024 * 50,  # 50 MB
+            "backupCount": 20,
+            "formatter": "json",
+        },
+        "audit_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "logs/audit.log",
+            "maxBytes": 1024 * 1024 * 50,  # 50 MB
+            "backupCount": 30,
+            "formatter": "json",
+        },
+    },
+    "loggers": {
+        "aura": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "aura.security": {
+            "handlers": ["security_file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "aura.audit": {
+            "handlers": ["audit_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "aura.business": {
+            "handlers": ["file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "aura.errors": {
+            "handlers": ["file", "console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["security_file"],
+            "level": "WARNING",
+            "propagate": False,
         },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
@@ -335,11 +409,20 @@ SOCIALACCOUNT_FORMS = {"signup": "aura.users.forms.UserSocialSignupForm"}
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "knox.auth.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "aura.core.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 20,
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
@@ -355,6 +438,47 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": "/api/0/",
 }
 
-
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+
+# Knox Configuration
+# ------------------------------------------------------------------------------
+REST_KNOX = {
+    "SECURE_HASH_ALGORITHM": "cryptography.hazmat.primitives.hashes.SHA512",
+    "AUTH_TOKEN_CHARACTER_LENGTH": 64,
+    "TOKEN_TTL": timedelta(hours=10),
+    "USER_SERIALIZER": "aura.users.serializers.UserSerializer",
+    "TOKEN_LIMIT_PER_USER": 10,
+    "AUTO_REFRESH": True,
+}
+
+# Axes Configuration for brute force protection
+# ------------------------------------------------------------------------------
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1
+AXES_LOCKOUT_PARAMETERS = ["ip_address", "username"]
+AXES_ENABLE_ADMIN = True
+
+# Field Encryption
+# ------------------------------------------------------------------------------
+FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", default="your-32-byte-key-here-change-in-production")
+
+# Caching Configuration
+# ------------------------------------------------------------------------------
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "aura",
+        "TIMEOUT": 300,
+    }
+}
+
+# Session Configuration
+# ------------------------------------------------------------------------------
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
