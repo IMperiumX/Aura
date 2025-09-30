@@ -24,6 +24,10 @@ django-recurrence==1.11.1 # https://github.com/jazzband/django-recurrence
 django-lifecycle==1.2.4 # https://github.com/rsinger86/django-lifecycle
 django-taggit==5.0.1 # https://github.com/jazzband/django-taggit
 django-viewflow==2.2.7 # https://github.com/viewflow/django-viewflow
+# Rate Limiting and Security
+django-ratelimit==4.1.0  # https://github.com/jsocol/django-ratelimit
+django-axes==8.0.0  # https://github.com/jazzband/django-axes
+
 # Django REST Framework
 djangorestframework==3.16.1  # https://github.com/encode/django-rest-framework
 django-cors-headers==4.7.0  # https://github.com/adamchainz/django-cors-headers
@@ -34,6 +38,9 @@ drf-nested-routers==0.94.1
 # Django REST Framework
 # DRF-spectacular for api documentation
 drf-spectacular==0.28.0  # https://github.com/tfranzel/drf-spectacular
+
+# Knox Authentication for secure token authentication
+django-rest-knox==5.0.2  # https://github.com/James1345/django-rest-knox
 
 # Logging & Monitoring
 # ------------------------------------------------------------------------------
@@ -57,6 +64,7 @@ psycopg2-binary==2.9.9
 python-dateutil==2.8.2
 python-rapidjson==1.20 # https://github.com/python-rapidjson/python-rapidjson
 simplejson==3.19.3 # https://github.com/simplejson/simplejson
+dj-database-url==2.3.0 # https://github.com/kennethreitz/dj-database-url
 
 # Requests
 requests==2.31.0
@@ -66,3 +74,12 @@ whitenoise==6.6.0
 
 # Workalendar
 workalendar==17.0.0
+
+# Encryption and Security
+cryptography==45.0.7  # https://github.com/pyca/cryptography
+
+# Pylibmagic
+pylibmagic==0.5.0
+
+# Google Cloud PubSub
+google-cloud-pubsub==2.29.0 # https://github.com/googleapis/python-pubsub

@@ -1,3 +1,0 @@
-pylibmagic
-dj-database-url # https://github.com/kennethreitz/dj-database-url
-google-cloud-pubsub

@@ -2,6 +2,7 @@
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
+FIELD_ENCRYPTION_KEY=tVhnHZwmHwOL_W8AXVx7mQvTcYLV3gt2H4zq2mtvBA0=
 # Redis
 # ------------------------------------------------------------------------------
 REDIS_URL=redis://redis:6379/0
