@@ -22,7 +22,7 @@ crispy-bootstrap5==2025.6  # https://github.com/django-crispy-forms/crispy-boots
 django-redis==6.0.0  # https://github.com/jazzband/django-redis
 django-recurrence==1.11.1 # https://github.com/jazzband/django-recurrence
 django-lifecycle==1.2.4 # https://github.com/rsinger86/django-lifecycle
-django-taggit==5.0.1 # https://github.com/jazzband/django-taggit
+django-taggit==6.1.0 # https://github.com/jazzband/django-taggit
 django-viewflow==2.2.7 # https://github.com/viewflow/django-viewflow
 # Rate Limiting and Security
 django-ratelimit==4.1.0  # https://github.com/jsocol/django-ratelimit
