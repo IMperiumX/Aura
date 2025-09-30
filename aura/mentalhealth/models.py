@@ -60,13 +60,13 @@ class TherapySession(TimeStampedModel):
     )
     recurrences = RecurrenceField()
     therapist = models.ForeignKey(
-        "users.Therapist",
+        "users.TherapistProfile",
         on_delete=models.CASCADE,
         related_name="therapy_sessions",
         verbose_name=_("Therapist"),
     )
     patient = models.ForeignKey(
-        "users.Patient",
+        "users.PatientProfile",
         on_delete=models.CASCADE,
         related_name="therapy_sessions",
         verbose_name=_("Patient"),

@@ -30,7 +30,6 @@ class RecurrenceFilter(filters.DateFromToRangeFilter):
             date = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).date()
             # using date object instead
             date = date.isoformat()
-
         except ValueError:
             return qs
 
